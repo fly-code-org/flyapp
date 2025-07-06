@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "228834943626",
+    "project_id": "firstloveyourself-b0c13",
+    "storage_bucket": "firstloveyourself-b0c13.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:228834943626:android:aabe4a5c0c23d63d270373",
+        "android_client_info": {
+          "package_name": "com.example.fly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "228834943626-qacs6kk86vdf78kmapmutabng538uvfa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fly",
+            "certificate_hash": "23799a1397d2de15f3c90d8080730a3973ff9640"
+          }
+        },
+        {
+          "client_id": "228834943626-tt0vma304lu9677t2v0lihdtd8c49u6e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABrmJQsh_KnWO8cm2xiwtUJKd8-k8VGVw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "228834943626-tt0vma304lu9677t2v0lihdtd8c49u6e.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "228834943626-kebj25a4tdlsvee95rkoejeie7rc9csg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flyFe"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:228834943626:android:852db0355c6be95c270373",
+        "android_client_info": {
+          "package_name": "com.example.fly_fe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "228834943626-et5tlt2at60tf0bq7bpr0e1ctvsrhb22.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fly_fe",
+            "certificate_hash": "23799a1397d2de15f3c90d8080730a3973ff9640"
+          }
+        },
+        {
+          "client_id": "228834943626-tt0vma304lu9677t2v0lihdtd8c49u6e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABrmJQsh_KnWO8cm2xiwtUJKd8-k8VGVw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "228834943626-tt0vma304lu9677t2v0lihdtd8c49u6e.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "228834943626-kebj25a4tdlsvee95rkoejeie7rc9csg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flyFe"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
