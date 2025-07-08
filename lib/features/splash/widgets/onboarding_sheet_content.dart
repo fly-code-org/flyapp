@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/auth/presentation/pages/login_screen.dart';
+import 'package:fly/features/auth/presentation/pages/register_screen.dart';
 
 class OnboardingSheetContent extends StatelessWidget {
   final ScrollController scrollController;
@@ -15,7 +15,7 @@ class OnboardingSheetContent extends StatelessWidget {
     required this.onBegin,
   });
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Stack(
       children: [
@@ -78,7 +78,7 @@ class OnboardingSheetContent extends StatelessWidget {
                 ],
               )
             else
-              LoginScreen(),
+              RegisterScreen(),
           ],
         ),
       ],

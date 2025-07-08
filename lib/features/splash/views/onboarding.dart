@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/auth/presentation/pages/login_screen.dart';
+import 'package:fly/features/auth/presentation/pages/register_screen.dart';
 // Import the new login screen file
 
 class Onboarding extends StatefulWidget {
@@ -166,7 +166,7 @@ class _OnboardingState extends State<Onboarding> {
                                 ],
                               )
                             else
-                              LoginScreen(), // Display login screen
+                              RegisterScreen(), // Display login screen
                           ],
                         ),
                       ],
@@ -197,3 +197,4 @@ class _OnboardingState extends State<Onboarding> {
     );
   }
 }
+
