@@ -55,6 +55,10 @@
     <!-- Internet permission required for Google Sign-In -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Media (Gallery) permissions -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
     <!-- Optional: for system debugging tools -->
     <queries>
         <intent>

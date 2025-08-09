@@ -8,6 +8,9 @@ import 'package:fly/features/auth/presentation/widgets/already_member_text.dart'
 import 'package:fly/features/auth/presentation/widgets/input_text_field.dart';
 import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
 import 'package:fly/features/auth/presentation/widgets/role_selector.dart';
+import 'package:fly/features/profile_creation/presentation/views/user_profile_form.dart';
+import 'package:fly/routes/app_routes.dart';
+import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
@@ -135,12 +138,13 @@ if (response.statusCode == 200) {
 
                   if (!_isLogin)
                     RoleSelector(
-                      onRoleSelected: (role) {
-                        setState(() {
-                          _status = "$role selected";
-                        });
-                      },
-                    ),
+                    onRoleSelected: (role) {
+                      setState(() {
+                        selectedRole = role;  // ✅ Important line
+                        _status = "$role selected";
+                      });
+                    },
+                  ),
 
                   if (!_isLogin) const SizedBox(height: 30),
 
@@ -204,6 +208,17 @@ if (response.statusCode == 200) {
                       ),
                       child: TextButton(
                         onPressed: () {
+                          if (selectedRole.isEmpty && !_isLogin) {
+                            setState(() {
+                              _status = "Please select a role first";
+                            });
+                            return;
+                          }
+
+                          Get.toNamed('/email-verification', arguments: {
+                            'role': selectedRole,
+                          });
+
                           // TODO: Add login/register logic here
                         },
                         style: TextButton.styleFrom(

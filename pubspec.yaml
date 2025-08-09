@@ -48,6 +48,9 @@ dependencies:
   logger: ^2.4.0          # For logging
   json_annotation: ^4.9.0
   flutter_dotenv: ^5.1.0  # For environment variables
+  image_picker: ^1.1.2
+  permission_handler: ^12.0.1
+  flutter_svg: ^2.2.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
