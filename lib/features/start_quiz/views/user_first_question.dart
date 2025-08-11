@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
 import 'package:fly/features/start_quiz/widgets/gradient_button.dart';
+import 'package:fly/features/start_quiz/widgets/vertical_progress_bar.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
-class QuizIntroScreen extends StatefulWidget {
-  const QuizIntroScreen({super.key});
+class UserQuestionOneScreen extends StatefulWidget {
+  const UserQuestionOneScreen({super.key});
 
   @override
-  State<QuizIntroScreen> createState() => _QuizIntroScreenState();
+  State<UserQuestionOneScreen> createState() => _UserQuestionOneScreenState();
 }
 
-class _QuizIntroScreenState extends State<QuizIntroScreen> {
+class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
   double _dragPosition = 0.8;
   late final String role;
 
@@ -23,20 +24,6 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
     super.initState();
     final args = Get.arguments ?? {};
     role = (args['role'] ?? 'user').toLowerCase();
-    print("PhoneVerification role: $role");
-  }
-
-  void _handleButtonPressed() {
-    if (_showSureLetsGo) {
-      // Navigate with "Sure, let's go"
-      Get.toNamed('/intro-quiz', arguments: {'text': "Sure, let's go"});
-      setState(() {
-        _showSureLetsGo = false; // Switch text on next render
-      });
-    } else {
-      // Navigate with "Next >>>>"
-      Get.toNamed('/intro-quiz', arguments: {'text': "Next >>>>"});
-    }
   }
 
   @override
@@ -94,42 +81,24 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                         opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 300),
                         child: const Text(
-                          "We’ve designed a few quick questions to better understand your journey.\n\n"
-                          "Your insights will help us improve fly and create a more supportive space for everyone.",
+                          "What kind of support would you prefer when you're extremely upset?",
                           style: TextStyle(
                             fontFamily: 'Lexend',
-                            fontSize: 40,
-                            fontWeight: FontWeight.w500,
-                            height: 50 / 40,
-                            color: Color(0xFF8545E1),
+                            fontSize: 27,
+                            fontWeight: FontWeight.normal,
+                            // color: Color(0xFF8545E1),
                           ),
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      const SizedBox(height: 40),
-
+                      const SizedBox(height: 30),
+                      VerticalOptionsSelector(),
+                      const SizedBox(height: 20),
                       GradientButton(
-                        text: _showSureLetsGo ? "Sure, let's go!" : "Next >>>>",
+                        text: "Next >>>>",
                         onPressed: () {
-                          Get.toNamed(AppRoutes.UserQuestion1);
+                          Get.toNamed(AppRoutes.UserQuestion2);
                         },
-                      ),
-                      const SizedBox(height: 10),
-                      Center(
-                        child: GestureDetector(
-                          onTap: () {
-                            Get.toNamed('/get-interest'); 
-                          },
-                          child: const Text(
-                            'Skip',
-                            style: TextStyle(
-                              color: Color(0xFF8545E1), // purple
-                              fontSize: 18,
-                              fontWeight: FontWeight.normal,
-                              fontFamily: 'Lexend',
-                            ),
-                          ),
-                        ),
                       ),
                     ],
                   ),

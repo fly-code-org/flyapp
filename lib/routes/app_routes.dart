@@ -13,6 +13,10 @@ abstract class AppRoutes {
   // Q&A Flow
   static const IntroScreen = '/intro-quiz';
   static const UserStartQuiz = '/user-quiz';
+  static const UserQuestion1 = '/question-one';
+  static const UserQuestion2 = '/question-two';
+  static const UserQuestion3 = '/question-three';
+  static const UserQuestion4 = '/question-four';
   static const MhpStartQuiz = '/user-quiz';
   static const GetInterest = '/get-interest';
 }
