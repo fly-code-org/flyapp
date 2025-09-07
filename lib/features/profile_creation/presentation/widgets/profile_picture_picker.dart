@@ -5,8 +5,13 @@ import 'package:image_picker/image_picker.dart';
 
 class ProfileImagePicker extends StatefulWidget {
   final void Function(File) onImagePicked;
+  final String role; // 👈 added role
 
-  const ProfileImagePicker({super.key, required this.onImagePicked});
+  const ProfileImagePicker({
+    super.key,
+    required this.onImagePicked,
+    required this.role,
+  });
 
   @override
   State<ProfileImagePicker> createState() => _ProfileImagePickerState();
@@ -44,18 +49,31 @@ class _ProfileImagePickerState extends State<ProfileImagePicker> {
                   height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    image: DecorationImage(image: FileImage(_selectedImage!))
+                    image: DecorationImage(
+                      image: FileImage(_selectedImage!),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 )
-              : Center(
-                  child: SvgPicture.network(
-                    'https://cdn.flyapp.in/assets/image_picker.svg',
-                    width: 120,
-                    height: 120,
-                    placeholderBuilder: (context) =>
-                        const CircularProgressIndicator(),
-                  ),
-                ),
+              : (widget.role == "mhp"
+                    ? Center(
+                        child: SvgPicture.network(
+                          'https://cdn.flyapp.in/assets/mhp_profile.svg',
+                          width: 120,
+                          height: 120,
+                          placeholderBuilder: (context) =>
+                              const CircularProgressIndicator(),
+                        ),
+                      )
+                    : Center(
+                        child: SvgPicture.network(
+                          'https://cdn.flyapp.in/assets/image_picker.svg',
+                          width: 120,
+                          height: 120,
+                          placeholderBuilder: (context) =>
+                              const CircularProgressIndicator(),
+                        ),
+                      )),
         ),
       ),
     );

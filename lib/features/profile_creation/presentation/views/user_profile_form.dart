@@ -36,10 +36,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg_fly.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
           ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
@@ -95,6 +92,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
                       /// Profile Image Picker
                       ProfileImagePicker(
+                        role: role, // 👈 send role down
                         onImagePicked: (file) {
                           controller.selectedImage.value = file;
                         },
@@ -133,8 +131,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
                       /// Username Input Field
                       CustomInputField(
-                        onChanged: (value) =>
-                            controller.username.value = value,
+                        onChanged: (value) => controller.username.value = value,
                       ),
                       const SizedBox(height: 10),
                       const Text(
@@ -148,17 +145,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                       ),
                       const Text(
-                      "Username unavailable. Try another fictional name as fly is an anonymous platform!",
-                      style: TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        height: 28.75 / 23,
-                        color: Colors.black,
+                        "Username unavailable. Try another fictional name as fly is an anonymous platform!",
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          height: 28.75 / 23,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
+                      const SizedBox(height: 10),
+                      const Text(
                         "First Name",
                         textAlign: TextAlign.left,
                         style: TextStyle(
@@ -173,8 +170,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       const SizedBox(height: 10),
                       CustomInputField(
                         hintText: "Enter first name",
-                        onChanged: (value) =>
-                            controller.username.value = value,
+                        onChanged: (value) => controller.username.value = value,
                       ),
                       const SizedBox(height: 10),
                       const Text(
@@ -191,8 +187,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       const SizedBox(height: 10),
                       CustomInputField(
                         hintText: "Enter second name",
-                        onChanged: (value) =>
-                            controller.username.value = value,
+                        onChanged: (value) => controller.username.value = value,
                       ),
                       const SizedBox(height: 10),
                       const Text(
@@ -227,8 +222,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       const SizedBox(height: 10),
                       CustomInputField(
                         hintText: "Type your mood",
-                        onChanged: (value) =>
-                            controller.username.value = value,
+                        onChanged: (value) => controller.username.value = value,
                       ),
                       const SizedBox(height: 10),
                       const Text(
@@ -253,12 +247,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       GradientButton(
                         text: "Verify and Continue",
                         onPressed: () {
-                          Get.toNamed('/intro-quiz', arguments: {
-                            'role': role,
-                          });
+                          Get.toNamed('/intro-quiz', arguments: {'role': role});
                         },
                       ),
-
                     ],
                   ),
                 ),

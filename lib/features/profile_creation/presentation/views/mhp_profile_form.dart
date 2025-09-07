@@ -1,5 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
+import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
+import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
+import 'package:fly/features/profile_creation/presentation/widgets/bio_input_field.dart';
+import 'package:fly/features/profile_creation/presentation/widgets/dob_input_field.dart';
+import 'package:fly/features/profile_creation/presentation/widgets/profile_picture_picker.dart';
+import 'package:fly/features/profile_creation/presentation/widgets/user_name_input_field.dart';
 import 'package:get/get.dart';
 
 class MhpProfileScreen extends StatefulWidget {
@@ -11,15 +18,15 @@ class MhpProfileScreen extends StatefulWidget {
 
 class _MhpProfileScreenState extends State<MhpProfileScreen> {
   double _dragPosition = 0.8;
-
   late final String role;
+  final UserProfileController controller = Get.put(UserProfileController());
 
   @override
   void initState() {
     super.initState();
     final args = Get.arguments;
     role = (args['role'] ?? 'user').toLowerCase();
-    print("PhoneVerification role: $role");
+    print("MhpProfileScreen role: $role");
   }
 
   @override
@@ -29,10 +36,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg_fly.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
           ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
@@ -72,9 +76,46 @@ class _MhpProfileScreenState extends State<MhpProfileScreen> {
                   padding: const EdgeInsets.all(16),
                   child: ListView(
                     controller: scrollController,
-                    children: const [
+                    children: [
                       const Text(
-                        "MHP's Screen",
+                        "Create your account",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 27,
+                          fontWeight: FontWeight.w400,
+                          height: 33.75 / 27,
+                          letterSpacing: 0.25,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      /// Profile Image Picker
+                      ProfileImagePicker(
+                        role: "mhp", // 👈 send role down
+                        onImagePicked: (file) {
+                          controller.selectedImage.value = file;
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      /// Image Selected Text
+                      Obx(() {
+                        final image = controller.selectedImage.value;
+                        return image != null
+                            ? Center(
+                                child: Text(
+                                  "Image selected: ${image.path.split('/').last}",
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              )
+                            : const SizedBox();
+                      }),
+
+                      const SizedBox(height: 30),
+                      const Text(
+                        "First Name",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           fontFamily: 'Lexend',
@@ -84,8 +125,38 @@ class _MhpProfileScreenState extends State<MhpProfileScreen> {
                           letterSpacing: 0.25,
                         ),
                       ),
-                      const SizedBox(height: 30),
-                      OrContinueWith(), // Placeholder for test content
+
+                      const SizedBox(height: 10),
+                      CustomInputField(
+                        hintText: "Enter first name",
+                        onChanged: (value) => controller.username.value = value,
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Add a quick bio",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 23,
+                          fontWeight: FontWeight.w400,
+                          height: 33.75 / 27,
+                          letterSpacing: 0.25,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      BioInputField(
+                        hintText: "Tell us something about yourself...",
+                        onChanged: (value) {
+                          print("Bio: $value");
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      GradientButton(
+                        text: "Verify and Continue",
+                        onPressed: () {
+                          Get.toNamed('/intro-quiz', arguments: {'role': role});
+                        },
+                      ),
                     ],
                   ),
                 ),
