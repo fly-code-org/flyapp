@@ -1,23 +1,26 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
+import 'package:fly/features/profile_creation/presentation/widgets/add_media.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/input_field.dart';
+import 'package:fly/features/profile_creation/presentation/widgets/list_input.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/bio_input_field.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/dob_input_field.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/profile_picture_picker.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/user_name_input_field.dart';
+import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
-class UserProfileScreen extends StatefulWidget {
-  const UserProfileScreen({super.key});
+class MoreInfoScreen extends StatefulWidget {
+  const MoreInfoScreen({super.key});
 
   @override
-  State<UserProfileScreen> createState() => _UserProfileScreenState();
+  State<MoreInfoScreen> createState() => _MoreInfoScreenState();
 }
 
-class _UserProfileScreenState extends State<UserProfileScreen> {
+class _MoreInfoScreenState extends State<MoreInfoScreen> {
   double _dragPosition = 0.8;
   late final String role;
   final UserProfileController controller = Get.put(UserProfileController());
@@ -27,7 +30,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     super.initState();
     final args = Get.arguments;
     role = (args['role'] ?? 'user').toLowerCase();
-    print("UserProfileScreen role: $role");
+    print("MoreInfoScreen role: $role");
   }
 
   @override
@@ -79,7 +82,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     controller: scrollController,
                     children: [
                       const Text(
-                        "Create your profile",
+                        "Tell us about yourself",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'Lexend',
@@ -90,34 +93,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
-
-                      /// Profile Image Picker
-                      ProfileImagePicker(
-                        role: role, // 👈 send role down
-                        onImagePicked: (file) {
-                          controller.selectedImage.value = file;
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      /// Image Selected Text
-                      Obx(() {
-                        final image = controller.selectedImage.value;
-                        return image != null
-                            ? Center(
-                                child: Text(
-                                  "Image selected: ${image.path.split('/').last}",
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                              )
-                            : const SizedBox();
-                      }),
-
-                      const SizedBox(height: 30),
-
                       const Text(
-                        "Create your alias username",
+                        "Where have you studied?",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           fontFamily: 'Lexend',
@@ -127,94 +104,31 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           letterSpacing: 0.25,
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Add the name of your college/univerity",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          height: 33.75 / 27,
+                          letterSpacing: 0.25,
+                        ),
+                      ),
 
                       const SizedBox(height: 10),
-
-                      /// Username Input Field
-                      CustomInputField(
+                      GeneralCustomInputField(
+                        hintText: "Enter your college name",
                         onChanged: (value) => controller.username.value = value,
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        "😮 Someone stole your idea.",
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          height: 28.75 / 23,
-                          color: Colors.red,
-                        ),
-                      ),
-                      const Text(
-                        "Username unavailable. Try another fictional name as fly is an anonymous platform!",
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          height: 28.75 / 23,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        "First Name",
+                        "What did you pursue",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           fontFamily: 'Lexend',
-                          fontSize: 23,
-                          fontWeight: FontWeight.w400,
-                          height: 33.75 / 27,
-                          letterSpacing: 0.25,
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-                      CustomInputField(
-                        hintText: "Enter first name",
-                        onChanged: (value) => controller.username.value = value,
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        "Second Name",
-                        textAlign: TextAlign.left,
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 23,
-                          fontWeight: FontWeight.w400,
-                          height: 33.75 / 27,
-                          letterSpacing: 0.25,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      CustomInputField(
-                        hintText: "Enter second name",
-                        onChanged: (value) => controller.username.value = value,
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        "Date of Birth",
-                        textAlign: TextAlign.left,
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 23,
-                          fontWeight: FontWeight.w400,
-                          height: 33.75 / 27,
-                          letterSpacing: 0.25,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      DOBInputField(
-                        onDateSelected: (dob) {
-                          print("Selected DOB: $dob");
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        "Mood Check-In",
-                        textAlign: TextAlign.left,
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 23,
+                          fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
                           letterSpacing: 0.25,
@@ -222,33 +136,91 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       ),
                       const SizedBox(height: 10),
                       GeneralCustomInputField(
-                        hintText: "Type your mood",
+                        hintText: "Enter your college name",
                         onChanged: (value) => controller.username.value = value,
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        "Add a quick bio",
+                        "Years of experience",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           fontFamily: 'Lexend',
-                          fontSize: 23,
+                          fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
                           letterSpacing: 0.25,
                         ),
                       ),
                       const SizedBox(height: 10),
-                      BioInputField(
-                        hintText: "Tell us something about yourself...",
-                        onChanged: (value) {
-                          print("Bio: $value");
-                        },
+                      GeneralCustomInputField(
+                        hintText: "1-3 yrs",
+                        onChanged: (value) => controller.username.value = value,
+                      ),
+
+                      const SizedBox(height: 10),
+                      const ListInputWidget(
+                        title: "Languages you know",
+                        hintText: 'Type a language and press space',
                       ),
                       const SizedBox(height: 10),
+                      const Text(
+                        "State where you practice",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          height: 33.75 / 27,
+                          letterSpacing: 0.25,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      GeneralCustomInputField(
+                        hintText: "Enter your state",
+                        onChanged: (value) => controller.username.value = value,
+                      ),
+                      const SizedBox(height: 10),
+                      const ListInputWidget(
+                        title: "Add Specializations",
+                        hintText: 'Enter your specializations',
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Upload your degree certificate",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          height: 33.75 / 27,
+                          letterSpacing: 0.25,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Add your certificate in PDF format",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          height: 33.75 / 27,
+                          letterSpacing: 0.25,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      AddMediaWidget(
+                        onTap: () {
+                          // Open file picker here
+                          print("Pick a PDF or media file");
+                        },
+                        text: "Add Degree Certificate",
+                      ),
+                      const SizedBox(height: 20),
                       GradientButton(
                         text: "Verify and Continue",
                         onPressed: () {
-                          Get.toNamed('/intro-quiz', arguments: {'role': role});
+                          Get.toNamed(AppRoutes.AddSessionForm);
                         },
                       ),
                     ],

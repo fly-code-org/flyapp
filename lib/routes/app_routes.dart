@@ -9,7 +9,8 @@ abstract class AppRoutes {
 
   static const createUserProfile = '/create-user-profile';
   static const createMhpProfile = '/create-mhp-profile';
-
+  static const AddMoreInfo = '/add-more-info';
+  static const AddSessionForm = '/add-session-form';
   // Q&A Flow
   static const IntroScreen = '/intro-quiz';
   static const UserStartQuiz = '/user-quiz';

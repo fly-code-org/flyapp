@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
+import 'package:fly/features/profile_creation/presentation/widgets/input_field.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/list_input.dart';
+import 'package:fly/features/profile_creation/presentation/widgets/select_pill_list.dart';
+import 'package:fly/features/profile_creation/presentation/widgets/time_field.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/bio_input_field.dart';
@@ -11,14 +14,14 @@ import 'package:fly/features/profile_creation/presentation/widgets/user_name_inp
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
-class MhpProfileScreen extends StatefulWidget {
-  const MhpProfileScreen({super.key});
+class AddSessionScreen extends StatefulWidget {
+  const AddSessionScreen({super.key});
 
   @override
-  State<MhpProfileScreen> createState() => _MhpProfileScreenState();
+  State<AddSessionScreen> createState() => _AddSessionScreenState();
 }
 
-class _MhpProfileScreenState extends State<MhpProfileScreen> {
+class _AddSessionScreenState extends State<AddSessionScreen> {
   double _dragPosition = 0.8;
   late final String role;
   final UserProfileController controller = Get.put(UserProfileController());
@@ -28,7 +31,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen> {
     super.initState();
     final args = Get.arguments;
     role = (args['role'] ?? 'user').toLowerCase();
-    print("MhpProfileScreen role: $role");
+    print("AddSessionScreen role: $role");
   }
 
   @override
@@ -80,7 +83,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen> {
                     controller: scrollController,
                     children: [
                       const Text(
-                        "Create your account",
+                        "Tell us about yourself",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'Lexend',
@@ -91,75 +94,87 @@ class _MhpProfileScreenState extends State<MhpProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
-
-                      /// Profile Image Picker
-                      ProfileImagePicker(
-                        role: "mhp", // 👈 send role down
-                        onImagePicked: (file) {
-                          controller.selectedImage.value = file;
+                      const ListInputWidget(
+                        title: "What are your types of therapies you provide",
+                        hintText: 'Type a language and press space',
+                      ),
+                      const SizedBox(height: 10),
+                      const ListInputWidget(
+                        title: "Select the mode of session",
+                        hintText: 'Enter your specializations',
+                      ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Select the mode of session",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          height: 33.75 / 27,
+                          letterSpacing: 0.25,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SelectablePillList(
+                        options: ["Online", "In-Person", "Hybrid"],
+                        onSelectionChanged: (selected) {
+                          print("Selected options: $selected");
                         },
                       ),
-
+                      const SizedBox(height: 10),
+                      const Text(
+                        "Select your available days",
+                        textAlign: TextAlign.left,
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          height: 33.75 / 27,
+                          letterSpacing: 0.25,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SelectablePillList(
+                        options: [
+                          "Mon",
+                          "Tue",
+                          "Wed",
+                          "Thu",
+                          "Fri",
+                          "Sat",
+                          "Sun",
+                        ],
+                        onSelectionChanged: (selected) {
+                          print("Selected options: $selected");
+                        },
+                      ),
+                      // 👇 NEW SECTION: Time Availability
                       const SizedBox(height: 20),
-
-                      /// Image Selected Text
-                      Obx(() {
-                        final image = controller.selectedImage.value;
-                        return image != null
-                            ? Center(
-                                child: Text(
-                                  "Image selected: ${image.path.split('/').last}",
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                              )
-                            : const SizedBox();
-                      }),
-
-                      const SizedBox(height: 30),
                       const Text(
-                        "First Name",
+                        "Set your availability time",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           fontFamily: 'Lexend',
-                          fontSize: 23,
-                          fontWeight: FontWeight.w400,
-                          height: 33.75 / 27,
-                          letterSpacing: 0.25,
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-                      CustomInputField(
-                        hintText: "Enter first name",
-                        onChanged: (value) => controller.username.value = value,
-                      ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        "Add a quick bio",
-                        textAlign: TextAlign.left,
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 23,
+                          fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
                           letterSpacing: 0.25,
                         ),
                       ),
                       const SizedBox(height: 10),
-                      BioInputField(
-                        hintText: "Tell us something about yourself...",
-                        onChanged: (value) {
-                          print("Bio: $value");
+                      TimeAvailabilityField(
+                        onTimeSelected: (from, to) {
+                          print(
+                            "From: ${from.format(context)}, To: ${to.format(context)}",
+                          );
                         },
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 20),
                       GradientButton(
                         text: "Verify and Continue",
                         onPressed: () {
-                          Get.toNamed(
-                            AppRoutes.AddMoreInfo,
-                            arguments: {'role': role},
-                          );
+                          Get.toNamed(AppRoutes.AddSessionForm);
                         },
                       ),
                     ],
