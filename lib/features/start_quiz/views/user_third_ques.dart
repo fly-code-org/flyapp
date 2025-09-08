@@ -11,7 +11,8 @@ class UserQuestionThirdScreen extends StatefulWidget {
   const UserQuestionThirdScreen({super.key});
 
   @override
-  State<UserQuestionThirdScreen> createState() => _UserQuestionThirdScreenState();
+  State<UserQuestionThirdScreen> createState() =>
+      _UserQuestionThirdScreenState();
 }
 
 class _UserQuestionThirdScreenState extends State<UserQuestionThirdScreen> {
@@ -32,10 +33,7 @@ class _UserQuestionThirdScreenState extends State<UserQuestionThirdScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg_fly.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
           ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
@@ -91,7 +89,13 @@ class _UserQuestionThirdScreenState extends State<UserQuestionThirdScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
-                      NumberPickerWithBall(),
+                      // Example 1: Numbers
+                      PickerWithBall(
+                        options: ["1", "2", "3", "4", "5"],
+                        labels: ["1", "2", "3", "4", "5"], // top labels
+                        onChanged: (value, index) =>
+                            print("Picked $value ($index)"),
+                      ),
                       const SizedBox(height: 50),
                       GradientButton(
                         text: "Next >>>>",

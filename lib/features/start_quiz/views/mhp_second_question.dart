@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
-import 'package:fly/features/start_quiz/widgets/card_options.dart';
 import 'package:fly/features/start_quiz/widgets/gradient_button.dart';
+import 'package:fly/features/start_quiz/widgets/number_picker.dart';
 import 'package:fly/features/start_quiz/widgets/vertical_progress_bar.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
-class UserQuestionSecondScreen extends StatefulWidget {
-  const UserQuestionSecondScreen({super.key});
+class MhpQuestionSecondScreen extends StatefulWidget {
+  const MhpQuestionSecondScreen({super.key});
 
   @override
-  State<UserQuestionSecondScreen> createState() =>
-      _UserQuestionSecondScreenState();
+  State<MhpQuestionSecondScreen> createState() =>
+      _MhpQuestionSecondScreenState();
 }
 
-class _UserQuestionSecondScreenState extends State<UserQuestionSecondScreen> {
+class _MhpQuestionSecondScreenState extends State<MhpQuestionSecondScreen> {
   double _dragPosition = 0.8;
   late final String role;
 
@@ -80,7 +80,7 @@ class _UserQuestionSecondScreenState extends State<UserQuestionSecondScreen> {
                         opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 300),
                         child: const Text(
-                          "What kind of support would you prefer when you're extremely upset?",
+                          "How important is a safe, anonymous space for mental wellness?",
                           style: TextStyle(
                             fontFamily: 'Lexend',
                             fontSize: 27,
@@ -91,23 +91,22 @@ class _UserQuestionSecondScreenState extends State<UserQuestionSecondScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
-                      OptionsGrid(
-                        emojis: ['🏫', '🎓', '💼', '🤐'],
+                      PickerWithBall(
+                        options: ["🩷", "😐", "😊", "😀", "🤩"],
                         labels: [
-                          'School',
-                          'College',
-                          'Working\nProfessional',
-                          'Prefer not to say',
+                          "Personal experience",
+                          "To help people",
+                          "Interest in psychology",
+                          "Personal influence",
+                          "To break stigma",
                         ],
-                        onOptionSelected: (index) {
-                          print("Selected option: $index");
-                        },
+                        displayFontSize: 60,
                       ),
                       const SizedBox(height: 20),
                       GradientButton(
                         text: "Next >>>>",
                         onPressed: () {
-                          Get.toNamed(AppRoutes.UserQuestion3);
+                          Get.toNamed(AppRoutes.MHPQuestion3);
                         },
                       ),
                     ],

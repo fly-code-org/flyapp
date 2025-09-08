@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 
 class OptionsGrid extends StatefulWidget {
+  final List<String> emojis; // ✅ Dynamic emojis
+  final List<String> labels; // ✅ Dynamic labels
   final void Function(int) onOptionSelected;
 
-  const OptionsGrid({Key? key, required this.onOptionSelected}) : super(key: key);
+  const OptionsGrid({
+    Key? key,
+    required this.emojis,
+    required this.labels,
+    required this.onOptionSelected,
+  }) : super(key: key);
 
   @override
   State<OptionsGrid> createState() => _OptionsGridState();
 }
 
 class _OptionsGridState extends State<OptionsGrid> {
-  final List<String> emojis = ['🏫', '🎓', '💼', '🤐'];
-  final List<String> labels = ['School', 'College', '\t\t\tWorking\nProfessional', 'Prefer not to say'];
-
   int? selectedIndex;
 
   void _onTap(int index) {
@@ -28,9 +32,9 @@ class _OptionsGridState extends State<OptionsGrid> {
       padding: const EdgeInsets.all(16.0),
       child: GridView.builder(
         shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: emojis.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: widget.emojis.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
@@ -47,7 +51,9 @@ class _OptionsGridState extends State<OptionsGrid> {
                 color: isSelected ? Colors.blue.shade50 : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected ? const Color.fromARGB(255, 152, 71, 195) : Colors.transparent,
+                  color: isSelected
+                      ? const Color.fromARGB(255, 152, 71, 195)
+                      : Colors.transparent,
                   width: 3,
                 ),
                 boxShadow: [
@@ -55,22 +61,23 @@ class _OptionsGridState extends State<OptionsGrid> {
                     color: Colors.black.withOpacity(0.1),
                     spreadRadius: 1,
                     blurRadius: 6,
-                    offset: Offset(0, 3),
-                  )
+                    offset: const Offset(0, 3),
+                  ),
                 ],
               ),
-              padding: EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    emojis[index],
-                    style: TextStyle(fontSize: 40),
+                    widget.emojis[index],
+                    style: const TextStyle(fontSize: 40),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    labels[index],
-                    style: TextStyle(
+                    widget.labels[index],
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
                       fontFamily: 'lexend',
                       fontSize: 16,
                       fontWeight: FontWeight.w500,

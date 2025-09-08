@@ -46,10 +46,7 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg_fly.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
           ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
@@ -111,14 +108,20 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                       GradientButton(
                         text: _showSureLetsGo ? "Sure, let's go!" : "Next >>>>",
                         onPressed: () {
-                          Get.toNamed(AppRoutes.UserQuestion1);
+                          if (_showSureLetsGo) {
+                            if (role == 'mhp') {
+                              Get.toNamed(AppRoutes.MHPQuestion1);
+                            }
+                          } else {
+                            Get.toNamed(AppRoutes.UserQuestion1);
+                          }
                         },
                       ),
                       const SizedBox(height: 10),
                       Center(
                         child: GestureDetector(
                           onTap: () {
-                            Get.toNamed('/get-interest'); 
+                            Get.toNamed('/get-interest');
                           },
                           child: const Text(
                             'Skip',

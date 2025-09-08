@@ -33,10 +33,7 @@ class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg_fly.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
           ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
@@ -92,7 +89,17 @@ class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
-                      VerticalOptionsSelector(),
+                      VerticalOptionsSelector(
+                        leftLabels: [
+                          "1:1 Sessions",
+                          "Interactive Workshops",
+                          "Group Discussions",
+                          "Content Sharing",
+                          "Self-Help Resources",
+                        ],
+                        rightLabels: ["🤩", "😀", "😊", "😐", "😟"],
+                      ),
+
                       const SizedBox(height: 20),
                       GradientButton(
                         text: "Next >>>>",

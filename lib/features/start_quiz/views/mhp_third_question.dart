@@ -6,15 +6,14 @@ import 'package:fly/features/start_quiz/widgets/vertical_progress_bar.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
-class UserQuestionSecondScreen extends StatefulWidget {
-  const UserQuestionSecondScreen({super.key});
+class MhpQuestionThirdScreen extends StatefulWidget {
+  const MhpQuestionThirdScreen({super.key});
 
   @override
-  State<UserQuestionSecondScreen> createState() =>
-      _UserQuestionSecondScreenState();
+  State<MhpQuestionThirdScreen> createState() => _MhpQuestionThirdScreenState();
 }
 
-class _UserQuestionSecondScreenState extends State<UserQuestionSecondScreen> {
+class _MhpQuestionThirdScreenState extends State<MhpQuestionThirdScreen> {
   double _dragPosition = 0.8;
   late final String role;
 
@@ -80,7 +79,7 @@ class _UserQuestionSecondScreenState extends State<UserQuestionSecondScreen> {
                         opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
                         duration: const Duration(milliseconds: 300),
                         child: const Text(
-                          "What kind of support would you prefer when you're extremely upset?",
+                          "How important is a safe, anonymous space for mental wellness?",
                           style: TextStyle(
                             fontFamily: 'Lexend',
                             fontSize: 27,
@@ -92,12 +91,21 @@ class _UserQuestionSecondScreenState extends State<UserQuestionSecondScreen> {
                       ),
                       const SizedBox(height: 30),
                       OptionsGrid(
-                        emojis: ['🏫', '🎓', '💼', '🤐'],
+                        emojis: [
+                          '🧘‍♂️',
+                          '🌧️',
+                          '💔',
+                          '🚫',
+                          '🌱',
+                          '👨‍👩‍👧‍👦',
+                        ],
                         labels: [
-                          'School',
-                          'College',
-                          'Working\nProfessional',
-                          'Prefer not to say',
+                          'Anxiety & Stress Management',
+                          'Depression & Mood Disorders',
+                          'Trauma & Grief counseling',
+                          'Addiction & Substance Abuse',
+                          'Self-Esteem & Personal Growth',
+                          'Family & Relationship Counseling',
                         ],
                         onOptionSelected: (index) {
                           print("Selected option: $index");
@@ -107,7 +115,7 @@ class _UserQuestionSecondScreenState extends State<UserQuestionSecondScreen> {
                       GradientButton(
                         text: "Next >>>>",
                         onPressed: () {
-                          Get.toNamed(AppRoutes.UserQuestion3);
+                          Get.toNamed(AppRoutes.MHPQuestion4);
                         },
                       ),
                     ],

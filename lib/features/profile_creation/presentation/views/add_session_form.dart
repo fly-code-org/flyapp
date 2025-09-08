@@ -30,7 +30,7 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
   void initState() {
     super.initState();
     final args = Get.arguments;
-    role = (args['role'] ?? 'user').toLowerCase();
+    role = 'mhp';
     print("AddSessionScreen role: $role");
   }
 
@@ -174,7 +174,7 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                       GradientButton(
                         text: "Verify and Continue",
                         onPressed: () {
-                          Get.toNamed(AppRoutes.AddSessionForm);
+                          Get.toNamed('/intro-quiz', arguments: {'role': role});
                         },
                       ),
                     ],

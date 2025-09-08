@@ -6,6 +6,10 @@ import 'package:fly/features/profile_creation/presentation/views/mhp_profile_for
 import 'package:fly/features/profile_creation/presentation/views/user_profile_form.dart';
 import 'package:fly/features/start_quiz/views/get_interest.dart';
 import 'package:fly/features/start_quiz/views/intro.dart';
+import 'package:fly/features/start_quiz/views/mhp_first_question.dart';
+import 'package:fly/features/start_quiz/views/mhp_fourth_question.dart';
+import 'package:fly/features/start_quiz/views/mhp_second_question.dart';
+import 'package:fly/features/start_quiz/views/mhp_third_question.dart';
 import 'package:fly/features/start_quiz/views/user_first_question.dart';
 import 'package:fly/features/start_quiz/views/user_fourth_ques.dart';
 import 'package:fly/features/start_quiz/views/user_second_ques.dart';
@@ -53,16 +57,32 @@ class AppPages {
       page: () => const UserQuestionOneScreen(),
     ),
     GetPage(
+      name: AppRoutes.MHPQuestion1,
+      page: () => const MhpQuestionOneScreen(),
+    ),
+    GetPage(
       name: AppRoutes.UserQuestion2,
       page: () => const UserQuestionSecondScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.MHPQuestion2,
+      page: () => const MhpQuestionSecondScreen(),
     ),
     GetPage(
       name: AppRoutes.UserQuestion3,
       page: () => const UserQuestionThirdScreen(),
     ),
     GetPage(
+      name: AppRoutes.MHPQuestion3,
+      page: () => const MhpQuestionThirdScreen(),
+    ),
+    GetPage(
       name: AppRoutes.UserQuestion4,
       page: () => const UserQuestionFourthScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.MHPQuestion4,
+      page: () => const MhpQuestionFourthScreen(),
     ),
     // GetPage(name: AppRoutes.MhpStartQuiz, page: () => const MhpStartQuiz())
   ];

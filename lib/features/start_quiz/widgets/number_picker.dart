@@ -1,79 +1,98 @@
 import 'package:flutter/material.dart';
 
-class NumberPickerWithBall extends StatefulWidget {
-  const NumberPickerWithBall({Key? key}) : super(key: key);
+class PickerWithBall extends StatefulWidget {
+  final List<String> options; // What user taps on (emojis, numbers, etc.)
+  final List<String>? labels; // Optional mapped labels for top text
+  final int initialIndex; // Default selection
+  final double displayFontSize; // Top text size
+  final void Function(String value, int index)? onChanged; // Callback
+
+  const PickerWithBall({
+    Key? key,
+    required this.options,
+    this.labels,
+    this.initialIndex = 0,
+    this.displayFontSize = 100,
+    this.onChanged,
+  }) : super(key: key);
 
   @override
-  State<NumberPickerWithBall> createState() => _NumberPickerWithBallState();
+  State<PickerWithBall> createState() => _PickerWithBallState();
 }
 
-class _NumberPickerWithBallState extends State<NumberPickerWithBall> {
-  int selectedNumber = 1;
+class _PickerWithBallState extends State<PickerWithBall> {
+  late int selectedIndex;
 
-  final Gradient purpleGradient = LinearGradient(
+  final RadialGradient purpleRadialGradient = const RadialGradient(
     colors: [
-      Color(0xFFC36AFD), // Purple gradient start (#C36AFD)
-      Color(0xFF7A5AF8), // Purple gradient end (#7A5AF8)
+      Color(0xFFC36AFD), // Purple gradient start
+      Color(0xFF7A5AF8), // Purple gradient end
     ],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
+    center: Alignment.center,
+    radius: 0.8,
   );
 
-  final RadialGradient purpleRadialGradient = RadialGradient(
-  colors: [
-    Color(0xFFC36AFD), // Purple gradient start
-    Color(0xFF7A5AF8), // Purple gradient end
-  ],
-  center: Alignment.center,
-  radius: 0.8,
-);
+  @override
+  void initState() {
+    super.initState();
+    selectedIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
+    // If labels provided, show them on top, else fallback to options
+    final selectedValue = widget.labels != null
+        ? widget.labels![selectedIndex]
+        : widget.options[selectedIndex];
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Big text showing selected number
+        // Big text showing selected value/label
         Text(
-          selectedNumber.toString(),
+          selectedValue,
           style: TextStyle(
-            fontSize: 180,
+            fontSize: widget.displayFontSize,
             fontWeight: FontWeight.bold,
             foreground: Paint()
               ..shader = purpleRadialGradient.createShader(
-                Rect.fromLTWH(0, 0, 200, 200),
+                const Rect.fromLTWH(0, 0, 200, 200),
               ),
           ),
+          textAlign: TextAlign.center,
         ),
-        SizedBox(height: 24),
+        const SizedBox(height: 24),
 
-        // Pill container with numbers 1-5
+        // Pill container with dynamic options
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           decoration: BoxDecoration(
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(40),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: List.generate(5, (index) {
-              int number = index + 1;
-              bool isSelected = number == selectedNumber;
+            children: List.generate(widget.options.length, (index) {
+              String option = widget.options[index];
+              bool isSelected = index == selectedIndex;
 
               return GestureDetector(
                 onTap: () {
                   setState(() {
-                    selectedNumber = number;
+                    selectedIndex = index;
                   });
+                  if (widget.onChanged != null) {
+                    widget.onChanged!(option, index);
+                  }
                 },
                 child: Container(
                   width: 50,
                   height: 40,
-                  margin: EdgeInsets.symmetric(horizontal: 6),
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Circular purple ball behind the selected number
+                      // Circular purple ball behind selected item
                       if (isSelected)
                         Container(
                           width: 36,
@@ -81,7 +100,7 @@ class _NumberPickerWithBallState extends State<NumberPickerWithBall> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: purpleRadialGradient,
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
                                 color: Color(0xAA7B2FF7),
                                 blurRadius: 10,
@@ -92,9 +111,9 @@ class _NumberPickerWithBallState extends State<NumberPickerWithBall> {
                           ),
                         ),
 
-                      // Number text
+                      // Option text (emoji/number/string)
                       Text(
-                        number.toString(),
+                        option,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

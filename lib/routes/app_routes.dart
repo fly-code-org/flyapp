@@ -15,9 +15,12 @@ abstract class AppRoutes {
   static const IntroScreen = '/intro-quiz';
   static const UserStartQuiz = '/user-quiz';
   static const UserQuestion1 = '/question-one';
+  static const MHPQuestion1 = '/mhp-question-one';
   static const UserQuestion2 = '/question-two';
+  static const MHPQuestion2 = '/mhp-question-two';
   static const UserQuestion3 = '/question-three';
+  static const MHPQuestion3 = '/mhp-question-three';
   static const UserQuestion4 = '/question-four';
-  static const MhpStartQuiz = '/user-quiz';
+  static const MHPQuestion4 = '/mhp-question-four';
   static const GetInterest = '/get-interest';
 }

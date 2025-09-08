@@ -62,14 +62,15 @@ class VerticalProgressBar extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: Colors.white,
                     boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 4,
-                      )
+                      BoxShadow(color: Colors.black26, blurRadius: 4),
                     ],
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(Icons.circle, size: 12, color: Colors.purple),
+                  child: const Icon(
+                    Icons.circle,
+                    size: 12,
+                    color: Colors.purple,
+                  ),
                 ),
               ),
             ),
@@ -81,7 +82,14 @@ class VerticalProgressBar extends StatelessWidget {
 }
 
 class VerticalOptionsSelector extends StatefulWidget {
-  const VerticalOptionsSelector({super.key});
+  final List<String> leftLabels;
+  final List<String> rightLabels;
+
+  const VerticalOptionsSelector({
+    super.key,
+    required this.leftLabels,
+    required this.rightLabels,
+  });
 
   @override
   State<VerticalOptionsSelector> createState() =>
@@ -89,20 +97,11 @@ class VerticalOptionsSelector extends StatefulWidget {
 }
 
 class _VerticalOptionsSelectorState extends State<VerticalOptionsSelector> {
-  int selectedIndex = 0; // 0 = Option 1 (bottom), 4 = Option 5 (top)
-
-  final leftLabels = [
-    "1:1 Sessions",
-    "Interactive Workshops",
-    "Group Discussions",
-    "Content Sharing",
-    "Self-Help Resources"
-  ];
-  final rightLabels = ["🤩", "😀", "😊", "😐", "😟"];
+  int selectedIndex = 0; // 0 = bottom, length-1 = top
 
   void _handleOptionTap(int visualIndex) {
     setState(() {
-      selectedIndex = (leftLabels.length - 1) - visualIndex;
+      selectedIndex = (widget.leftLabels.length - 1) - visualIndex;
     });
   }
 
@@ -113,20 +112,20 @@ class _VerticalOptionsSelectorState extends State<VerticalOptionsSelector> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Left labels with padding from the bar
+          // Left labels
           Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(leftLabels.length, (i) {
+            children: List.generate(widget.leftLabels.length, (i) {
               return GestureDetector(
                 onTap: () => _handleOptionTap(i),
                 child: SizedBox(
-                  height: 320 / leftLabels.length,
+                  height: 320 / widget.leftLabels.length,
                   child: Padding(
                     padding: const EdgeInsets.only(right: 16),
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        leftLabels[i],
+                        widget.leftLabels[i],
                         style: const TextStyle(fontSize: 14),
                       ),
                     ),
@@ -137,12 +136,12 @@ class _VerticalOptionsSelectorState extends State<VerticalOptionsSelector> {
           ),
           const SizedBox(width: 12),
 
-          // Progress bar in the center
+          // Progress bar
           SizedBox(
             height: 320,
             child: VerticalProgressBar(
               selectedIndex: selectedIndex,
-              totalOptions: leftLabels.length,
+              totalOptions: widget.leftLabels.length,
               onOptionSelected: (index) {
                 setState(() => selectedIndex = index);
               },
@@ -150,22 +149,21 @@ class _VerticalOptionsSelectorState extends State<VerticalOptionsSelector> {
           ),
           const SizedBox(width: 12),
 
-          // Right labels with padding from the bar
+          // Right labels
           Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(rightLabels.length, (i) {
+            children: List.generate(widget.rightLabels.length, (i) {
               return GestureDetector(
                 onTap: () => _handleOptionTap(i),
                 child: SizedBox(
-                  height: 320 / rightLabels.length,
+                  height: 320 / widget.rightLabels.length,
                   child: Padding(
                     padding: const EdgeInsets.only(left: 16),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        rightLabels[i],
+                        widget.rightLabels[i],
                         style: const TextStyle(fontSize: 35),
-                        
                       ),
                     ),
                   ),
@@ -184,16 +182,27 @@ class TestScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final leftLabels = [
+      "1:1 Sessions",
+      "Interactive Workshops",
+      "Group Discussions",
+      "Content Sharing",
+      "Self-Help Resources",
+    ];
+
+    final rightLabels = ["🤩", "😀", "😊", "😐", "😟"];
+
     return Scaffold(
       body: Center(
-        child: VerticalOptionsSelector(),
+        child: VerticalOptionsSelector(
+          leftLabels: leftLabels,
+          rightLabels: rightLabels,
+        ),
       ),
     );
   }
 }
 
 void main() {
-  runApp(const MaterialApp(
-    home: TestScreen(),
-  ));
+  runApp(const MaterialApp(home: TestScreen()));
 }

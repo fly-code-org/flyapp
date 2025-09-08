@@ -38,8 +38,8 @@ class _TimeAvailabilityFieldState extends State<TimeAvailabilityField> {
           "From time to To time",
           style: TextStyle(
             fontFamily: 'Lexend',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            fontWeight: FontWeight.w300,
           ),
         ),
         const SizedBox(width: 16),
