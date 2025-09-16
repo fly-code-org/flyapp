@@ -220,7 +220,7 @@ class _CreateSupportCommunityScreenState
                     controller: scrollController,
                     children: [
                       const Text(
-                        "Create your community, set the vibe that specaks to your mission",
+                        "Create your community, set the vibe that speaks to your mission",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'Lexend',
@@ -270,7 +270,7 @@ class _CreateSupportCommunityScreenState
 
                       const SizedBox(height: 10),
                       CustomInputField(
-                        hintText: "Enter first name",
+                        hintText: "Enter community name",
                         onChanged: (value) => controller.username.value = value,
                       ),
                       const SizedBox(height: 10),
@@ -296,31 +296,30 @@ class _CreateSupportCommunityScreenState
                       const SizedBox(height: 20),
 
                       /// 👇 Supported Community Tag Picker
-                      const Text(
-                        "Select Supported Community Tag",
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
+                      // const Text(
+                      //   "Select Supported Community Tag",
+                      //   style: TextStyle(
+                      //     fontFamily: 'Lexend',
+                      //     fontSize: 20,
+                      //     fontWeight: FontWeight.w400,
+                      //   ),
+                      // ),
                       const SizedBox(height: 10),
                       CommunityTagPicker(tags: supportedTags, isSocial: false),
 
-                      const SizedBox(height: 20),
+                      // const SizedBox(height: 20),
 
                       /// 👇 Social Community Tag Picker
-                      const Text(
-                        "Select Social Community Tag",
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      CommunityTagPicker(tags: socialTags, isSocial: true),
-
+                      // const Text(
+                      //   "Select Social Community Tag",
+                      //   style: TextStyle(
+                      //     fontFamily: 'Lexend',
+                      //     fontSize: 20,
+                      //     fontWeight: FontWeight.w400,
+                      //   ),
+                      // ),
+                      // const SizedBox(height: 10),
+                      // CommunityTagPicker(tags: socialTags, isSocial: true),
                       const SizedBox(height: 30),
                       GradientButton(
                         text: "Verify and Continue",
