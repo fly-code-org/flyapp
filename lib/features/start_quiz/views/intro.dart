@@ -121,7 +121,14 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                       Center(
                         child: GestureDetector(
                           onTap: () {
-                            Get.toNamed('/get-interest');
+                            if (_showSureLetsGo) {
+                              if (role == 'mhp') {
+                                Get.toNamed(AppRoutes.CreateSupportCommunity);
+                              }
+                            } else {
+                              Get.toNamed(AppRoutes.GetInterest);
+                              ;
+                            }
                           },
                           child: const Text(
                             'Skip',

@@ -1,3 +1,4 @@
+import 'package:fly/features/create_community/presentation/views/create_support_community.dart';
 import 'package:fly/features/create_profile/presentation/views/mhp_profile.dart';
 import 'package:fly/features/create_profile/presentation/views/user_profile.dart';
 import 'package:fly/features/profile_creation/presentation/views/add_session_form.dart';
@@ -83,6 +84,11 @@ class AppPages {
     GetPage(
       name: AppRoutes.MHPQuestion4,
       page: () => const MhpQuestionFourthScreen(),
+    ),
+
+    GetPage(
+      name: AppRoutes.CreateSupportCommunity,
+      page: () => const CreateSupportCommunityScreen(),
     ),
     // GetPage(name: AppRoutes.MhpStartQuiz, page: () => const MhpStartQuiz())
   ];

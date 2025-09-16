@@ -23,4 +23,8 @@ abstract class AppRoutes {
   static const UserQuestion4 = '/question-four';
   static const MHPQuestion4 = '/mhp-question-four';
   static const GetInterest = '/get-interest';
+
+  // Community Flow
+  static const CreateSocialCommunity = '/create-social-community';
+  static const CreateSupportCommunity = '/create-support-community';
 }

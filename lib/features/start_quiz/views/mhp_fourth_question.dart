@@ -96,7 +96,7 @@ class _MhpQuestionFourthScreenState extends State<MhpQuestionFourthScreen> {
                       GradientButton(
                         text: "Next >>>>",
                         onPressed: () {
-                          Get.toNamed(AppRoutes.GetInterest);
+                          Get.toNamed(AppRoutes.CreateSupportCommunity);
                         },
                       ),
                     ],
