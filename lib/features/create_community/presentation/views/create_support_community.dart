@@ -13,19 +13,19 @@ import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
 /// Model for a tag
-class CommunityTag {
+class SupportCommunity {
   final String name;
   final IconData icon; // Placeholder for now, replace with assets later
-  CommunityTag({required this.name, required this.icon});
+  SupportCommunity({required this.name, required this.icon});
 }
 
 /// Base widget for tag picker
-class CommunityTagPicker extends StatefulWidget {
-  final List<CommunityTag> tags;
+class SupportCommunityPicker extends StatefulWidget {
+  final List<SupportCommunity> tags;
   final bool isSocial; // true = social, false = supported
   final String placeholder;
 
-  const CommunityTagPicker({
+  const SupportCommunityPicker({
     super.key,
     required this.tags,
     required this.isSocial,
@@ -33,11 +33,11 @@ class CommunityTagPicker extends StatefulWidget {
   });
 
   @override
-  State<CommunityTagPicker> createState() => _CommunityTagPickerState();
+  State<SupportCommunityPicker> createState() => _SupportCommunityPickerState();
 }
 
-class _CommunityTagPickerState extends State<CommunityTagPicker> {
-  CommunityTag? _selectedTag;
+class _SupportCommunityPickerState extends State<SupportCommunityPicker> {
+  SupportCommunity? _selectedTag;
 
   @override
   Widget build(BuildContext context) {
@@ -144,26 +144,32 @@ class _CreateSupportCommunityScreenState
     extends State<CreateSupportCommunityScreen> {
   double _dragPosition = 0.8;
   final CommunityController controller = Get.put(CommunityController());
+  final CommunityMediaController mediaController = Get.put(
+    CommunityMediaController(),
+  );
 
   // Hardcoded lists
   final supportedTags = [
-    CommunityTag(name: "Emotional Healing", icon: Icons.healing),
-    CommunityTag(name: "Anxiety & Stress", icon: Icons.sentiment_dissatisfied),
-    CommunityTag(name: "Grief & Heartbreak", icon: Icons.heart_broken),
-    CommunityTag(name: "Work & Career", icon: Icons.work),
-    CommunityTag(name: "Trauma", icon: Icons.local_hospital),
-    CommunityTag(name: "Family & Relations", icon: Icons.family_restroom),
-    CommunityTag(name: "Self-Worth & Identity", icon: Icons.person),
+    SupportCommunity(name: "Emotional Healing", icon: Icons.healing),
+    SupportCommunity(
+      name: "Anxiety & Stress",
+      icon: Icons.sentiment_dissatisfied,
+    ),
+    SupportCommunity(name: "Grief & Heartbreak", icon: Icons.heart_broken),
+    SupportCommunity(name: "Work & Career", icon: Icons.work),
+    SupportCommunity(name: "Trauma", icon: Icons.local_hospital),
+    SupportCommunity(name: "Family & Relations", icon: Icons.family_restroom),
+    SupportCommunity(name: "Self-Worth & Identity", icon: Icons.person),
   ];
 
   final socialTags = [
-    CommunityTag(name: "Motivational", icon: Icons.lightbulb),
-    CommunityTag(name: "Awwdorable", icon: Icons.pets),
-    CommunityTag(name: "Fun & Humour", icon: Icons.emoji_emotions),
-    CommunityTag(name: "Peace", icon: Icons.spa),
-    CommunityTag(name: "Words Of Wisdom", icon: Icons.menu_book),
-    CommunityTag(name: "News & Insights", icon: Icons.article),
-    CommunityTag(name: "Movies & Shows", icon: Icons.movie),
+    SupportCommunity(name: "Motivational", icon: Icons.lightbulb),
+    SupportCommunity(name: "Awwdorable", icon: Icons.pets),
+    SupportCommunity(name: "Fun & Humour", icon: Icons.emoji_emotions),
+    SupportCommunity(name: "Peace", icon: Icons.spa),
+    SupportCommunity(name: "Words Of Wisdom", icon: Icons.menu_book),
+    SupportCommunity(name: "News & Insights", icon: Icons.article),
+    SupportCommunity(name: "Movies & Shows", icon: Icons.movie),
   ];
 
   @override
@@ -305,7 +311,10 @@ class _CreateSupportCommunityScreenState
                       //   ),
                       // ),
                       const SizedBox(height: 10),
-                      CommunityTagPicker(tags: supportedTags, isSocial: false),
+                      SupportCommunityPicker(
+                        tags: supportedTags,
+                        isSocial: false,
+                      ),
 
                       // const SizedBox(height: 20),
 
@@ -319,12 +328,13 @@ class _CreateSupportCommunityScreenState
                       //   ),
                       // ),
                       // const SizedBox(height: 10),
-                      // CommunityTagPicker(tags: socialTags, isSocial: true),
+                      // SupportCommunityPicker(tags: socialTags, isSocial: true),
                       const SizedBox(height: 30),
                       GradientButton(
                         text: "Verify and Continue",
                         onPressed: () {
                           // Save selected tags if needed
+                          Get.toNamed(AppRoutes.CommunitySupportProfile);
                         },
                       ),
                     ],

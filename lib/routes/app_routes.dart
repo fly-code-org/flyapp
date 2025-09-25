@@ -27,4 +27,6 @@ abstract class AppRoutes {
   // Community Flow
   static const CreateSocialCommunity = '/create-social-community';
   static const CreateSupportCommunity = '/create-support-community';
+  static const CommunitySocialProfile = '/community-social-profile';
+  static const CommunitySupportProfile = '/community-support-profile';
 }
