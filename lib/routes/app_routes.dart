@@ -1,3 +1,5 @@
+import 'package:fly/features/create_community/presentation/views/community_guidelines.dart';
+
 abstract class AppRoutes {
   static const splash = '/splash';
   static const onboarding = '/onboarding';
@@ -29,4 +31,6 @@ abstract class AppRoutes {
   static const CreateSupportCommunity = '/create-support-community';
   static const CommunitySocialProfile = '/community-social-profile';
   static const CommunitySupportProfile = '/community-support-profile';
+  static const EditCommunity = '/edit-community';
+  static const CommunityGuidelines = '/community-guidelines';
 }

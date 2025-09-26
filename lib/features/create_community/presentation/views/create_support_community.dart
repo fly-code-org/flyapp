@@ -24,12 +24,14 @@ class SupportCommunityPicker extends StatefulWidget {
   final List<SupportCommunity> tags;
   final bool isSocial; // true = social, false = supported
   final String placeholder;
+  final SupportCommunity? defaultTag;
 
   const SupportCommunityPicker({
     super.key,
     required this.tags,
     required this.isSocial,
     this.placeholder = "Select a tag",
+    this.defaultTag,
   });
 
   @override

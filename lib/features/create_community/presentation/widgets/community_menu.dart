@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fly/routes/app_routes.dart';
+import 'package:get/instance_manager.dart';
+import 'package:get/get.dart';
 
 class CommunityMenuSheet extends StatelessWidget {
   const CommunityMenuSheet({super.key});
@@ -20,6 +23,7 @@ class CommunityMenuSheet extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               // TODO: Handle navigation
+              Get.toNamed(AppRoutes.CommunityGuidelines);
             },
           ),
           _divider(),
