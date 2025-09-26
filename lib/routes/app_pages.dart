@@ -5,6 +5,7 @@ import 'package:fly/features/create_community/presentation/views/edit_community_
 import 'package:fly/features/create_profile/presentation/views/mhp_profile.dart';
 import 'package:fly/features/create_profile/presentation/views/user_profile.dart';
 import 'package:fly/features/explore/presentation/views/explore.dart';
+import 'package:fly/features/home/presentation/views/home.dart';
 import 'package:fly/features/profile_creation/presentation/views/add_session_form.dart';
 import 'package:fly/features/profile_creation/presentation/views/mhp_more_info.dart';
 import 'package:fly/features/profile_creation/presentation/views/mhp_profile_form.dart';
@@ -108,7 +109,7 @@ class AppPages {
     ),
 
     // Bottom Nav
-    // GetPage(name: AppRoutes.Home, page: () => const HomeScreen()),
+    GetPage(name: AppRoutes.Home, page: () => HomeScreen()),
     GetPage(name: AppRoutes.Explore, page: () => ExploreScreen()),
     // GetPage(name: AppRoutes.Nira, page: () => const NiraScreen()),
     // GetPage(name: AppRoutes.Notifications, page: () => const NotificationsScreen()),

@@ -19,7 +19,7 @@ class BottomNavBar extends StatelessWidget {
         // 👇 Direct GetX navigation
         switch (index) {
           case 0:
-            Get.offAllNamed("/home");
+            Get.offAllNamed(AppRoutes.Home);
             break;
           case 1:
             Get.offAllNamed(AppRoutes.Explore);

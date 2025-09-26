@@ -20,7 +20,7 @@ class _CommunitySupportProfileState extends State<CommunitySupportProfile> {
   double _dragPosition = 0.9;
   late final String role;
 
-  int _currentIndex = 0;
+  int _currentIndex = 3;
   TabController? _tabController; // <-- to pass into posts grid
 
   @override
