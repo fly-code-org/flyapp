@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:fly/routes/app_routes.dart';
+import 'package:get/get.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
-  final Function(int) onTap;
 
-  const BottomNavBar({
-    super.key,
-    required this.currentIndex,
-    required this.onTap,
-  });
+  const BottomNavBar({super.key, required this.currentIndex});
 
   @override
   Widget build(BuildContext context) {
@@ -19,20 +15,45 @@ class BottomNavBar extends StatelessWidget {
       selectedItemColor: const Color(0xFF855DFC),
       unselectedItemColor: Colors.black,
       currentIndex: currentIndex,
-      onTap: onTap,
+      onTap: (index) {
+        // 👇 Direct GetX navigation
+        switch (index) {
+          case 0:
+            Get.offAllNamed("/home");
+            break;
+          case 1:
+            Get.offAllNamed(AppRoutes.Explore);
+            break;
+          case 2:
+            Get.offAllNamed("/nira");
+            break;
+          case 3:
+            Get.offAllNamed("/notifications");
+            break;
+          case 4:
+            Get.offAllNamed("/profile");
+            break;
+        }
+      },
       items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.explore), label: "Explore"),
+        const BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.explore),
+          label: "Explore",
+        ),
         BottomNavigationBarItem(
           icon: Image.asset("assets/images/nira_icon.png"),
           // Nira chatbot icon
           label: "Nira",
         ),
-        BottomNavigationBarItem(
+        const BottomNavigationBarItem(
           icon: Icon(Icons.notifications),
           label: "Notifications",
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.person),
+          label: "Profile",
+        ),
       ],
     );
   }

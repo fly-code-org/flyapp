@@ -4,6 +4,7 @@ import 'package:fly/features/create_community/presentation/views/create_support_
 import 'package:fly/features/create_community/presentation/views/edit_community_details.dart';
 import 'package:fly/features/create_profile/presentation/views/mhp_profile.dart';
 import 'package:fly/features/create_profile/presentation/views/user_profile.dart';
+import 'package:fly/features/explore/presentation/views/explore.dart';
 import 'package:fly/features/profile_creation/presentation/views/add_session_form.dart';
 import 'package:fly/features/profile_creation/presentation/views/mhp_more_info.dart';
 import 'package:fly/features/profile_creation/presentation/views/mhp_profile_form.dart';
@@ -105,6 +106,13 @@ class AppPages {
       name: AppRoutes.CommunityGuidelines,
       page: () => const CommunityGuidelineScreen(),
     ),
+
+    // Bottom Nav
+    // GetPage(name: AppRoutes.Home, page: () => const HomeScreen()),
+    GetPage(name: AppRoutes.Explore, page: () => ExploreScreen()),
+    // GetPage(name: AppRoutes.Nira, page: () => const NiraScreen()),
+    // GetPage(name: AppRoutes.Notifications, page: () => const NotificationsScreen()),
+    // GetPage(name: AppRoutes.Profile, page: () => const ProfileScreen()),
     // GetPage(name: AppRoutes.MhpStartQuiz, page: () => const MhpStartQuiz())
   ];
 }

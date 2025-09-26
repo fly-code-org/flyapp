@@ -33,4 +33,11 @@ abstract class AppRoutes {
   static const CommunitySupportProfile = '/community-support-profile';
   static const EditCommunity = '/edit-community';
   static const CommunityGuidelines = '/community-guidelines';
+
+  // bottom nav
+  static const Home = '/home';
+  static const Explore = '/explore';
+  static const Nira = '/nira';
+  static const Notifications = '/notifications';
+  static const Profile = '/profile';
 }

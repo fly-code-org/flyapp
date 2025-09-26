@@ -36,29 +36,7 @@ class _CommunitySupportProfileState extends State<CommunitySupportProfile> {
       backgroundColor: Colors.black,
 
       // Bottom nav bar
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-
-          switch (index) {
-            case 0:
-              print("Go to Home");
-              break;
-            case 1:
-              print("Go to Explore");
-              break;
-            case 3:
-              print("Go to Notifications");
-              break;
-            case 4:
-              print("Go to Profile");
-              break;
-          }
-        },
-      ),
+      bottomNavigationBar: BottomNavBar(currentIndex: _currentIndex),
 
       body: Stack(
         children: [
