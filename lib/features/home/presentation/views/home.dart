@@ -21,89 +21,127 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       bottomNavigationBar: BottomNavBar(currentIndex: _currentIndex),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top Row: Streak, Fly Logo, Upgrade
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Left: Streak pill with dashed border
-                  DottedBorder(
-                    options: RoundedRectDottedBorderOptions(
-                      strokeWidth: 1.5,
-                      dashPattern: const [6, 3],
-                      color: Colors.grey,
-                      radius: const Radius.circular(30),
-                      padding: EdgeInsets.zero,
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Text(
-                        "🪽$streakCount Streaks",
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                  // Top Row: Streak, Fly Logo, Upgrade
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Left: Streak pill with dashed border
+                      DottedBorder(
+                        options: RoundedRectDottedBorderOptions(
+                          strokeWidth: 1.5,
+                          dashPattern: const [6, 3],
+                          color: Colors.grey,
+                          radius: const Radius.circular(30),
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Text(
+                            "🪽$streakCount Streaks",
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+
+                      // Center: Fly logo
+                      Image.asset("assets/images/fly_logo.png", height: 32),
+
+                      // Right: Upgrade text (clickable)
+                      GestureDetector(
+                        onTap: () {
+                          // Navigator.push(context,
+                          //   MaterialPageRoute(builder: (_) => UpgradeScreen()));
+                        },
+                        child: const Text(
+                          "Upgrade",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
-                  // Center: Fly logo
-                  Image.asset("assets/images/fly_logo.png", height: 32),
+                  const SizedBox(height: 24),
 
-                  // Right: Upgrade text (clickable)
-                  GestureDetector(
-                    onTap: () {
-                      // Navigator.push(context,
-                      //   MaterialPageRoute(builder: (_) => UpgradeScreen()));
+                  // Tabs: Social & Support
+                  SocialSupportTabs(
+                    key: const ValueKey("tabs"),
+                    onTabChanged: (index) {
+                      setState(() {
+                        activeTabIndex = index;
+                      });
                     },
-                    child: const Text(
-                      "Upgrade",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.blue,
-                      ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Expanded SocialFeed
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0),
+                      child: SocialFeed(isSocialTab: activeTabIndex == 0),
                     ),
                   ),
                 ],
               ),
+            ),
 
-              const SizedBox(height: 24),
-
-              // Tabs: Social & Support
-              SocialSupportTabs(
-                key: const ValueKey("tabs"),
-                onTabChanged: (index) {
-                  setState(() {
-                    activeTabIndex = index;
-                  });
-                },
-              ),
-
-              const SizedBox(height: 16),
-
-              // Expanded SocialFeed
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 0,
-                  ), // remove horizontal padding
-                  child: SocialFeed(isSocialTab: activeTabIndex == 0),
+            // Pill-shaped Create Post button
+            Positioned(
+              bottom: 30,
+              right: 16,
+              child: Material(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(30),
+                child: InkWell(
+                  onTap: () {
+                    // TODO: Navigate to Create Post screen
+                  },
+                  borderRadius: BorderRadius.circular(30),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.edit, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          "Create Post",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
