@@ -109,7 +109,7 @@ class AppPages {
     ),
 
     // Bottom Nav
-    GetPage(name: AppRoutes.Home, page: () => HomeScreen()),
+    GetPage(name: AppRoutes.Home, page: () => const HomeScreen()),
     GetPage(name: AppRoutes.Explore, page: () => ExploreScreen()),
     // GetPage(name: AppRoutes.Nira, page: () => const NiraScreen()),
     // GetPage(name: AppRoutes.Notifications, page: () => const NotificationsScreen()),

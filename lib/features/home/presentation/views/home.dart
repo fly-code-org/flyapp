@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:fly/features/create_community/presentation/widgets/bottom_navbar.dart';
 import 'package:fly/features/home/presentation/widgets/community_tabs.dart';
+import 'package:fly/features/home/presentation/widgets/social_feed.dart'; // Import SocialFeed
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   final int streakCount = 2;
   final int _currentIndex = 0;
-
-  const HomeScreen({super.key});
+  int activeTabIndex = 0; // 0 -> Social, 1 -> Support
 
   @override
   Widget build(BuildContext context) {
@@ -52,12 +59,9 @@ class HomeScreen extends StatelessWidget {
                   ),
 
                   // Center: Fly logo
-                  Image.asset(
-                    "assets/images/fly_logo.png",
-                    height: 32, // Adjust size as needed
-                  ),
+                  Image.asset("assets/images/fly_logo.png", height: 32),
 
-                  // Right: Upgrade text (clickable, route commented)
+                  // Right: Upgrade text (clickable)
                   GestureDetector(
                     onTap: () {
                       // Navigator.push(context,
@@ -75,9 +79,29 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 24), // Spacing below top row
+              const SizedBox(height: 24),
+
               // Tabs: Social & Support
-              const SocialSupportTabs(),
+              SocialSupportTabs(
+                key: const ValueKey("tabs"),
+                onTabChanged: (index) {
+                  setState(() {
+                    activeTabIndex = index;
+                  });
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // Expanded SocialFeed
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 0,
+                  ), // remove horizontal padding
+                  child: SocialFeed(isSocialTab: activeTabIndex == 0),
+                ),
+              ),
             ],
           ),
         ),
