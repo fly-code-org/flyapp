@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 class SocialPost extends StatefulWidget {
   final Post post;
-  final bool isSocialTab; // true for Social, false for Support
+  final bool isSocialTab;
 
   const SocialPost({super.key, required this.post, this.isSocialTab = true});
 
@@ -20,21 +20,22 @@ class _SocialPostState extends State<SocialPost> {
   bool isLiked = false;
   bool isBookmarked = false;
   bool isTextExpanded = false;
+  int _currentPage = 0;
+  final PageController _pageController = PageController();
 
   @override
   void initState() {
     super.initState();
-    // Only initialize video if not web (Web may require video_player_web)
     if (widget.post.isVideo && !kIsWeb) {
       _videoController =
           VideoPlayerController.networkUrl(
-              Uri.parse(widget.post.mediaUrl),
+              Uri.parse(widget.post.mediaUrl ?? ''),
               videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
             )
             ..initialize().then((_) {
               setState(() {});
               _videoController?.setLooping(true);
-              _videoController?.setVolume(0); // muted by default
+              _videoController?.setVolume(0);
               _videoController?.play();
             });
     }
@@ -43,6 +44,7 @@ class _SocialPostState extends State<SocialPost> {
   @override
   void dispose() {
     _videoController?.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -63,6 +65,51 @@ class _SocialPostState extends State<SocialPost> {
         ),
       );
     }
+  }
+
+  Widget _buildImageCarousel(List<String> mediaUrls) {
+    return Column(
+      children: [
+        SizedBox(
+          height: 300,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: mediaUrls.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return CachedNetworkImage(
+                imageUrl: mediaUrls[index],
+                fit: BoxFit.cover,
+                width: double.infinity,
+              );
+            },
+          ),
+        ),
+        if (mediaUrls.length > 1)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                mediaUrls.length,
+                (index) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentPage == index ? Colors.black : Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   @override
@@ -139,11 +186,8 @@ class _SocialPostState extends State<SocialPost> {
                     ),
                     if (isOverflow)
                       GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isTextExpanded = !isTextExpanded;
-                          });
-                        },
+                        onTap: () =>
+                            setState(() => isTextExpanded = !isTextExpanded),
                         child: Text(
                           isTextExpanded ? "See less" : "See more",
                           style: const TextStyle(
@@ -181,21 +225,19 @@ class _SocialPostState extends State<SocialPost> {
                     color: Colors.black12,
                     child: const Center(child: CircularProgressIndicator()),
                   )
+          else if (widget.post.mediaUrls != null &&
+              widget.post.mediaUrls!.isNotEmpty)
+            _buildImageCarousel(widget.post.mediaUrls!)
           else
-            Image.network(widget.post.mediaUrl),
+            const SizedBox.shrink(),
 
           // Action Row
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                // Like
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      isLiked = !isLiked;
-                    });
-                  },
+                  onTap: () => setState(() => isLiked = !isLiked),
                   child: Row(
                     children: [
                       Icon(
@@ -208,7 +250,6 @@ class _SocialPostState extends State<SocialPost> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Comment
                 Row(
                   children: [
                     const Icon(Icons.comment_outlined, color: Colors.grey),
@@ -217,10 +258,8 @@ class _SocialPostState extends State<SocialPost> {
                   ],
                 ),
                 const SizedBox(width: 16),
-                // Share
                 const Icon(Icons.share_outlined, color: Colors.grey),
                 const Spacer(),
-                // Stats
                 Row(
                   children: [
                     const Icon(Icons.remove_red_eye, color: Colors.grey),
@@ -229,13 +268,8 @@ class _SocialPostState extends State<SocialPost> {
                   ],
                 ),
                 const SizedBox(width: 16),
-                // Bookmark
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      isBookmarked = !isBookmarked;
-                    });
-                  },
+                  onTap: () => setState(() => isBookmarked = !isBookmarked),
                   child: Icon(
                     isBookmarked
                         ? Icons.bookmark

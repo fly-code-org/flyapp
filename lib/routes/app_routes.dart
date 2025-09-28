@@ -40,4 +40,6 @@ abstract class AppRoutes {
   static const Nira = '/nira';
   static const Notifications = '/notifications';
   static const Profile = '/profile';
+
+  // create post
 }
