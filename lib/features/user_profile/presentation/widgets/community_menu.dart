@@ -19,7 +19,7 @@ class CommunityMenuSheet extends StatelessWidget {
         children: [
           _buildMenuItem(
             icon: Icons.rule,
-            text: "Community Guidelines",
+            text: "Block u",
             onTap: () {
               Navigator.pop(context);
               // TODO: Handle navigation

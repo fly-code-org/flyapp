@@ -1,101 +1,148 @@
 import 'package:flutter/material.dart';
 
-/// Pill-shaped Media button with gradient
-class MediaButton extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const MediaButton({super.key, required this.onPressed});
+class CustomTabWithMedia extends StatefulWidget {
+  final Function(int)? onTabChanged;
+  const CustomTabWithMedia({super.key, this.onTabChanged});
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF855DFC), Color(0xFFA68CFC)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.perm_media, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text(
-              "Media",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  State<CustomTabWithMedia> createState() => _CustomTabWithMediaState();
 }
 
-/// Custom Tab widget with Media button (uses DefaultTabController)
-class CustomTabWithMedia extends StatelessWidget {
-  final VoidCallback onMediaPressed;
+class _CustomTabWithMediaState extends State<CustomTabWithMedia>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
 
-  const CustomTabWithMedia({super.key, required this.onMediaPressed});
+  final List<Map<String, dynamic>> _tabs = [
+    {"label": "Activities", "icon": Icons.local_activity_outlined},
+    {"label": "My Journal", "icon": Icons.menu_book_outlined},
+    {"label": "Bookmarks", "icon": Icons.bookmark_outline},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) return;
+      widget.onTabChanged?.call(_tabController.index);
+      setState(() {}); // update active tab highlight
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Color _getColor(int index) {
+    return _tabController.index == index
+        ? const Color(0xFF855DFC)
+        : Colors.grey;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final TabController tabController = DefaultTabController.of(context)!;
-
-    Color _getColor(int index) {
-      return tabController.index == index
-          ? const Color(0xFF855DFC)
-          : Colors.grey;
-    }
-
-    return Row(
-      children: [
-        Expanded(
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: TabBar(
-              controller: tabController,
-              isScrollable: true,
-              indicatorColor: const Color(0xFF855DFC),
-              labelColor: const Color(0xFF855DFC),
-              unselectedLabelColor: Colors.grey,
-              dividerColor: Colors.transparent,
-              tabs: [
-                Tab(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.arrow_outward, color: _getColor(0)),
-                      const SizedBox(width: 6),
-                      Text("New", style: TextStyle(color: _getColor(0))),
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tabs Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Activities (left aligned)
+              Expanded(
+                flex: 2,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: TabBar(
+                    controller: _tabController,
+                    indicatorColor: const Color(0xFF855DFC),
+                    labelColor: const Color(0xFF855DFC),
+                    unselectedLabelColor: Colors.grey,
+                    dividerColor: Colors.transparent,
+                    indicatorWeight: 3,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    tabs: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(_tabs[0]["icon"], color: _getColor(0)),
+                          const SizedBox(width: 6),
+                          Text(
+                            _tabs[0]["label"],
+                            style: TextStyle(
+                              color: _getColor(0),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                Tab(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.show_chart, color: _getColor(1)),
-                      const SizedBox(width: 6),
-                      Text("Popular", style: TextStyle(color: _getColor(1))),
+              ),
+
+              const SizedBox(width: 16),
+
+              // My Journal + Bookmarks (right aligned)
+              Expanded(
+                flex: 3,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    indicatorColor: const Color(0xFF855DFC),
+                    labelColor: const Color(0xFF855DFC),
+                    unselectedLabelColor: Colors.grey,
+                    dividerColor: Colors.transparent,
+                    indicatorWeight: 3,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    tabs: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(_tabs[1]["icon"], color: _getColor(1)),
+                          const SizedBox(width: 6),
+                          Text(
+                            _tabs[1]["label"],
+                            style: TextStyle(
+                              color: _getColor(1),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(_tabs[2]["icon"], color: _getColor(2)),
+                          const SizedBox(width: 6),
+                          Text(
+                            _tabs[2]["label"],
+                            style: TextStyle(
+                              color: _getColor(2),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(width: 12),
-        MediaButton(onPressed: onMediaPressed),
-      ],
+
+          const SizedBox(height: 8),
+
+          // Active Tab Indicator line (for visual clarity)
+          Container(height: 2, color: const Color(0xFF855DFC).withOpacity(0.2)),
+        ],
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:fly/features/create_community/presentation/views/community_guidelines.dart';
+import 'package:fly/features/user_profile/presentation/views/create_journal_screen.dart';
 
 abstract class AppRoutes {
   static const splash = '/splash';
@@ -40,4 +41,7 @@ abstract class AppRoutes {
   static const Nira = '/nira';
   static const Notifications = '/notifications';
   static const Profile = '/profile';
+
+  //User Profile Flow
+  static const CreateJournalScreen = '/create-journal-screen';
 }
