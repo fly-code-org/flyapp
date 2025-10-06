@@ -111,9 +111,9 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                           if (_showSureLetsGo) {
                             if (role == 'mhp') {
                               Get.toNamed(AppRoutes.MHPQuestion1);
+                            } else if (role == 'user') {
+                              Get.toNamed(AppRoutes.UserQuestion1);
                             }
-                          } else {
-                            Get.toNamed(AppRoutes.UserQuestion1);
                           }
                         },
                       ),
@@ -121,13 +121,13 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                       Center(
                         child: GestureDetector(
                           onTap: () {
-                            if (_showSureLetsGo) {
-                              if (role == 'mhp') {
+                            if (role == 'mhp') {
+                              if (_showSureLetsGo) {
                                 Get.toNamed(AppRoutes.CreateSupportCommunity);
                               }
-                            } else {
+                            } else if (role == 'user') {
+                              // For users, always go to Explore
                               Get.toNamed(AppRoutes.GetInterest);
-                              ;
                             }
                           },
                           child: const Text(

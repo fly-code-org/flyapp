@@ -2,8 +2,6 @@ import 'package:fly/features/create_community/presentation/views/community_guide
 import 'package:fly/features/create_community/presentation/views/community_profile_screen.dart';
 import 'package:fly/features/create_community/presentation/views/create_support_community.dart';
 import 'package:fly/features/create_community/presentation/views/edit_community_details.dart';
-import 'package:fly/features/create_profile/presentation/views/mhp_profile.dart';
-import 'package:fly/features/create_profile/presentation/views/user_profile.dart';
 import 'package:fly/features/explore/presentation/views/explore.dart';
 import 'package:fly/features/home/presentation/views/home.dart';
 import 'package:fly/features/nira/screens/nira_chat_screen.dart';
@@ -21,6 +19,7 @@ import 'package:fly/features/start_quiz/views/user_first_question.dart';
 import 'package:fly/features/start_quiz/views/user_fourth_ques.dart';
 import 'package:fly/features/start_quiz/views/user_second_ques.dart';
 import 'package:fly/features/start_quiz/views/user_third_ques.dart';
+import 'package:fly/features/user_profile/presentation/views/user_profile_screen.dart';
 import 'package:fly/features/user_verification/presentation/views/email_verification.dart';
 import 'package:fly/features/user_verification/presentation/views/phone_verification.dart';
 import 'package:fly/routes/app_routes.dart';
@@ -33,7 +32,10 @@ class AppPages {
   static final pages = [
     GetPage(name: '/splash', page: () => SplashScreen()),
     GetPage(name: '/onboarding', page: () => Onboarding()),
-    GetPage(name: AppRoutes.userProfile, page: () => const UserProfileScreen()),
+    // GetPage(
+    //   name: AppRoutes.userProfile,
+    //   page: () => const CreateUserProfileScreen(),
+    // ),
     GetPage(
       name: AppRoutes.emailVerification,
       page: () => const EmailVerification(),
@@ -48,7 +50,7 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.createUserProfile,
-      page: () => const UserProfileScreen(),
+      page: () => const CreateUserProfileScreen(),
     ),
     GetPage(name: AppRoutes.AddMoreInfo, page: () => const MoreInfoScreen()),
     GetPage(
@@ -114,7 +116,7 @@ class AppPages {
     GetPage(name: AppRoutes.Explore, page: () => ExploreScreen()),
     GetPage(name: AppRoutes.Nira, page: () => NiraChatScreen()),
     // GetPage(name: AppRoutes.Notifications, page: () => const NotificationsScreen()),
-    // GetPage(name: AppRoutes.Profile, page: () => const ProfileScreen()),
+    GetPage(name: AppRoutes.Profile, page: () => const UserProfileScreen()),
     // GetPage(name: AppRoutes.MhpStartQuiz, page: () => const MhpStartQuiz())
   ];
 }

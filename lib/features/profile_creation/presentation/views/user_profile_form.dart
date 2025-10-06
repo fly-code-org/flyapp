@@ -10,24 +10,21 @@ import 'package:fly/features/profile_creation/presentation/widgets/profile_pictu
 import 'package:fly/features/profile_creation/presentation/widgets/user_name_input_field.dart';
 import 'package:get/get.dart';
 
-class UserProfileScreen extends StatefulWidget {
-  const UserProfileScreen({super.key});
+class CreateUserProfileScreen extends StatefulWidget {
+  const CreateUserProfileScreen({super.key});
 
   @override
-  State<UserProfileScreen> createState() => _UserProfileScreenState();
+  State<CreateUserProfileScreen> createState() =>
+      _CreateUserProfileScreenState();
 }
 
-class _UserProfileScreenState extends State<UserProfileScreen> {
-  double _dragPosition = 0.8;
-  late final String role;
+class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
   final UserProfileController controller = Get.put(UserProfileController());
+  double _dragPosition = 0.8;
 
   @override
   void initState() {
     super.initState();
-    final args = Get.arguments;
-    role = (args['role'] ?? 'user').toLowerCase();
-    print("UserProfileScreen role: $role");
   }
 
   @override
@@ -93,7 +90,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
                       /// Profile Image Picker
                       ProfileImagePicker(
-                        role: role, // 👈 send role down
+                        role: "user", // 👈 send role down
                         onImagePicked: (file) {
                           controller.selectedImage.value = file;
                         },
@@ -248,7 +245,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       GradientButton(
                         text: "Verify and Continue",
                         onPressed: () {
-                          Get.toNamed('/intro-quiz', arguments: {'role': role});
+                          Get.toNamed(
+                            '/intro-quiz',
+                            arguments: {'role': "user"},
+                          );
                         },
                       ),
                     ],
