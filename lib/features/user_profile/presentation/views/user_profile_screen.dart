@@ -6,6 +6,7 @@ import 'package:fly/features/user_profile/presentation/widgets/custom_tab_with_m
 import 'package:fly/features/user_profile/presentation/widgets/profile_card.dart';
 import 'package:fly/features/user_profile/presentation/widgets/user_info_card.dart';
 import 'package:fly/features/user_profile/presentation/widgets/journal_grid_section.dart';
+import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import 'create_journal_screen.dart';
 
@@ -98,12 +99,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 size: 30,
               ),
               onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  isScrollControlled: true,
-                  builder: (_) => const CommunityMenuSheet(),
-                );
+                Get.toNamed(AppRoutes.UserSettingsScreen);
               },
             ),
           ),
