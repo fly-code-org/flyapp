@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/user_profile/presentation/widgets/bottom_navbar.dart';
-import 'package:fly/features/user_profile/presentation/widgets/community_post_grid.dart';
-import 'package:fly/features/user_profile/presentation/widgets/profile_card.dart';
-import 'package:fly/features/user_profile/presentation/widgets/user_info_card.dart';
-import 'package:fly/features/user_profile/presentation/widgets/journal_grid_section.dart';
+import 'package:fly/features/create_community/presentation/widgets/edit_community_button.dart';
+import 'package:fly/features/create_community/presentation/widgets/invite_members.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/bottom_navbar.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/community_post_grid.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/edit_profile_button.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/mhp_squares.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/share_profile.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/profile_card.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/mhp_info_card.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/about_screen.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
-import 'create_journal_screen.dart';
 
-class UserProfileScreen extends StatefulWidget {
-  const UserProfileScreen({super.key});
+class MhpProfileScreen extends StatefulWidget {
+  const MhpProfileScreen({super.key});
 
   @override
-  State<UserProfileScreen> createState() => _UserProfileScreenState();
+  State<MhpProfileScreen> createState() => _MhpProfileScreenState();
 }
 
-class _UserProfileScreenState extends State<UserProfileScreen>
+class _MhpProfileScreenState extends State<MhpProfileScreen>
     with SingleTickerProviderStateMixin {
   late final String role;
   int _selectedTab = 0;
@@ -62,7 +66,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       case 0:
         return const CommunityMediaSection(type: "Activities");
       case 1:
-        return const JournalGridSection();
+        return const MHPProfileEditScreen();
       case 2:
         return const CommunityMediaSection(type: "Bookmarks");
       default:
@@ -134,12 +138,33 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                         children: [
                           const SizedBox(height: 60),
                           const UserInfo(
-                            userId: "Anonyamous",
+                            userName: "Shruti Jain",
                             bio:
-                                "Exploring my journey toward mental well-being.",
+                                "Helping you navigate anxiety, trauma, and self-growth with empathy & evidence-based therapy.",
                             location: "Chandigarh, India",
-                            date: "March, 2025",
+                            yearsOfExp: "March, 2025",
                           ),
+                          const SizedBox(height: 20),
+
+                          // Edit + Invite Members
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              EditProfileButton(
+                                onPressed: () {
+                                  Get.toNamed('/edit-community');
+                                },
+                              ),
+                              const SizedBox(width: 20),
+                              ShareProfile(
+                                onPressed: () {
+                                  Get.toNamed('/invite-members');
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          MHPSquare(),
                           const SizedBox(height: 40),
                           // Tabs Row
                           Row(
@@ -153,22 +178,20 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                               Row(
                                 children: [
                                   _buildTabItem(
-                                    "My Journal",
-                                    Icons.book_outlined,
+                                    "About",
+                                    Icons.verified_user_outlined,
                                     1,
                                   ),
                                   const SizedBox(width: 16),
                                   _buildTabItem(
-                                    "Bookmarks",
-                                    Icons.bookmark_border_outlined,
+                                    "Connect",
+                                    Icons.calendar_month_outlined,
                                     2,
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
-
                           // Tab content
                           SizedBox(height: 600, child: _buildBody()),
                         ],
@@ -190,18 +213,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               );
             },
           ),
-
-          // ✅ Add Journal FAB (visible only on My Journal tab)
-          if (_selectedTab == 1)
-            Positioned(
-              bottom: 24,
-              right: 24,
-              child: FloatingActionButton(
-                backgroundColor: const Color(0xFF855DFC),
-                onPressed: () => Get.to(() => const CreateJournalScreen()),
-                child: const Icon(Icons.add, color: Colors.white),
-              ),
-            ),
         ],
       ),
     );

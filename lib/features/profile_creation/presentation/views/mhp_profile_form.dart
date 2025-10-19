@@ -11,14 +11,14 @@ import 'package:fly/features/profile_creation/presentation/widgets/user_name_inp
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
-class MhpProfileScreen extends StatefulWidget {
-  const MhpProfileScreen({super.key});
+class CreateMhpProfileScreen extends StatefulWidget {
+  const CreateMhpProfileScreen({super.key});
 
   @override
-  State<MhpProfileScreen> createState() => _MhpProfileScreenState();
+  State<CreateMhpProfileScreen> createState() => _CreateMhpProfileScreenState();
 }
 
-class _MhpProfileScreenState extends State<MhpProfileScreen> {
+class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
   double _dragPosition = 0.8;
   late final String role;
   final UserProfileController controller = Get.put(UserProfileController());
@@ -28,7 +28,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen> {
     super.initState();
     final args = Get.arguments;
     role = (args['role'] ?? 'user').toLowerCase();
-    print("MhpProfileScreen role: $role");
+    print("CreateMhpProfileScreen role: $role");
   }
 
   @override

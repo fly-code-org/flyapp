@@ -6,6 +6,7 @@ abstract class AppRoutes {
   static const onboarding = '/onboarding';
   static const login = '/login';
   static const userProfile = '/user-profile';
+  static const mhpProfile = '/mhp-profile';
 
   static const emailVerification = '/email-verification';
   static const phoneVerification = '/phone-verification';

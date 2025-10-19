@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
-// Example: replace this with your actual logic (controller or service)
-final bool isMhp = true; // or Get.find<UserController>().isMhp
-
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
 
@@ -19,6 +16,7 @@ class BottomNavBar extends StatelessWidget {
       unselectedItemColor: Colors.black,
       currentIndex: currentIndex,
       onTap: (index) {
+        // 👇 Direct GetX navigation
         switch (index) {
           case 0:
             Get.offAllNamed(AppRoutes.Home);
@@ -33,12 +31,7 @@ class BottomNavBar extends StatelessWidget {
             Get.offAllNamed("/notifications");
             break;
           case 4:
-            // 👇 Check if user is MHP
-            if (isMhp) {
-              Get.offAllNamed(AppRoutes.mhpProfile);
-            } else {
-              Get.offAllNamed(AppRoutes.Profile);
-            }
+            Get.offAllNamed("/profile");
             break;
         }
       },
@@ -50,6 +43,7 @@ class BottomNavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Image.asset("assets/images/nira_icon.png"),
+          // Nira chatbot icon
           label: "Nira",
         ),
         const BottomNavigationBarItem(

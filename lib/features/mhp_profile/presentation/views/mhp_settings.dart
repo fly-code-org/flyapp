@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class UserSettingsScreen extends StatelessWidget {
-  const UserSettingsScreen({super.key});
+class MhpSettingsScreen extends StatelessWidget {
+  const MhpSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
