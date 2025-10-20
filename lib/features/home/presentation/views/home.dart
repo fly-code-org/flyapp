@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fly/features/create_community/presentation/widgets/bottom_navbar.dart';
 import 'package:fly/features/home/presentation/widgets/community_tabs.dart';
 import 'package:fly/features/home/presentation/views/creat_post_screen.dart';
@@ -75,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
+                            horizontal: 10,
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
@@ -84,13 +85,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text(
                             "🪽$streakCount Streaks",
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
-                      Image.asset("assets/images/fly_logo.png", height: 32),
+                      SvgPicture.asset(
+                        "assets/images/fly_home.svg",
+                        height: 32,
+                        semanticsLabel: 'Fly logo',
+                      ),
                       GestureDetector(
                         onTap: () {},
                         child: const Text(

@@ -10,7 +10,7 @@ class ShareProfile extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [

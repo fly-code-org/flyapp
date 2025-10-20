@@ -10,7 +10,7 @@ class EditProfileButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
         decoration: BoxDecoration(
           color: const Color(0xFFE0E0E0), // grey background
           borderRadius: BorderRadius.circular(50), // pill shape

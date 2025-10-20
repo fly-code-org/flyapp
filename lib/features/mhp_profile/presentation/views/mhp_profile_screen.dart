@@ -203,7 +203,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                       top: -60,
                       left: 16,
                       child: const ProfileAvatar(
-                        imagePath: 'assets/images/mydp.JPG',
+                        imagePath: 'assets/images/communitydp.png',
                         size: 120,
                         showEditIcon: false,
                       ),

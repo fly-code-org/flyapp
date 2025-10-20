@@ -31,7 +31,7 @@ class BottomNavBar extends StatelessWidget {
             Get.offAllNamed("/notifications");
             break;
           case 4:
-            Get.offAllNamed("/profile");
+            Get.offAllNamed(AppRoutes.userProfile);
             break;
         }
       },
