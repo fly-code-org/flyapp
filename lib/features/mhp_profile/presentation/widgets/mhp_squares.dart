@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:fly/routes/app_routes.dart';
+import 'package:get/get.dart';
 
 class MHPSquare extends StatelessWidget {
   const MHPSquare({super.key});
@@ -7,8 +9,7 @@ class MHPSquare extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> communities = [
       {"title": "Mindful Living", "image": "assets/images/community_demo.png"},
-      {"title": "Anxiety Support", "image": "assets/images/community_demo.png"},
-      {"title": "Self-Growth Hub", "image": "assets/images/community_demo.png"},
+      // Add more items if needed
     ];
 
     return Column(
@@ -46,15 +47,14 @@ class MHPSquare extends StatelessWidget {
           ),
         ),
 
-        // ------------------ Community List ------------------
-        ListView.builder(
-          itemCount: communities.length,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemBuilder: (context, index) {
-            final community = communities[index];
-            return Container(
-              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        const SizedBox(height: 8),
+
+        // ------------------ Community Items ------------------
+        ...communities.map((community) {
+          return GestureDetector(
+            onTap: () => Get.toNamed(AppRoutes.CommunitySupportProfile),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.grey[200],
@@ -62,7 +62,7 @@ class MHPSquare extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  // Square image box
+                  // Square image
                   Container(
                     width: 50,
                     height: 50,
@@ -89,9 +89,9 @@ class MHPSquare extends StatelessWidget {
                   ),
                 ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        }),
       ],
     );
   }
