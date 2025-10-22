@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fly/features/create_community/controller/user_profile_controller.dart';
-import 'package:fly/features/create_community/presentation/widgets/bottom_navbar.dart';
 import 'package:fly/features/explore/presentation/widgets/community_list_horizontal.dart';
 import 'package:fly/features/explore/presentation/widgets/conversation_card.dart';
 import 'package:fly/features/explore/presentation/widgets/search_bar.dart';
 import 'package:fly/features/explore/presentation/widgets/social_tag_h.dart';
+import 'package:fly/features/user_profile/presentation/widgets/bottom_navbar.dart';
 import 'package:get/get.dart';
 
 class ExploreScreen extends StatelessWidget {
