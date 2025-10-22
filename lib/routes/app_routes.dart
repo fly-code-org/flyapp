@@ -40,7 +40,7 @@ abstract class AppRoutes {
   static const Home = '/home';
   static const Explore = '/explore';
   static const Nira = '/nira';
-  static const Notifications = '/notifications';
+  static const NotificationScreen = '/notifications';
   static const Profile = '/profile';
 
   //User Profile Flow

@@ -28,7 +28,7 @@ class BottomNavBar extends StatelessWidget {
             Get.offAllNamed(AppRoutes.Nira);
             break;
           case 3:
-            Get.offAllNamed("/notifications");
+            Get.offAllNamed(AppRoutes.NotificationScreen);
             break;
           case 4:
             Get.offAllNamed(AppRoutes.mhpProfile);

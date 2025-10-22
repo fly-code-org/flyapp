@@ -6,6 +6,7 @@ import 'package:fly/features/explore/presentation/views/explore.dart';
 import 'package:fly/features/home/presentation/views/home.dart';
 import 'package:fly/features/mhp_profile/presentation/views/mhp_profile_screen.dart';
 import 'package:fly/features/nira/screens/nira_chat_screen.dart';
+import 'package:fly/features/notifications/presentation/view/notification_screen.dart';
 import 'package:fly/features/profile_creation/presentation/views/add_session_form.dart';
 import 'package:fly/features/profile_creation/presentation/views/mhp_more_info.dart';
 import 'package:fly/features/profile_creation/presentation/views/mhp_profile_form.dart';
@@ -130,8 +131,11 @@ class AppPages {
     GetPage(name: AppRoutes.Home, page: () => const HomeScreen()),
     GetPage(name: AppRoutes.Explore, page: () => ExploreScreen()),
     GetPage(name: AppRoutes.Nira, page: () => NiraChatScreen()),
-    // GetPage(name: AppRoutes.Notifications, page: () => const NotificationsScreen()),
-    GetPage(name: AppRoutes.Profile, page: () => const UserProfileScreen()),
+    GetPage(
+      name: AppRoutes.NotificationScreen,
+      page: () => NotificationScreen(),
+    ),
+    GetPage(name: AppRoutes.userProfile, page: () => const UserProfileScreen()),
     // GetPage(name: AppRoutes.MhpStartQuiz, page: () => const MhpStartQuiz())
   ];
 }

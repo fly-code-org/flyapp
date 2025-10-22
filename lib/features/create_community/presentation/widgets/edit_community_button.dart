@@ -10,7 +10,7 @@ class EditCommunityButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         decoration: BoxDecoration(
           color: const Color(0xFFE0E0E0), // grey background
           borderRadius: BorderRadius.circular(50), // pill shape

@@ -10,7 +10,7 @@ class InviteMembersButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [
