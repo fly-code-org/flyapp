@@ -39,21 +39,24 @@ class BottomNavBar extends StatelessWidget {
         }
       },
       items: [
-        const BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.explore),
+        BottomNavigationBarItem(
+          icon: Image.asset("assets/icon/navbar/home-filled.png"),
+          label: "Home",
+        ),
+        BottomNavigationBarItem(
+          icon: Image.asset("assets/icon/navbar/explore-outlined.png"),
           label: "Explore",
         ),
         BottomNavigationBarItem(
           icon: Image.asset("assets/images/nira_icon.png"),
           label: "Nira",
         ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.notifications),
+        BottomNavigationBarItem(
+          icon: Image.asset("assets/icon/navbar/notification-outlined.png"),
           label: "Notifications",
         ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.person),
+        BottomNavigationBarItem(
+          icon: Image.asset("assets/icon/navbar/profile-outlined.png"),
           label: "Profile",
         ),
       ],

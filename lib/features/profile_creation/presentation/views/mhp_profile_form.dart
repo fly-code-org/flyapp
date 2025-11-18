@@ -117,7 +117,7 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
 
                       const SizedBox(height: 30),
                       const Text(
-                        "First Name",
+                        "May I know your full name",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           fontFamily: 'Lexend',
@@ -130,7 +130,7 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
 
                       const SizedBox(height: 10),
                       CustomInputField(
-                        hintText: "Enter first name",
+                        hintText: "full name",
                         onChanged: (value) => controller.username.value = value,
                       ),
                       const SizedBox(height: 10),

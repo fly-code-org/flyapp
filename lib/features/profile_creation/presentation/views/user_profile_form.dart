@@ -172,7 +172,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        "Second Name",
+                        "Last Name",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           fontFamily: 'Lexend',
@@ -184,7 +184,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                       ),
                       const SizedBox(height: 10),
                       CustomInputField(
-                        hintText: "Enter second name",
+                        hintText: "Enter last name",
                         onChanged: (value) => controller.username.value = value,
                       ),
                       const SizedBox(height: 10),

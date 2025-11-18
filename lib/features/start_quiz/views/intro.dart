@@ -95,7 +95,7 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                           "Your insights will help us improve fly and create a more supportive space for everyone.",
                           style: TextStyle(
                             fontFamily: 'Lexend',
-                            fontSize: 40,
+                            fontSize: 30,
                             fontWeight: FontWeight.w500,
                             height: 50 / 40,
                             color: Color(0xFF8545E1),

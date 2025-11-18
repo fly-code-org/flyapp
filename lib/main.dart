@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:get/get.dart';
 
+import 'core/di/service_locator.dart' as di;
 import 'firebase_options.dart'; // Generated from flutterfire configure
 import 'routes/app_routes.dart';
 import 'routes/app_pages.dart';
@@ -17,6 +18,9 @@ Future<void> main() async {
 
   // ✅ Firebase initialization
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // ✅ Initialize dependency injection
+  await di.init();
 
   runApp(const MyApp());
 }

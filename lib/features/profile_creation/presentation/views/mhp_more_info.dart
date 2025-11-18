@@ -106,7 +106,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        "Add the name of your college/univerity",
+                        "Add the name of your college/university",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           fontFamily: 'Lexend',
@@ -136,12 +136,12 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                       ),
                       const SizedBox(height: 10),
                       GeneralCustomInputField(
-                        hintText: "Enter your college name",
+                        hintText: "Enter your major",
                         onChanged: (value) => controller.username.value = value,
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        "Years of experience",
+                        "Years of experience: ",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           fontFamily: 'Lexend',

@@ -1,11 +1,39 @@
 import 'package:flutter/material.dart';
 
-class EnterOtpWidget extends StatelessWidget {
+class EnterOtpWidget extends StatefulWidget {
+  final Function(String)? onOtpChanged;
+
+  const EnterOtpWidget({super.key, this.onOtpChanged});
+
+  @override
+  State<EnterOtpWidget> createState() => _EnterOtpWidgetState();
+}
+
+class _EnterOtpWidgetState extends State<EnterOtpWidget> {
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
   final List<TextEditingController> _controllers =
       List.generate(4, (_) => TextEditingController());
 
-  EnterOtpWidget({super.key});
+  @override
+  void dispose() {
+    for (var node in _focusNodes) {
+      node.dispose();
+    }
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  String get otp {
+    return _controllers.map((controller) => controller.text).join();
+  }
+
+  void _notifyOtpChanged() {
+    if (widget.onOtpChanged != null) {
+      widget.onOtpChanged!(otp);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +78,7 @@ class EnterOtpWidget extends StatelessWidget {
                   } else if (value.isEmpty && index > 0) {
                     _focusNodes[index - 1].requestFocus();
                   }
+                  _notifyOtpChanged();
                 },
               ),
             );
