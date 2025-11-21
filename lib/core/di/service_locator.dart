@@ -14,6 +14,10 @@ import '../../features/user_verification/domain/repositories/verification_reposi
 import '../../features/user_verification/domain/usecases/verify_email.dart';
 import '../../features/user_verification/domain/usecases/verify_phone.dart';
 import '../../features/user_verification/presentation/controllers/verification_controller.dart';
+import '../../features/profile_creation/data/datasources/mhp_profile_remote_data_source.dart';
+import '../../features/profile_creation/data/repositories/mhp_profile_repository_impl.dart';
+import '../../features/profile_creation/domain/repositories/mhp_profile_repository.dart';
+import '../../features/profile_creation/domain/usecases/create_mhp_profile.dart';
 
 final sl = GetIt.instance;
 
@@ -60,6 +64,20 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<VerificationRemoteDataSource>(
     () => VerificationRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  //! Features - Profile Creation
+  // Use cases
+  sl.registerLazySingleton(() => CreateMhpProfile(sl()));
+
+  // Repository
+  sl.registerLazySingleton<MhpProfileRepository>(
+    () => MhpProfileRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<MhpProfileRemoteDataSource>(
+    () => MhpProfileRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Core

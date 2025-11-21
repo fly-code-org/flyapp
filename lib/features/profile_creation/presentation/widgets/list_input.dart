@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class ListInputWidget extends StatefulWidget {
   final String title;
   final String hintText;
+  final ValueChanged<List<String>>? onLanguagesChanged;
 
   const ListInputWidget({
     super.key,
     required this.title,
     required this.hintText,
+    this.onLanguagesChanged,
   });
 
   @override
@@ -25,6 +27,7 @@ class _ListInputWidgetState extends State<ListInputWidget> {
         setState(() {
           _languages.add(trimmed);
         });
+        widget.onLanguagesChanged?.call(_languages);
       }
       _controller.clear();
     }

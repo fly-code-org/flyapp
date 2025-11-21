@@ -1,11 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
-import 'package:fly/features/profile_creation/presentation/widgets/list_input.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
+import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
+import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/bio_input_field.dart';
-import 'package:fly/features/profile_creation/presentation/widgets/dob_input_field.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/profile_picture_picker.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/user_name_input_field.dart';
 import 'package:fly/routes/app_routes.dart';
@@ -21,14 +19,58 @@ class CreateMhpProfileScreen extends StatefulWidget {
 class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
   double _dragPosition = 0.8;
   late final String role;
-  final UserProfileController controller = Get.put(UserProfileController());
+
+  // Get controller safely - finds existing or creates new
+  UserProfileController get controller {
+    print("🔍 [MHP PROFILE FORM] [CONTROLLER GETTER] Accessing controller...");
+    try {
+      print("🔍 [MHP PROFILE FORM] [CONTROLLER GETTER] Attempting to find existing controller...");
+      final foundController = Get.find<UserProfileController>(tag: 'UserProfileController');
+      print("✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Found existing controller: ${foundController.hashCode}");
+      return foundController;
+    } catch (e) {
+      print("📝 [MHP PROFILE FORM] [CONTROLLER GETTER] Controller not found, creating new one. Error: $e");
+      try {
+        final createMhpProfile = sl<CreateMhpProfile>();
+        print("✅ [MHP PROFILE FORM] [CONTROLLER GETTER] CreateMhpProfile retrieved from service locator");
+        final newController = UserProfileController(createMhpProfile: createMhpProfile);
+        final registeredController = Get.put(
+          newController,
+          tag: 'UserProfileController',
+          permanent: false,
+        );
+        print("✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Controller registered: ${registeredController.hashCode}");
+        return registeredController;
+      } catch (slError) {
+        print("❌ [MHP PROFILE FORM] [CONTROLLER GETTER] Error getting CreateMhpProfile: $slError");
+        final fallbackController = UserProfileController(createMhpProfile: null);
+        final registeredController = Get.put(
+          fallbackController,
+          tag: 'UserProfileController',
+          permanent: false,
+        );
+        print("✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Fallback controller registered: ${registeredController.hashCode}");
+        return registeredController;
+      }
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    print("🚀 [MHP PROFILE FORM] [INIT STATE] initState started");
     final args = Get.arguments;
     role = (args['role'] ?? 'user').toLowerCase();
-    print("CreateMhpProfileScreen role: $role");
+    print("✅ [MHP PROFILE FORM] [INIT STATE] Role set to: $role");
+    try {
+      print("🔍 [MHP PROFILE FORM] [INIT STATE] Initializing controller...");
+      final ctrl = controller;
+      print("✅ [MHP PROFILE FORM] [INIT STATE] Controller initialized: ${ctrl.hashCode}");
+    } catch (e, stackTrace) {
+      print("❌ [MHP PROFILE FORM] [INIT STATE] Error initializing controller: $e");
+      print("📚 [MHP PROFILE FORM] [INIT STATE] Stack trace: $stackTrace");
+    }
+    print("✅ [MHP PROFILE FORM] [INIT STATE] initState completed");
   }
 
   @override
@@ -95,8 +137,11 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
                       /// Profile Image Picker
                       ProfileImagePicker(
                         role: "mhp", // 👈 send role down
-                        onImagePicked: (file) {
+                        onImagePicked: (file) async {
                           controller.selectedImage.value = file;
+                          // Save image path to cache (you may need to upload and get path)
+                          controller.picturePath.value = file.path;
+                          await controller.saveToCache();
                         },
                       ),
 
@@ -131,7 +176,10 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
                       const SizedBox(height: 10),
                       CustomInputField(
                         hintText: "full name",
-                        onChanged: (value) => controller.username.value = value,
+                        onChanged: (value) {
+                          controller.username.value = value;
+                          controller.saveToCache();
+                        },
                       ),
                       const SizedBox(height: 10),
                       const Text(
@@ -149,13 +197,16 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
                       BioInputField(
                         hintText: "Tell us something about yourself...",
                         onChanged: (value) {
-                          print("Bio: $value");
+                          controller.bio.value = value;
+                          controller.saveToCache();
                         },
                       ),
                       const SizedBox(height: 10),
                       GradientButton(
                         text: "Verify and Continue",
-                        onPressed: () {
+                        onPressed: () async {
+                          // Save current form data before navigating
+                          await controller.saveToCache();
                           Get.toNamed(
                             AppRoutes.AddMoreInfo,
                             arguments: {'role': role},
