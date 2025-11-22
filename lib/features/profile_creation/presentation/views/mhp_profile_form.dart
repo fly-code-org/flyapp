@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/bio_input_field.dart';
@@ -32,8 +33,12 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
       print("📝 [MHP PROFILE FORM] [CONTROLLER GETTER] Controller not found, creating new one. Error: $e");
       try {
         final createMhpProfile = sl<CreateMhpProfile>();
-        print("✅ [MHP PROFILE FORM] [CONTROLLER GETTER] CreateMhpProfile retrieved from service locator");
-        final newController = UserProfileController(createMhpProfile: createMhpProfile);
+        final s3UploadService = sl<S3UploadService>();
+        print("✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Dependencies retrieved from service locator");
+        final newController = UserProfileController(
+          createMhpProfile: createMhpProfile,
+          s3UploadService: s3UploadService,
+        );
         final registeredController = Get.put(
           newController,
           tag: 'UserProfileController',
@@ -43,7 +48,11 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
         return registeredController;
       } catch (slError) {
         print("❌ [MHP PROFILE FORM] [CONTROLLER GETTER] Error getting CreateMhpProfile: $slError");
-        final fallbackController = UserProfileController(createMhpProfile: null);
+        final s3UploadService = sl<S3UploadService>();
+        final fallbackController = UserProfileController(
+          createMhpProfile: null,
+          s3UploadService: s3UploadService,
+        );
         final registeredController = Get.put(
           fallbackController,
           tag: 'UserProfileController',
@@ -65,7 +74,9 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
     try {
       print("🔍 [MHP PROFILE FORM] [INIT STATE] Initializing controller...");
       final ctrl = controller;
+      ctrl.role.value = role; // Set role on controller for S3 uploads
       print("✅ [MHP PROFILE FORM] [INIT STATE] Controller initialized: ${ctrl.hashCode}");
+      print("✅ [MHP PROFILE FORM] [INIT STATE] Controller role set to: ${ctrl.role.value}");
     } catch (e, stackTrace) {
       print("❌ [MHP PROFILE FORM] [INIT STATE] Error initializing controller: $e");
       print("📚 [MHP PROFILE FORM] [INIT STATE] Stack trace: $stackTrace");
@@ -138,9 +149,12 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
                       ProfileImagePicker(
                         role: "mhp", // 👈 send role down
                         onImagePicked: (file) async {
+                          print('📸 [MHP PROFILE FORM] Image picked: ${file.path}');
                           controller.selectedImage.value = file;
-                          // Save image path to cache (you may need to upload and get path)
-                          controller.picturePath.value = file.path;
+                          // Don't set picturePath here - it will be set after S3 upload
+                          // Clear any previous S3 path so upload will trigger
+                          controller.picturePath.value = '';
+                          print('✅ [MHP PROFILE FORM] Image selected, will upload to S3 on profile creation');
                           await controller.saveToCache();
                         },
                       ),

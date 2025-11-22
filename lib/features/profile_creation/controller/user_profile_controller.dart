@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:get/get.dart';
 import '../../../core/error/exceptions.dart';
 import '../../../core/storage/mhp_profile_cache.dart';
+import '../../../core/services/s3_upload_service.dart';
 import '../domain/usecases/create_mhp_profile.dart';
 import '../domain/usecases/create_user_profile.dart';
 
@@ -35,11 +36,19 @@ class UserProfileController extends GetxController {
   // API related
   final CreateMhpProfile? createMhpProfile;
   final CreateUserProfile? createUserProfile;
+  final S3UploadService? s3UploadService;
+  var role = 'user'.obs; // Current role: 'user' or 'mhp'
   var isLoading = false.obs;
   var message = ''.obs;
   var errorMessage = ''.obs;
+  var uploadProgress = 0.0.obs; // Upload progress (0.0 to 1.0)
+  var isUploading = false.obs; // Whether file is currently uploading
 
-  UserProfileController({this.createMhpProfile, this.createUserProfile});
+  UserProfileController({
+    this.createMhpProfile,
+    this.createUserProfile,
+    this.s3UploadService,
+  });
 
   /// Pick a PDF or document file
   Future<void> pickDegreeFile() async {
@@ -60,17 +69,12 @@ class UserProfileController extends GetxController {
 
         selectedDegreeFile.value = file;
 
-        // Set degreePath to the file path
-        if (file.path != null) {
-          degreePath.value = file.path!;
-          print('✅ [PICK DEGREE FILE] degreePath set to: ${degreePath.value}');
-        } else {
-          // For web or if path is null, use the file name
-          degreePath.value = '/${file.name}';
-          print(
-            '✅ [PICK DEGREE FILE] degreePath set to file name: ${degreePath.value}',
-          );
-        }
+        // Don't set degreePath here - it will be set after S3 upload
+        // Clear any previous S3 path so upload will trigger
+        degreePath.value = '';
+        print(
+          '✅ [PICK DEGREE FILE] File selected, will upload to S3 on profile creation',
+        );
 
         update(); // Notify listeners
       } else {
@@ -153,6 +157,104 @@ class UserProfileController extends GetxController {
     }
   }
 
+  /// Upload profile picture to S3
+  /// role: 'user' or 'mhp' to determine file type (user_profile_pic or mhp_profile_pic)
+  Future<String?> uploadProfilePicture(
+    File imageFile, {
+    String? roleOverride,
+  }) async {
+    if (s3UploadService == null) {
+      print('❌ [UPLOAD PROFILE PICTURE] S3UploadService is null!');
+      errorMessage.value = 'File upload service not available';
+      return null;
+    }
+
+    try {
+      print('🚀 [UPLOAD PROFILE PICTURE] Starting upload...');
+      isUploading.value = true;
+      uploadProgress.value = 0.0;
+      errorMessage.value = '';
+
+      // Use roleOverride if provided, otherwise use controller's role
+      final uploadRole = roleOverride ?? role.value;
+      print('   - Role: $uploadRole');
+
+      final s3Path = await s3UploadService!.uploadFile(
+        file: imageFile,
+        isProfilePicture: true,
+        role: uploadRole,
+        onProgress: (progress) {
+          uploadProgress.value = progress;
+          print(
+            '📊 [UPLOAD PROFILE PICTURE] Progress: ${(progress * 100).toStringAsFixed(1)}%',
+          );
+        },
+      );
+
+      print('✅ [UPLOAD PROFILE PICTURE] Upload successful: $s3Path');
+      picturePath.value = s3Path;
+      isUploading.value = false;
+      uploadProgress.value = 1.0;
+      return s3Path;
+    } catch (e) {
+      print('❌ [UPLOAD PROFILE PICTURE] Error: $e');
+      errorMessage.value = 'Failed to upload profile picture: ${e.toString()}';
+      isUploading.value = false;
+      uploadProgress.value = 0.0;
+      return null;
+    }
+  }
+
+  /// Upload degree certificate to S3
+  /// customFileType: One of the valid backend file types
+  /// Default: 'degree' (maps to "mhp/degree/" path in S3)
+  Future<String?> uploadDegreeCertificate(
+    File certificateFile, {
+    String customFileType = 'degree',
+  }) async {
+    if (s3UploadService == null) {
+      print('❌ [UPLOAD DEGREE CERTIFICATE] S3UploadService is null!');
+      errorMessage.value = 'File upload service not available';
+      return null;
+    }
+
+    try {
+      print('🚀 [UPLOAD DEGREE CERTIFICATE] Starting upload...');
+      isUploading.value = true;
+      uploadProgress.value = 0.0;
+      errorMessage.value = '';
+
+      // File type 'degree' maps to "mhp/degree/" path in S3 bucket
+      // Available types: company_logo, video_thumbnail, additional_images, ml_file,
+      // ml_jd, invoice, blog_media, masked_cv, smarthire_audio_file, cv_analysis,
+      // degree, custom_jd, pool_jd, applicant_invoice
+      final s3Path = await s3UploadService!.uploadFile(
+        file: certificateFile,
+        isProfilePicture: false,
+        customFileType: customFileType,
+        onProgress: (progress) {
+          uploadProgress.value = progress;
+          print(
+            '📊 [UPLOAD DEGREE CERTIFICATE] Progress: ${(progress * 100).toStringAsFixed(1)}%',
+          );
+        },
+      );
+
+      print('✅ [UPLOAD DEGREE CERTIFICATE] Upload successful: $s3Path');
+      degreePath.value = s3Path;
+      isUploading.value = false;
+      uploadProgress.value = 1.0;
+      return s3Path;
+    } catch (e) {
+      print('❌ [UPLOAD DEGREE CERTIFICATE] Error: $e');
+      errorMessage.value =
+          'Failed to upload degree certificate: ${e.toString()}';
+      isUploading.value = false;
+      uploadProgress.value = 0.0;
+      return null;
+    }
+  }
+
   /// Create MHP profile via API
   Future<bool> createProfile() async {
     print('🚀 [CREATE PROFILE] Starting profile creation...');
@@ -194,6 +296,70 @@ class UserProfileController extends GetxController {
     }
 
     try {
+      // Upload profile picture if selected
+      print('🔍 [CREATE PROFILE] Checking if profile picture needs upload...');
+      print('   - selectedImage.value: ${selectedImage.value?.path ?? "null"}');
+      print('   - picturePath.value: "${picturePath.value}"');
+      print('   - picturePath.value.isEmpty: ${picturePath.value.isEmpty}');
+
+      if (selectedImage.value != null) {
+        // Check if already uploaded (has S3 path) or needs upload
+        if (picturePath.value.isEmpty || !picturePath.value.startsWith('/')) {
+          print('📸 [CREATE PROFILE] Profile picture needs upload to S3...');
+          final uploadedPath = await uploadProfilePicture(selectedImage.value!);
+          if (uploadedPath == null) {
+            print('❌ [CREATE PROFILE] Profile picture upload failed');
+            return false;
+          }
+          print('✅ [CREATE PROFILE] Profile picture uploaded: $uploadedPath');
+        } else {
+          print(
+            'ℹ️ [CREATE PROFILE] Profile picture already uploaded: ${picturePath.value}',
+          );
+        }
+      } else {
+        print('ℹ️ [CREATE PROFILE] No profile picture selected');
+      }
+
+      // Upload degree certificate if selected
+      print(
+        '🔍 [CREATE PROFILE] Checking if degree certificate needs upload...',
+      );
+      print(
+        '   - selectedDegreeFile.value: ${selectedDegreeFile.value?.path ?? "null"}',
+      );
+      print('   - degreePath.value: "${degreePath.value}"');
+      print('   - degreePath.value.isEmpty: ${degreePath.value.isEmpty}');
+
+      if (selectedDegreeFile.value != null &&
+          selectedDegreeFile.value!.path != null) {
+        // Check if already uploaded (has S3 path) or needs upload
+        // S3 paths typically start with '/' and don't contain '/tmp/' or '/private/'
+        final isLocalPath =
+            degreePath.value.contains('/tmp/') ||
+            degreePath.value.contains('/private/') ||
+            degreePath.value.contains('Containers/Data/Application/');
+
+        if (degreePath.value.isEmpty || isLocalPath) {
+          print('📄 [CREATE PROFILE] Degree certificate needs upload to S3...');
+          final certificateFile = File(selectedDegreeFile.value!.path!);
+          final uploadedPath = await uploadDegreeCertificate(certificateFile);
+          if (uploadedPath == null) {
+            print('❌ [CREATE PROFILE] Degree certificate upload failed');
+            return false;
+          }
+          print(
+            '✅ [CREATE PROFILE] Degree certificate uploaded: $uploadedPath',
+          );
+        } else {
+          print(
+            'ℹ️ [CREATE PROFILE] Degree certificate already uploaded: ${degreePath.value}',
+          );
+        }
+      } else {
+        print('ℹ️ [CREATE PROFILE] No degree certificate selected');
+      }
+
       print('🔍 [CREATE PROFILE] Getting cached data...');
       final cachedData = await MhpProfileCache.getProfileData();
       print('✅ [CREATE PROFILE] Cached data retrieved: $cachedData');
@@ -373,6 +539,37 @@ class UserProfileController extends GetxController {
     }
 
     try {
+      // Upload profile picture if selected
+      print(
+        '🔍 [CREATE USER PROFILE] Checking if profile picture needs upload...',
+      );
+      print('   - selectedImage.value: ${selectedImage.value?.path ?? "null"}');
+      print('   - picturePath.value: "${picturePath.value}"');
+      print('   - picturePath.value.isEmpty: ${picturePath.value.isEmpty}');
+
+      if (selectedImage.value != null) {
+        // Check if already uploaded (has S3 path) or needs upload
+        if (picturePath.value.isEmpty || !picturePath.value.startsWith('/')) {
+          print(
+            '📸 [CREATE USER PROFILE] Profile picture needs upload to S3...',
+          );
+          final uploadedPath = await uploadProfilePicture(selectedImage.value!);
+          if (uploadedPath == null) {
+            print('❌ [CREATE USER PROFILE] Profile picture upload failed');
+            return false;
+          }
+          print(
+            '✅ [CREATE USER PROFILE] Profile picture uploaded: $uploadedPath',
+          );
+        } else {
+          print(
+            'ℹ️ [CREATE USER PROFILE] Profile picture already uploaded: ${picturePath.value}',
+          );
+        }
+      } else {
+        print('ℹ️ [CREATE USER PROFILE] No profile picture selected');
+      }
+
       print('🔍 [CREATE USER PROFILE] Accessing form fields...');
 
       print('   - Accessing username...');

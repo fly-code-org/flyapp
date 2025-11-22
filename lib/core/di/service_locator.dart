@@ -22,6 +22,11 @@ import '../../features/profile_creation/domain/repositories/mhp_profile_reposito
 import '../../features/profile_creation/domain/repositories/user_profile_repository.dart';
 import '../../features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import '../../features/profile_creation/domain/usecases/create_user_profile.dart';
+import '../../features/file_upload/data/datasources/upload_remote_data_source.dart';
+import '../../features/file_upload/data/repositories/upload_repository_impl.dart';
+import '../../features/file_upload/domain/repositories/upload_repository.dart';
+import '../../features/file_upload/domain/usecases/get_presigned_url.dart';
+import '../services/s3_upload_service.dart';
 
 final sl = GetIt.instance;
 
@@ -96,6 +101,23 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<UserProfileRemoteDataSource>(
     () => UserProfileRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  //! Features - File Upload
+  // Services
+  sl.registerLazySingleton(() => S3UploadService(getPresignedUrl: sl()));
+
+  // Use cases
+  sl.registerLazySingleton(() => GetPresignedUrl(sl()));
+
+  // Repository
+  sl.registerLazySingleton<UploadRepository>(
+    () => UploadRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<UploadRemoteDataSource>(
+    () => UploadRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Core

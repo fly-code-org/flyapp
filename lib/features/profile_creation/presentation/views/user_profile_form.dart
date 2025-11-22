@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/input_field.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/bio_input_field.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/dob_input_field.dart';
@@ -32,10 +33,14 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
       return foundController;
     } catch (e) {
       print("📝 [USER PROFILE FORM] [CONTROLLER GETTER] Controller not found, creating new one. Error: $e");
-      try {
-        final createUserProfile = sl<CreateUserProfile>();
-        print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] CreateUserProfile retrieved from service locator");
-        final newController = UserProfileController(createUserProfile: createUserProfile);
+        try {
+          final createUserProfile = sl<CreateUserProfile>();
+          final s3UploadService = sl<S3UploadService>();
+          print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Dependencies retrieved from service locator");
+          final newController = UserProfileController(
+            createUserProfile: createUserProfile,
+            s3UploadService: s3UploadService,
+          );
         final registeredController = Get.put(
           newController,
           tag: 'UserProfileController',
@@ -45,7 +50,11 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
         return registeredController;
       } catch (slError) {
         print("❌ [USER PROFILE FORM] [CONTROLLER GETTER] Error getting CreateUserProfile: $slError");
-        final fallbackController = UserProfileController(createUserProfile: null);
+          final s3UploadService = sl<S3UploadService>();
+          final fallbackController = UserProfileController(
+            createUserProfile: null,
+            s3UploadService: s3UploadService,
+          );
         final registeredController = Get.put(
           fallbackController,
           tag: 'UserProfileController',
@@ -67,7 +76,9 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
     try {
       print("🔍 [USER PROFILE FORM] [INIT STATE] Initializing controller...");
       final ctrl = controller;
+      ctrl.role.value = role; // Set role on controller for S3 uploads
       print("✅ [USER PROFILE FORM] [INIT STATE] Controller initialized: ${ctrl.hashCode}");
+      print("✅ [USER PROFILE FORM] [INIT STATE] Controller role set to: ${ctrl.role.value}");
     } catch (e, stackTrace) {
       print("❌ [USER PROFILE FORM] [INIT STATE] Error initializing controller: $e");
       print("📚 [USER PROFILE FORM] [INIT STATE] Stack trace: $stackTrace");
@@ -146,9 +157,10 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                               onImagePicked: (file) {
                                 print('📸 [USER PROFILE FORM] Image picked: ${file.path}');
                                 ctrl.selectedImage.value = file;
-                                // Set picture_path for API
-                                ctrl.picturePath.value = file.path;
-                                print('✅ [USER PROFILE FORM] picturePath set to: ${ctrl.picturePath.value}');
+                                // Don't set picturePath here - it will be set after S3 upload
+                                // Clear any previous S3 path so upload will trigger
+                                ctrl.picturePath.value = '';
+                                print('✅ [USER PROFILE FORM] Image selected, will upload to S3 on profile creation');
                               },
                             );
                           } catch (e) {

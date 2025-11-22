@@ -4,6 +4,7 @@ import 'package:fly/features/profile_creation/presentation/widgets/select_pill_l
 import 'package:fly/features/profile_creation/presentation/widgets/time_field.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import 'package:get/get.dart';
@@ -25,37 +26,69 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
     try {
       // Try to find existing controller
       print("🔍 [CONTROLLER GETTER] Attempting to find existing controller...");
-      final foundController = Get.find<UserProfileController>(tag: 'UserProfileController');
-      print("✅ [CONTROLLER GETTER] Found existing controller: ${foundController.hashCode}");
-      print("🔍 [CONTROLLER GETTER] Controller createMhpProfile: ${foundController.createMhpProfile != null}");
+      final foundController = Get.find<UserProfileController>(
+        tag: 'UserProfileController',
+      );
+      print(
+        "✅ [CONTROLLER GETTER] Found existing controller: ${foundController.hashCode}",
+      );
+      print(
+        "🔍 [CONTROLLER GETTER] Controller createMhpProfile: ${foundController.createMhpProfile != null}",
+      );
       return foundController;
     } catch (e) {
       // If not found, create a new one
-      print("📝 [CONTROLLER GETTER] Controller not found, creating new one. Error: $e");
+      print(
+        "📝 [CONTROLLER GETTER] Controller not found, creating new one. Error: $e",
+      );
       try {
-        print("🔍 [CONTROLLER GETTER] Accessing service locator for CreateMhpProfile...");
+        print(
+          "🔍 [CONTROLLER GETTER] Accessing service locator for dependencies...",
+        );
         final createMhpProfile = sl<CreateMhpProfile>();
-        print("✅ [CONTROLLER GETTER] CreateMhpProfile retrieved from service locator: ${createMhpProfile.hashCode}");
-        final newController = UserProfileController(createMhpProfile: createMhpProfile);
-        print("✅ [CONTROLLER GETTER] New controller created: ${newController.hashCode}");
+        final s3UploadService = sl<S3UploadService>();
+        print(
+          "✅ [CONTROLLER GETTER] Dependencies retrieved from service locator",
+        );
+        final newController = UserProfileController(
+          createMhpProfile: createMhpProfile,
+          s3UploadService: s3UploadService,
+        );
+        print(
+          "✅ [CONTROLLER GETTER] New controller created: ${newController.hashCode}",
+        );
         final registeredController = Get.put(
           newController,
           tag: 'UserProfileController',
           permanent: false,
         );
-        print("✅ [CONTROLLER GETTER] Controller registered with GetX: ${registeredController.hashCode}");
+        print(
+          "✅ [CONTROLLER GETTER] Controller registered with GetX: ${registeredController.hashCode}",
+        );
         return registeredController;
       } catch (slError) {
-        print("❌ [CONTROLLER GETTER] Error getting CreateMhpProfile from service locator: $slError");
-        print("📝 [CONTROLLER GETTER] Creating fallback controller without use case...");
-        final fallbackController = UserProfileController(createMhpProfile: null);
-        print("✅ [CONTROLLER GETTER] Fallback controller created: ${fallbackController.hashCode}");
+        print(
+          "❌ [CONTROLLER GETTER] Error getting CreateMhpProfile from service locator: $slError",
+        );
+        print(
+          "📝 [CONTROLLER GETTER] Creating fallback controller without use case...",
+        );
+        final s3UploadService = sl<S3UploadService>();
+        final fallbackController = UserProfileController(
+          createMhpProfile: null,
+          s3UploadService: s3UploadService,
+        );
+        print(
+          "✅ [CONTROLLER GETTER] Fallback controller created: ${fallbackController.hashCode}",
+        );
         final registeredController = Get.put(
           fallbackController,
           tag: 'UserProfileController',
           permanent: false,
         );
-        print("✅ [CONTROLLER GETTER] Fallback controller registered: ${registeredController.hashCode}");
+        print(
+          "✅ [CONTROLLER GETTER] Fallback controller registered: ${registeredController.hashCode}",
+        );
         return registeredController;
       }
     }
@@ -71,7 +104,11 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
     try {
       print("🔍 [INIT STATE] Initializing controller...");
       final ctrl = controller;
-      print("✅ [INIT STATE] Controller initialized successfully: ${ctrl.hashCode}");
+      ctrl.role.value = role; // Set role on controller for S3 uploads
+      print(
+        "✅ [INIT STATE] Controller initialized successfully: ${ctrl.hashCode}",
+      );
+      print("✅ [INIT STATE] Controller role set to: ${ctrl.role.value}");
       print("🔍 [INIT STATE] Checking controller properties...");
       print("   - isLoading: ${ctrl.isLoading.value}");
       print("   - message: ${ctrl.message.value}");
@@ -223,106 +260,161 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                       const SizedBox(height: 20),
                       Builder(
                         builder: (context) {
-                          print("🔍 [BUTTON BUILDER] Building button widget...");
+                          print(
+                            "🔍 [BUTTON BUILDER] Building button widget...",
+                          );
                           try {
-                            print("🔍 [BUTTON BUILDER] Accessing controller...");
-                            final ctrl = controller;
-                            print("✅ [BUTTON BUILDER] Controller accessed: ${ctrl.hashCode}");
-                            return Obx(
-                              () {
-                                print("🔍 [OBX] Rebuilding button widget...");
-                                try {
-                                  print("🔍 [OBX] Accessing ctrl.isLoading...");
-                                  final isLoadingValue = ctrl.isLoading.value;
-                                  print("✅ [OBX] isLoading.value = $isLoadingValue");
-                                  final buttonText = isLoadingValue
-                                      ? "Creating Profile..."
-                                      : "Verify and Continue";
-                                  print("✅ [OBX] Button text: $buttonText");
-                                  
-                                  return GradientButton(
-                                    text: buttonText,
-                                    onPressed: isLoadingValue
-                                        ? () {
-                                            print("⏸️ [BUTTON] Button disabled (loading)");
-                                          }
-                                        : () async {
-                                            print("🚀 [BUTTON] Button pressed - starting profile creation");
-                                            try {
-                                              print("🔍 [BUTTON] Step 1: Saving to cache...");
-                                              await ctrl.saveToCache();
-                                              print("✅ [BUTTON] Step 1 completed: Cache saved");
-
-                                              print("🔍 [BUTTON] Step 2: Calling createProfile API...");
-                                              final success = await ctrl.createProfile();
-                                              print("✅ [BUTTON] Step 2 completed: createProfile returned: $success");
-
-                                              print("🔍 [BUTTON] Step 3: Checking success and message...");
-                                              print("   - success: $success");
-                                              print("   - message.value: ${ctrl.message.value}");
-                                              print("   - message.value.isNotEmpty: ${ctrl.message.value.isNotEmpty}");
-                                              
-                                              if (success && ctrl.message.value.isNotEmpty) {
-                                                print("✅ [BUTTON] Profile created successfully, navigating to quiz...");
-                                                // Navigate to quiz only on success
-                                                Get.toNamed(
-                                                  '/intro-quiz',
-                                                  arguments: {'role': role},
-                                                );
-                                                print("✅ [BUTTON] Navigation completed");
-                                              } else {
-                                                print("🔍 [BUTTON] Checking error message...");
-                                                print("   - errorMessage.value: ${ctrl.errorMessage.value}");
-                                                print("   - errorMessage.value.isNotEmpty: ${ctrl.errorMessage.value.isNotEmpty}");
-                                                
-                                                if (ctrl.errorMessage.value.isNotEmpty) {
-                                                  print("❌ [BUTTON] Showing error message: ${ctrl.errorMessage.value}");
-                                                  // Show error message
-                                                  Get.snackbar(
-                                                    'Error',
-                                                    ctrl.errorMessage.value,
-                                                    snackPosition: SnackPosition.BOTTOM,
-                                                    backgroundColor: Colors.red,
-                                                    colorText: Colors.white,
-                                                  );
-                                                } else {
-                                                  print("⚠️ [BUTTON] No success and no error message");
-                                                }
-                                              }
-                                            } catch (e, stackTrace) {
-                                              print("❌ [BUTTON] Error in button handler: $e");
-                                              print("📚 [BUTTON] Stack trace: $stackTrace");
-                                              Get.snackbar(
-                                                'Error',
-                                                'An unexpected error occurred: $e',
-                                                snackPosition: SnackPosition.BOTTOM,
-                                                backgroundColor: Colors.red,
-                                                colorText: Colors.white,
-                                              );
-                                            }
-                                          },
-                                  );
-                                } catch (e, stackTrace) {
-                                  print("❌ [OBX] Error accessing controller properties: $e");
-                                  print("📚 [OBX] Stack trace: $stackTrace");
-                                  return GradientButton(
-                                    text: "Error Loading...",
-                                    onPressed: () {
-                                      Get.snackbar(
-                                        'Error',
-                                        'Controller property access error: $e',
-                                        snackPosition: SnackPosition.BOTTOM,
-                                        backgroundColor: Colors.red,
-                                        colorText: Colors.white,
-                                      );
-                                    },
-                                  );
-                                }
-                              },
+                            print(
+                              "🔍 [BUTTON BUILDER] Accessing controller...",
                             );
+                            final ctrl = controller;
+                            print(
+                              "✅ [BUTTON BUILDER] Controller accessed: ${ctrl.hashCode}",
+                            );
+                            return Obx(() {
+                              print("🔍 [OBX] Rebuilding button widget...");
+                              try {
+                                print("🔍 [OBX] Accessing ctrl.isLoading...");
+                                final isLoadingValue = ctrl.isLoading.value;
+                                print(
+                                  "✅ [OBX] isLoading.value = $isLoadingValue",
+                                );
+                                final buttonText = isLoadingValue
+                                    ? "Creating Profile..."
+                                    : "Verify and Continue";
+                                print("✅ [OBX] Button text: $buttonText");
+
+                                return GradientButton(
+                                  text: buttonText,
+                                  onPressed: isLoadingValue
+                                      ? () {
+                                          print(
+                                            "⏸️ [BUTTON] Button disabled (loading)",
+                                          );
+                                        }
+                                      : () async {
+                                          print(
+                                            "🚀 [BUTTON] Button pressed - starting profile creation",
+                                          );
+                                          try {
+                                            print(
+                                              "🔍 [BUTTON] Step 1: Saving to cache...",
+                                            );
+                                            await ctrl.saveToCache();
+                                            print(
+                                              "✅ [BUTTON] Step 1 completed: Cache saved",
+                                            );
+
+                                            print(
+                                              "🔍 [BUTTON] Step 2: Calling createProfile API...",
+                                            );
+                                            final success = await ctrl
+                                                .createProfile();
+                                            print(
+                                              "✅ [BUTTON] Step 2 completed: createProfile returned: $success",
+                                            );
+
+                                            print(
+                                              "🔍 [BUTTON] Step 3: Checking success and message...",
+                                            );
+                                            print("   - success: $success");
+                                            print(
+                                              "   - message.value: ${ctrl.message.value}",
+                                            );
+                                            print(
+                                              "   - message.value.isNotEmpty: ${ctrl.message.value.isNotEmpty}",
+                                            );
+
+                                            if (success &&
+                                                ctrl.message.value.isNotEmpty) {
+                                              print(
+                                                "✅ [BUTTON] Profile created successfully, navigating to quiz...",
+                                              );
+                                              // Navigate to quiz only on success
+                                              Get.toNamed(
+                                                '/intro-quiz',
+                                                arguments: {'role': role},
+                                              );
+                                              print(
+                                                "✅ [BUTTON] Navigation completed",
+                                              );
+                                            } else {
+                                              print(
+                                                "🔍 [BUTTON] Checking error message...",
+                                              );
+                                              print(
+                                                "   - errorMessage.value: ${ctrl.errorMessage.value}",
+                                              );
+                                              print(
+                                                "   - errorMessage.value.isNotEmpty: ${ctrl.errorMessage.value.isNotEmpty}",
+                                              );
+
+                                              if (ctrl
+                                                  .errorMessage
+                                                  .value
+                                                  .isNotEmpty) {
+                                                print(
+                                                  "❌ [BUTTON] Showing error message: ${ctrl.errorMessage.value}",
+                                                );
+                                                // Show error message
+                                                Get.snackbar(
+                                                  'Error',
+                                                  ctrl.errorMessage.value,
+                                                  snackPosition:
+                                                      SnackPosition.BOTTOM,
+                                                  backgroundColor: Colors.red,
+                                                  colorText: Colors.white,
+                                                );
+                                              } else {
+                                                print(
+                                                  "⚠️ [BUTTON] No success and no error message",
+                                                );
+                                              }
+                                            }
+                                          } catch (e, stackTrace) {
+                                            print(
+                                              "❌ [BUTTON] Error in button handler: $e",
+                                            );
+                                            print(
+                                              "📚 [BUTTON] Stack trace: $stackTrace",
+                                            );
+                                            Get.snackbar(
+                                              'Error',
+                                              'An unexpected error occurred: $e',
+                                              snackPosition:
+                                                  SnackPosition.BOTTOM,
+                                              backgroundColor: Colors.red,
+                                              colorText: Colors.white,
+                                            );
+                                          }
+                                        },
+                                );
+                              } catch (e, stackTrace) {
+                                print(
+                                  "❌ [OBX] Error accessing controller properties: $e",
+                                );
+                                print("📚 [OBX] Stack trace: $stackTrace");
+                                return GradientButton(
+                                  text: "Error Loading...",
+                                  onPressed: () {
+                                    Get.snackbar(
+                                      'Error',
+                                      'Controller property access error: $e',
+                                      snackPosition: SnackPosition.BOTTOM,
+                                      backgroundColor: Colors.red,
+                                      colorText: Colors.white,
+                                    );
+                                  },
+                                );
+                              }
+                            });
                           } catch (e, stackTrace) {
-                            print('❌ [BUTTON BUILDER] Error accessing controller: $e');
-                            print('📚 [BUTTON BUILDER] Stack trace: $stackTrace');
+                            print(
+                              '❌ [BUTTON BUILDER] Error accessing controller: $e',
+                            );
+                            print(
+                              '📚 [BUTTON BUILDER] Stack trace: $stackTrace',
+                            );
                             return GradientButton(
                               text: "Verify and Continue",
                               onPressed: () {
@@ -340,42 +432,64 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                       ),
                       Builder(
                         builder: (context) {
-                          print("🔍 [ERROR MESSAGE BUILDER] Building error message widget...");
+                          print(
+                            "🔍 [ERROR MESSAGE BUILDER] Building error message widget...",
+                          );
                           try {
-                            print("🔍 [ERROR MESSAGE BUILDER] Accessing controller...");
-                            final ctrl = controller;
-                            print("✅ [ERROR MESSAGE BUILDER] Controller accessed: ${ctrl.hashCode}");
-                            return Obx(
-                              () {
-                                print("🔍 [ERROR OBX] Rebuilding error message widget...");
-                                try {
-                                  print("🔍 [ERROR OBX] Accessing ctrl.errorMessage...");
-                                  final errorMsg = ctrl.errorMessage.value;
-                                  print("✅ [ERROR OBX] errorMessage.value = '$errorMsg'");
-                                  print("✅ [ERROR OBX] errorMessage.isNotEmpty = ${errorMsg.isNotEmpty}");
-                                  
-                                  return errorMsg.isNotEmpty
-                                      ? Padding(
-                                          padding: const EdgeInsets.only(top: 8.0),
-                                          child: Text(
-                                            errorMsg,
-                                            style: const TextStyle(
-                                              color: Colors.red,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        )
-                                      : const SizedBox();
-                                } catch (e, stackTrace) {
-                                  print("❌ [ERROR OBX] Error accessing errorMessage: $e");
-                                  print("📚 [ERROR OBX] Stack trace: $stackTrace");
-                                  return const SizedBox();
-                                }
-                              },
+                            print(
+                              "🔍 [ERROR MESSAGE BUILDER] Accessing controller...",
                             );
+                            final ctrl = controller;
+                            print(
+                              "✅ [ERROR MESSAGE BUILDER] Controller accessed: ${ctrl.hashCode}",
+                            );
+                            return Obx(() {
+                              print(
+                                "🔍 [ERROR OBX] Rebuilding error message widget...",
+                              );
+                              try {
+                                print(
+                                  "🔍 [ERROR OBX] Accessing ctrl.errorMessage...",
+                                );
+                                final errorMsg = ctrl.errorMessage.value;
+                                print(
+                                  "✅ [ERROR OBX] errorMessage.value = '$errorMsg'",
+                                );
+                                print(
+                                  "✅ [ERROR OBX] errorMessage.isNotEmpty = ${errorMsg.isNotEmpty}",
+                                );
+
+                                return errorMsg.isNotEmpty
+                                    ? Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 8.0,
+                                        ),
+                                        child: Text(
+                                          errorMsg,
+                                          style: const TextStyle(
+                                            color: Colors.red,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox();
+                              } catch (e, stackTrace) {
+                                print(
+                                  "❌ [ERROR OBX] Error accessing errorMessage: $e",
+                                );
+                                print(
+                                  "📚 [ERROR OBX] Stack trace: $stackTrace",
+                                );
+                                return const SizedBox();
+                              }
+                            });
                           } catch (e, stackTrace) {
-                            print("❌ [ERROR MESSAGE BUILDER] Error accessing controller: $e");
-                            print("📚 [ERROR MESSAGE BUILDER] Stack trace: $stackTrace");
+                            print(
+                              "❌ [ERROR MESSAGE BUILDER] Error accessing controller: $e",
+                            );
+                            print(
+                              "📚 [ERROR MESSAGE BUILDER] Stack trace: $stackTrace",
+                            );
                             return const SizedBox();
                           }
                         },

@@ -4,6 +4,7 @@ import 'package:fly/features/profile_creation/presentation/widgets/input_field.d
 import 'package:fly/features/profile_creation/presentation/widgets/list_input.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import 'package:fly/routes/app_routes.dart';
@@ -40,11 +41,13 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
       );
       try {
         final createMhpProfile = sl<CreateMhpProfile>();
+        final s3UploadService = sl<S3UploadService>();
         print(
-          "✅ [MHP MORE INFO] [CONTROLLER GETTER] CreateMhpProfile retrieved from service locator",
+          "✅ [MHP MORE INFO] [CONTROLLER GETTER] Dependencies retrieved from service locator",
         );
         final newController = UserProfileController(
           createMhpProfile: createMhpProfile,
+          s3UploadService: s3UploadService,
         );
         final registeredController = Get.put(
           newController,
@@ -59,8 +62,10 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
         print(
           "❌ [MHP MORE INFO] [CONTROLLER GETTER] Error getting CreateMhpProfile: $slError",
         );
+        final s3UploadService = sl<S3UploadService>();
         final fallbackController = UserProfileController(
           createMhpProfile: null,
+          s3UploadService: s3UploadService,
         );
         final registeredController = Get.put(
           fallbackController,
@@ -85,8 +90,12 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
     try {
       print("🔍 [MHP MORE INFO] [INIT STATE] Initializing controller...");
       final ctrl = controller;
+      ctrl.role.value = role; // Set role on controller for S3 uploads
       print(
         "✅ [MHP MORE INFO] [INIT STATE] Controller initialized: ${ctrl.hashCode}",
+      );
+      print(
+        "✅ [MHP MORE INFO] [INIT STATE] Controller role set to: ${ctrl.role.value}",
       );
     } catch (e, stackTrace) {
       print("❌ [MHP MORE INFO] [INIT STATE] Error initializing controller: $e");
