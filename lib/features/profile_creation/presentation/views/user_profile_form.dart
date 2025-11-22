@@ -1,13 +1,13 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/input_field.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
+import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/bio_input_field.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/dob_input_field.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/profile_picture_picker.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/user_name_input_field.dart';
+import 'package:fly/features/profile_creation/domain/usecases/create_user_profile.dart';
 import 'package:get/get.dart';
 
 class CreateUserProfileScreen extends StatefulWidget {
@@ -19,12 +19,60 @@ class CreateUserProfileScreen extends StatefulWidget {
 }
 
 class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
-  final UserProfileController controller = Get.put(UserProfileController());
   double _dragPosition = 0.8;
+  late final String role;
+
+  // Get controller safely - finds existing or creates new
+  UserProfileController get controller {
+    print("🔍 [USER PROFILE FORM] [CONTROLLER GETTER] Accessing controller...");
+    try {
+      print("🔍 [USER PROFILE FORM] [CONTROLLER GETTER] Attempting to find existing controller...");
+      final foundController = Get.find<UserProfileController>(tag: 'UserProfileController');
+      print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Found existing controller: ${foundController.hashCode}");
+      return foundController;
+    } catch (e) {
+      print("📝 [USER PROFILE FORM] [CONTROLLER GETTER] Controller not found, creating new one. Error: $e");
+      try {
+        final createUserProfile = sl<CreateUserProfile>();
+        print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] CreateUserProfile retrieved from service locator");
+        final newController = UserProfileController(createUserProfile: createUserProfile);
+        final registeredController = Get.put(
+          newController,
+          tag: 'UserProfileController',
+          permanent: false,
+        );
+        print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Controller registered: ${registeredController.hashCode}");
+        return registeredController;
+      } catch (slError) {
+        print("❌ [USER PROFILE FORM] [CONTROLLER GETTER] Error getting CreateUserProfile: $slError");
+        final fallbackController = UserProfileController(createUserProfile: null);
+        final registeredController = Get.put(
+          fallbackController,
+          tag: 'UserProfileController',
+          permanent: false,
+        );
+        print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Fallback controller registered: ${registeredController.hashCode}");
+        return registeredController;
+      }
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    print("🚀 [USER PROFILE FORM] [INIT STATE] initState started");
+    final args = Get.arguments;
+    role = (args?['role'] ?? 'user').toLowerCase();
+    print("✅ [USER PROFILE FORM] [INIT STATE] Role set to: $role");
+    try {
+      print("🔍 [USER PROFILE FORM] [INIT STATE] Initializing controller...");
+      final ctrl = controller;
+      print("✅ [USER PROFILE FORM] [INIT STATE] Controller initialized: ${ctrl.hashCode}");
+    } catch (e, stackTrace) {
+      print("❌ [USER PROFILE FORM] [INIT STATE] Error initializing controller: $e");
+      print("📚 [USER PROFILE FORM] [INIT STATE] Stack trace: $stackTrace");
+    }
+    print("✅ [USER PROFILE FORM] [INIT STATE] initState completed");
   }
 
   @override
@@ -89,27 +137,50 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                       const SizedBox(height: 30),
 
                       /// Profile Image Picker
-                      ProfileImagePicker(
-                        role: "user", // 👈 send role down
-                        onImagePicked: (file) {
-                          controller.selectedImage.value = file;
+                      Builder(
+                        builder: (context) {
+                          try {
+                            final ctrl = controller;
+                            return ProfileImagePicker(
+                              role: "user",
+                              onImagePicked: (file) {
+                                print('📸 [USER PROFILE FORM] Image picked: ${file.path}');
+                                ctrl.selectedImage.value = file;
+                                // Set picture_path for API
+                                ctrl.picturePath.value = file.path;
+                                print('✅ [USER PROFILE FORM] picturePath set to: ${ctrl.picturePath.value}');
+                              },
+                            );
+                          } catch (e) {
+                            print("❌ [USER PROFILE FORM] Error accessing controller: $e");
+                            return const SizedBox();
+                          }
                         },
                       ),
 
                       const SizedBox(height: 20),
 
                       /// Image Selected Text
-                      Obx(() {
-                        final image = controller.selectedImage.value;
-                        return image != null
-                            ? Center(
-                                child: Text(
-                                  "Image selected: ${image.path.split('/').last}",
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                              )
-                            : const SizedBox();
-                      }),
+                      Builder(
+                        builder: (context) {
+                          try {
+                            final ctrl = controller;
+                            return Obx(() {
+                              final image = ctrl.selectedImage.value;
+                              return image != null
+                                  ? Center(
+                                      child: Text(
+                                        "Image selected: ${image.path.split('/').last}",
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                    )
+                                  : const SizedBox();
+                            });
+                          } catch (e) {
+                            return const SizedBox();
+                          }
+                        },
+                      ),
 
                       const SizedBox(height: 30),
 
@@ -128,8 +199,23 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                       const SizedBox(height: 10),
 
                       /// Username Input Field
-                      CustomInputField(
-                        onChanged: (value) => controller.username.value = value,
+                      Builder(
+                        builder: (context) {
+                          try {
+                            final ctrl = controller;
+                            return CustomInputField(
+                              onChanged: (value) {
+                                print('👤 [USER PROFILE FORM] Username changed: $value');
+                                ctrl.username.value = value;
+                              },
+                            );
+                          } catch (e) {
+                            print("❌ [USER PROFILE FORM] Error accessing controller: $e");
+                            return CustomInputField(onChanged: (value) {
+                              // Empty handler for fallback
+                            });
+                          }
+                        },
                       ),
                       const SizedBox(height: 10),
                       const Text(
@@ -166,9 +252,27 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                       ),
 
                       const SizedBox(height: 10),
-                      CustomInputField(
-                        hintText: "Enter first name",
-                        onChanged: (value) => controller.username.value = value,
+                      Builder(
+                        builder: (context) {
+                          try {
+                            final ctrl = controller;
+                            return CustomInputField(
+                              hintText: "Enter first name",
+                              onChanged: (value) {
+                                print('👤 [USER PROFILE FORM] First name changed: $value');
+                                ctrl.firstName.value = value;
+                              },
+                            );
+                          } catch (e) {
+                            print("❌ [USER PROFILE FORM] Error accessing controller: $e");
+                            return CustomInputField(
+                              hintText: "Enter first name",
+                              onChanged: (value) {
+                                // Empty handler for fallback
+                              },
+                            );
+                          }
+                        },
                       ),
                       const SizedBox(height: 10),
                       const Text(
@@ -183,9 +287,27 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      CustomInputField(
-                        hintText: "Enter last name",
-                        onChanged: (value) => controller.username.value = value,
+                      Builder(
+                        builder: (context) {
+                          try {
+                            final ctrl = controller;
+                            return CustomInputField(
+                              hintText: "Enter last name",
+                              onChanged: (value) {
+                                print('👤 [USER PROFILE FORM] Last name changed: $value');
+                                ctrl.lastName.value = value;
+                              },
+                            );
+                          } catch (e) {
+                            print("❌ [USER PROFILE FORM] Error accessing controller: $e");
+                            return CustomInputField(
+                              hintText: "Enter last name",
+                              onChanged: (value) {
+                                // Empty handler for fallback
+                              },
+                            );
+                          }
+                        },
                       ),
                       const SizedBox(height: 10),
                       const Text(
@@ -200,9 +322,24 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      DOBInputField(
-                        onDateSelected: (dob) {
-                          print("Selected DOB: $dob");
+                      Builder(
+                        builder: (context) {
+                          try {
+                            final ctrl = controller;
+                            return DOBInputField(
+                              onDateSelected: (dob) {
+                                print('📅 [USER PROFILE FORM] DOB selected: $dob');
+                                // Convert DateTime to ISO string format
+                                ctrl.dateOfBirth.value = dob.toIso8601String();
+                                print('✅ [USER PROFILE FORM] dateOfBirth set to: ${ctrl.dateOfBirth.value}');
+                              },
+                            );
+                          } catch (e) {
+                            print("❌ [USER PROFILE FORM] Error accessing controller: $e");
+                            return DOBInputField(onDateSelected: (dob) {
+                              // Empty handler for fallback
+                            });
+                          }
                         },
                       ),
                       const SizedBox(height: 10),
@@ -218,9 +355,27 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      GeneralCustomInputField(
-                        hintText: "Type your mood",
-                        onChanged: (value) => controller.username.value = value,
+                      Builder(
+                        builder: (context) {
+                          try {
+                            final ctrl = controller;
+                            return GeneralCustomInputField(
+                              hintText: "Type your mood",
+                              onChanged: (value) {
+                                print('😊 [USER PROFILE FORM] Mood changed: $value');
+                                ctrl.mood.value = value;
+                              },
+                            );
+                          } catch (e) {
+                            print("❌ [USER PROFILE FORM] Error accessing controller: $e");
+                            return GeneralCustomInputField(
+                              hintText: "Type your mood",
+                              onChanged: (value) {
+                                // Empty handler for fallback
+                              },
+                            );
+                          }
+                        },
                       ),
                       const SizedBox(height: 10),
                       const Text(
@@ -235,20 +390,134 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      BioInputField(
-                        hintText: "Tell us something about yourself...",
-                        onChanged: (value) {
-                          print("Bio: $value");
+                      Builder(
+                        builder: (context) {
+                          try {
+                            final ctrl = controller;
+                            return BioInputField(
+                              hintText: "Tell us something about yourself...",
+                              onChanged: (value) {
+                                print('📝 [USER PROFILE FORM] Bio changed: $value');
+                                ctrl.bio.value = value;
+                              },
+                            );
+                          } catch (e) {
+                            print("❌ [USER PROFILE FORM] Error accessing controller: $e");
+                            return BioInputField(
+                              hintText: "Tell us something about yourself...",
+                              onChanged: (value) {
+                                // Empty handler for fallback
+                              },
+                            );
+                          }
                         },
                       ),
                       const SizedBox(height: 10),
-                      GradientButton(
-                        text: "Verify and Continue",
-                        onPressed: () {
-                          Get.toNamed(
-                            '/intro-quiz',
-                            arguments: {'role': "user"},
-                          );
+                      Builder(
+                        builder: (context) {
+                          try {
+                            final ctrl = controller;
+                            return Obx(
+                              () => Column(
+                                children: [
+                                  GradientButton(
+                                    text: ctrl.isLoading.value
+                                        ? "Creating Profile..."
+                                        : "Verify and Continue",
+                                    onPressed: ctrl.isLoading.value
+                                        ? () {}
+                                        : () async {
+                                            print("🚀 [USER PROFILE FORM] Button pressed - starting profile creation");
+                                            try {
+                                              // Validate required fields
+                                              if (ctrl.username.value.isEmpty) {
+                                                Get.snackbar(
+                                                  'Error',
+                                                  'Username is required',
+                                                  snackPosition: SnackPosition.BOTTOM,
+                                                  backgroundColor: Colors.red,
+                                                  colorText: Colors.white,
+                                                );
+                                                return;
+                                              }
+
+                                              print("🔍 [USER PROFILE FORM] Calling createUserProfileAPI...");
+                                              final success = await ctrl.createUserProfileAPI();
+
+                                              print("✅ [USER PROFILE FORM] createUserProfileAPI returned: $success");
+                                              print("   - success: $success");
+                                              print("   - message.value: ${ctrl.message.value}");
+                                              print("   - message.value.isNotEmpty: ${ctrl.message.value.isNotEmpty}");
+
+                                              if (success && ctrl.message.value.isNotEmpty) {
+                                                print("✅ [USER PROFILE FORM] Profile created successfully, navigating to quiz...");
+                                                // Navigate to quiz only on success
+                                                Get.toNamed(
+                                                  '/intro-quiz',
+                                                  arguments: {'role': role},
+                                                );
+                                                print("✅ [USER PROFILE FORM] Navigation completed");
+                                              } else {
+                                                print("🔍 [USER PROFILE FORM] Checking error message...");
+                                                print("   - errorMessage.value: ${ctrl.errorMessage.value}");
+                                                print("   - errorMessage.value.isNotEmpty: ${ctrl.errorMessage.value.isNotEmpty}");
+
+                                                if (ctrl.errorMessage.value.isNotEmpty) {
+                                                  print("❌ [USER PROFILE FORM] Showing error message: ${ctrl.errorMessage.value}");
+                                                  // Show error message
+                                                  Get.snackbar(
+                                                    'Error',
+                                                    ctrl.errorMessage.value,
+                                                    snackPosition: SnackPosition.BOTTOM,
+                                                    backgroundColor: Colors.red,
+                                                    colorText: Colors.white,
+                                                  );
+                                                } else {
+                                                  print("⚠️ [USER PROFILE FORM] No success and no error message");
+                                                }
+                                              }
+                                            } catch (e, stackTrace) {
+                                              print("❌ [USER PROFILE FORM] Error in button handler: $e");
+                                              print("📚 [USER PROFILE FORM] Stack trace: $stackTrace");
+                                              Get.snackbar(
+                                                'Error',
+                                                'An unexpected error occurred: $e',
+                                                snackPosition: SnackPosition.BOTTOM,
+                                                backgroundColor: Colors.red,
+                                                colorText: Colors.white,
+                                              );
+                                            }
+                                          },
+                                  ),
+                                  if (ctrl.errorMessage.value.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Text(
+                                        ctrl.errorMessage.value,
+                                        style: const TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          } catch (e) {
+                            print("❌ [USER PROFILE FORM] Error accessing controller: $e");
+                            return GradientButton(
+                              text: "Verify and Continue",
+                              onPressed: () {
+                                Get.snackbar(
+                                  'Error',
+                                  'Controller not available',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: Colors.red,
+                                  colorText: Colors.white,
+                                );
+                              },
+                            );
+                          }
                         },
                       ),
                     ],

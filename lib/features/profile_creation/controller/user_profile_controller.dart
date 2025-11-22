@@ -4,12 +4,13 @@ import 'package:get/get.dart';
 import '../../../core/error/exceptions.dart';
 import '../../../core/storage/mhp_profile_cache.dart';
 import '../domain/usecases/create_mhp_profile.dart';
+import '../domain/usecases/create_user_profile.dart';
 
 class UserProfileController extends GetxController {
   var username = ''.obs;
   var selectedImage = Rxn<File>();
 
-  // Profile form fields
+  // MHP Profile form fields
   var bio = ''.obs;
   var university = ''.obs;
   var degree = ''.obs;
@@ -22,13 +23,23 @@ class UserProfileController extends GetxController {
   var picturePath = ''.obs;
   var selectedDegreeFile = Rxn<PlatformFile>(); // Store selected file info
 
+  // User Profile form fields
+  var firstName = ''.obs;
+  var lastName = ''.obs;
+  var dateOfBirth = ''.obs;
+  var mood = ''.obs;
+  var followedInterests = <Map<String, String>>[].obs;
+  var activity = <Map<String, String>>[].obs;
+  var bookmarkedPosts = <Map<String, dynamic>>[].obs;
+
   // API related
   final CreateMhpProfile? createMhpProfile;
+  final CreateUserProfile? createUserProfile;
   var isLoading = false.obs;
   var message = ''.obs;
   var errorMessage = ''.obs;
 
-  UserProfileController({this.createMhpProfile});
+  UserProfileController({this.createMhpProfile, this.createUserProfile});
 
   /// Pick a PDF or document file
   Future<void> pickDegreeFile() async {
@@ -318,6 +329,155 @@ class UserProfileController extends GetxController {
         print('📚 [CREATE PROFILE] Stack trace: $stackTrace');
       }
       print('🏁 [CREATE PROFILE] Profile creation process completed');
+    }
+  }
+
+  /// Create User profile via API
+  Future<bool> createUserProfileAPI() async {
+    print('🚀 [CREATE USER PROFILE] Starting user profile creation...');
+    print(
+      '🔍 [CREATE USER PROFILE] Checking createUserProfile: ${createUserProfile != null}',
+    );
+    if (createUserProfile == null) {
+      print('❌ [CREATE USER PROFILE] createUserProfile is null!');
+      try {
+        errorMessage.value = 'Profile creation service not available';
+        print('✅ [CREATE USER PROFILE] Error message set');
+      } catch (e, stackTrace) {
+        print('❌ [CREATE USER PROFILE] Error setting errorMessage: $e');
+        print('📚 [CREATE USER PROFILE] Stack trace: $stackTrace');
+      }
+      return false;
+    }
+
+    try {
+      print('🔍 [CREATE USER PROFILE] Setting isLoading to true...');
+      isLoading.value = true;
+      print('✅ [CREATE USER PROFILE] isLoading set to true');
+
+      print('🔍 [CREATE USER PROFILE] Clearing errorMessage...');
+      errorMessage.value = '';
+      print('✅ [CREATE USER PROFILE] errorMessage cleared');
+
+      print('🔍 [CREATE USER PROFILE] Clearing message...');
+      message.value = '';
+      print('✅ [CREATE USER PROFILE] message cleared');
+
+      print('🔍 [CREATE USER PROFILE] Calling update()...');
+      update(); // Notify GetBuilder listeners
+      print('✅ [CREATE USER PROFILE] update() called');
+    } catch (e, stackTrace) {
+      print('❌ [CREATE USER PROFILE] Error setting initial state: $e');
+      print('📚 [CREATE USER PROFILE] Stack trace: $stackTrace');
+      rethrow;
+    }
+
+    try {
+      print('🔍 [CREATE USER PROFILE] Accessing form fields...');
+
+      print('   - Accessing username...');
+      final usernameValue = username.value;
+      print('   ✅ username.value = "$usernameValue"');
+
+      print('   - Accessing picturePath...');
+      final picPath = picturePath.value;
+      print('   ✅ picturePath.value = "$picPath"');
+
+      print('   - Accessing bio...');
+      final bioValue = bio.value;
+      print('   ✅ bio.value = "$bioValue"');
+
+      print('   - Accessing followedInterests...');
+      final interestsList = followedInterests.toList();
+      print('   ✅ followedInterests.toList() = $interestsList');
+
+      print('   - Accessing activity...');
+      final activityList = activity.toList();
+      print('   ✅ activity.toList() = $activityList');
+
+      print('   - Accessing bookmarkedPosts...');
+      final bookmarkedList = bookmarkedPosts.toList();
+      print('   ✅ bookmarkedPosts.toList() = $bookmarkedList');
+
+      // Build profile data for user profile API
+      final profileData = <String, dynamic>{
+        'username': usernameValue,
+        if (picPath.isNotEmpty) 'picture_path': picPath,
+        if (bioValue.isNotEmpty) 'bio': bioValue,
+        if (interestsList.isNotEmpty) 'followed_interests': interestsList,
+        if (activityList.isNotEmpty) 'activity': activityList,
+        if (bookmarkedList.isNotEmpty) 'bookmarked_posts': bookmarkedList,
+      };
+
+      print('✅ [CREATE USER PROFILE] Profile data map created: $profileData');
+      print('🚀 [CREATE USER PROFILE] Calling createUserProfile use case...');
+
+      final response = await createUserProfile!(profileData: profileData);
+
+      print('✅ [CREATE USER PROFILE] Profile created successfully');
+      print('📨 [CREATE USER PROFILE] Response message: ${response.message}');
+
+      print('🔍 [CREATE USER PROFILE] Setting message.value...');
+      message.value = response.message;
+      print('✅ [CREATE USER PROFILE] message.value set');
+
+      print('🔍 [CREATE USER PROFILE] Calling update()...');
+      update(); // Notify GetBuilder listeners
+      print('✅ [CREATE USER PROFILE] update() called');
+
+      print('✅ [CREATE USER PROFILE] Returning true');
+      return true;
+    } on ServerException catch (e) {
+      print('❌ [CREATE USER PROFILE] ServerException: ${e.message}');
+      try {
+        errorMessage.value = e.message;
+        update();
+      } catch (updateError, stackTrace) {
+        print(
+          '❌ [CREATE USER PROFILE] Error updating on ServerException: $updateError',
+        );
+        print('📚 [CREATE USER PROFILE] Stack trace: $stackTrace');
+      }
+      return false;
+    } on NetworkException catch (e) {
+      print('❌ [CREATE USER PROFILE] NetworkException: ${e.message}');
+      try {
+        errorMessage.value = e.message;
+        update();
+      } catch (updateError, stackTrace) {
+        print(
+          '❌ [CREATE USER PROFILE] Error updating on NetworkException: $updateError',
+        );
+        print('📚 [CREATE USER PROFILE] Stack trace: $stackTrace');
+      }
+      return false;
+    } catch (e, stackTrace) {
+      print('❌ [CREATE USER PROFILE] Unexpected error: $e');
+      print('📚 [CREATE USER PROFILE] Stack trace: $stackTrace');
+      try {
+        errorMessage.value = e.toString();
+        update();
+      } catch (updateError, updateStackTrace) {
+        print(
+          '❌ [CREATE USER PROFILE] Error updating on unexpected error: $updateError',
+        );
+        print('📚 [CREATE USER PROFILE] Update stack trace: $updateStackTrace');
+      }
+      return false;
+    } finally {
+      print(
+        '🔍 [CREATE USER PROFILE] Finally block - setting isLoading to false...',
+      );
+      try {
+        isLoading.value = false;
+        print('✅ [CREATE USER PROFILE] isLoading set to false');
+        update();
+        print('✅ [CREATE USER PROFILE] update() called in finally');
+      } catch (e, stackTrace) {
+        print('❌ [CREATE USER PROFILE] Error in finally block: $e');
+        print('📚 [CREATE USER PROFILE] Stack trace: $stackTrace');
+      }
+      print('🏁 [CREATE USER PROFILE] Profile creation process completed');
     }
   }
 }

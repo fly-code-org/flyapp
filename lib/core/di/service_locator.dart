@@ -15,9 +15,13 @@ import '../../features/user_verification/domain/usecases/verify_email.dart';
 import '../../features/user_verification/domain/usecases/verify_phone.dart';
 import '../../features/user_verification/presentation/controllers/verification_controller.dart';
 import '../../features/profile_creation/data/datasources/mhp_profile_remote_data_source.dart';
+import '../../features/profile_creation/data/datasources/user_profile_remote_data_source.dart';
 import '../../features/profile_creation/data/repositories/mhp_profile_repository_impl.dart';
+import '../../features/profile_creation/data/repositories/user_profile_repository_impl.dart';
 import '../../features/profile_creation/domain/repositories/mhp_profile_repository.dart';
+import '../../features/profile_creation/domain/repositories/user_profile_repository.dart';
 import '../../features/profile_creation/domain/usecases/create_mhp_profile.dart';
+import '../../features/profile_creation/domain/usecases/create_user_profile.dart';
 
 final sl = GetIt.instance;
 
@@ -66,7 +70,7 @@ Future<void> init() async {
     () => VerificationRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
-  //! Features - Profile Creation
+  //! Features - Profile Creation (MHP)
   // Use cases
   sl.registerLazySingleton(() => CreateMhpProfile(sl()));
 
@@ -78,6 +82,20 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<MhpProfileRemoteDataSource>(
     () => MhpProfileRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  //! Features - Profile Creation (User)
+  // Use cases
+  sl.registerLazySingleton(() => CreateUserProfile(sl()));
+
+  // Repository
+  sl.registerLazySingleton<UserProfileRepository>(
+    () => UserProfileRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<UserProfileRemoteDataSource>(
+    () => UserProfileRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Core
