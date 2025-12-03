@@ -84,11 +84,13 @@ class VerticalProgressBar extends StatelessWidget {
 class VerticalOptionsSelector extends StatefulWidget {
   final List<String> leftLabels;
   final List<String> rightLabels;
+  final Function(int index, String optionId)? onOptionSelected;
 
   const VerticalOptionsSelector({
     super.key,
     required this.leftLabels,
     required this.rightLabels,
+    this.onOptionSelected,
   });
 
   @override
@@ -103,6 +105,9 @@ class _VerticalOptionsSelectorState extends State<VerticalOptionsSelector> {
     setState(() {
       selectedIndex = (widget.leftLabels.length - 1) - visualIndex;
     });
+    if (widget.onOptionSelected != null && widget.leftLabels.isNotEmpty) {
+      widget.onOptionSelected!(selectedIndex, selectedIndex.toString());
+    }
   }
 
   @override

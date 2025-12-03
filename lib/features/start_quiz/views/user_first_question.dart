@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/quiz/presentation/controllers/quiz_controller.dart';
 import 'package:fly/features/start_quiz/widgets/gradient_button.dart';
 import 'package:fly/features/start_quiz/widgets/vertical_progress_bar.dart';
 import 'package:fly/routes/app_routes.dart';
@@ -15,15 +16,44 @@ class UserQuestionOneScreen extends StatefulWidget {
 class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
   double _dragPosition = 0.8;
   late final String role;
-
-  // Track which button text to show
-  bool _showSureLetsGo = true;
+  late final QuizController quizController;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     final args = Get.arguments ?? {};
     role = (args['role'] ?? 'user').toLowerCase();
+    
+    // Get or create QuizController
+    if (Get.isRegistered<QuizController>()) {
+      quizController = Get.find<QuizController>();
+      print("✅ [USER FIRST QUESTION] Found existing QuizController");
+    } else {
+      quizController = sl<QuizController>();
+      Get.put(quizController);
+      print("✅ [USER FIRST QUESTION] Created and registered new QuizController");
+    }
+    
+    _initializeQuestion();
+  }
+
+  Future<void> _initializeQuestion() async {
+    if (_isInitialized) return;
+    _isInitialized = true;
+    
+    await quizController.fetchQuestions(
+      category: role,
+      tags: ['first'],
+    );
+    
+    if (quizController.errorMessage.value.isNotEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(quizController.errorMessage.value)),
+        );
+      }
+    }
   }
 
   @override
@@ -74,39 +104,99 @@ class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
                   child: ListView(
                     controller: scrollController,
                     children: [
-                      AnimatedOpacity(
-                        opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 300),
-                        child: const Text(
-                          "What kind of support would you prefer when you're extremely upset?",
-                          style: TextStyle(
-                            fontFamily: 'Lexend',
-                            fontSize: 27,
-                            fontWeight: FontWeight.normal,
-                            // color: Color(0xFF8545E1),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-                      VerticalOptionsSelector(
-                        leftLabels: [
-                          "1:1 Sessions",
-                          "Interactive Workshops",
-                          "Group Discussions",
-                          "Content Sharing",
-                          "Self-Help Resources",
-                        ],
-                        rightLabels: ["🤩", "😀", "😊", "😐", "😟"],
-                      ),
-
-                      const SizedBox(height: 20),
-                      GradientButton(
-                        text: "Next >>>>",
-                        onPressed: () {
-                          Get.toNamed(AppRoutes.UserQuestion2);
-                        },
-                      ),
+                      Obx(() {
+                        final question = quizController.currentQuestion.value;
+                        final isLoading = quizController.isLoading.value;
+                        
+                        if (isLoading) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        
+                        if (question == null) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.0),
+                              child: Text('No question available'),
+                            ),
+                          );
+                        }
+                        
+                        final options = question.options;
+                        final leftLabels = options.map((opt) => opt.optionText).toList();
+                        final rightLabels = ["🤩", "😀", "😊", "😐", "😟"];
+                        
+                        // Adjust right labels to match left labels count
+                        final adjustedRightLabels = rightLabels.length >= leftLabels.length
+                            ? rightLabels.sublist(0, leftLabels.length)
+                            : [...rightLabels, ...List.filled(leftLabels.length - rightLabels.length, "😐")];
+                        
+                        return Column(
+                          children: [
+                            AnimatedOpacity(
+                              opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: Text(
+                                question.question,
+                                style: const TextStyle(
+                                  fontFamily: 'Lexend',
+                                  fontSize: 27,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            VerticalOptionsSelector(
+                              leftLabels: leftLabels,
+                              rightLabels: adjustedRightLabels,
+                              onOptionSelected: (index, _) {
+                                // VerticalOptionsSelector uses reversed index: 0 = bottom, length-1 = top
+                                // But our options array is in normal order: 0 = first option
+                                // So we need to reverse the index to match
+                                final reversedIndex = (options.length - 1) - index;
+                                if (reversedIndex >= 0 && reversedIndex < options.length) {
+                                  quizController.selectOption(options[reversedIndex].id);
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            Obx(() => GradientButton(
+                              text: quizController.isSubmitting.value
+                                  ? "Submitting..."
+                                  : "Next >>>>",
+                              onPressed: quizController.selectedOptionId.value.isEmpty ||
+                                      quizController.isSubmitting.value
+                                  ? () {
+                                      if (quizController.selectedOptionId.value.isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Please select an option'),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  : () {
+                                      quizController.submitCurrentAnswer().then((success) {
+                                        if (success) {
+                                          Get.toNamed(AppRoutes.UserQuestion2);
+                                        } else if (quizController.submitError.value.isNotEmpty) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(quizController.submitError.value),
+                                            ),
+                                          );
+                                        }
+                                      });
+                                    },
+                            )),
+                          ],
+                        );
+                      }),
                     ],
                   ),
                 ),

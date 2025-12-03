@@ -26,6 +26,12 @@ import '../../features/file_upload/data/datasources/upload_remote_data_source.da
 import '../../features/file_upload/data/repositories/upload_repository_impl.dart';
 import '../../features/file_upload/domain/repositories/upload_repository.dart';
 import '../../features/file_upload/domain/usecases/get_presigned_url.dart';
+import '../../features/quiz/data/datasources/quiz_remote_data_source.dart';
+import '../../features/quiz/data/repositories/quiz_repository_impl.dart';
+import '../../features/quiz/domain/repositories/quiz_repository.dart';
+import '../../features/quiz/domain/usecases/get_quiz_questions.dart';
+import '../../features/quiz/domain/usecases/submit_answer.dart';
+import '../../features/quiz/presentation/controllers/quiz_controller.dart';
 import '../services/s3_upload_service.dart';
 
 final sl = GetIt.instance;
@@ -118,6 +124,29 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<UploadRemoteDataSource>(
     () => UploadRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  //! Features - Quiz
+  // Controllers
+  sl.registerFactory(
+    () => QuizController(
+      getQuizQuestions: sl(),
+      submitAnswer: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetQuizQuestions(sl()));
+  sl.registerLazySingleton(() => SubmitAnswer(sl()));
+
+  // Repository
+  sl.registerLazySingleton<QuizRepository>(
+    () => QuizRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<QuizRemoteDataSource>(
+    () => QuizRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Core

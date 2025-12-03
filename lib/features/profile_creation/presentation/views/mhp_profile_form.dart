@@ -4,6 +4,7 @@ import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
+import 'package:fly/features/profile_creation/domain/usecases/create_user_profile.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/bio_input_field.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/profile_picture_picker.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/user_name_input_field.dart';
@@ -24,43 +25,58 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
   // Get controller safely - finds existing or creates new
   UserProfileController get controller {
     print("🔍 [MHP PROFILE FORM] [CONTROLLER GETTER] Accessing controller...");
+
+    // Check if controller is already registered
+    if (Get.isRegistered<UserProfileController>(tag: 'UserProfileController')) {
+      print(
+        "✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Found existing controller",
+      );
+      return Get.find<UserProfileController>(tag: 'UserProfileController');
+    }
+
+    // Create new controller
+    print(
+      "📝 [MHP PROFILE FORM] [CONTROLLER GETTER] Creating new controller...",
+    );
     try {
-      print("🔍 [MHP PROFILE FORM] [CONTROLLER GETTER] Attempting to find existing controller...");
-      final foundController = Get.find<UserProfileController>(tag: 'UserProfileController');
-      print("✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Found existing controller: ${foundController.hashCode}");
-      return foundController;
-    } catch (e) {
-      print("📝 [MHP PROFILE FORM] [CONTROLLER GETTER] Controller not found, creating new one. Error: $e");
-      try {
-        final createMhpProfile = sl<CreateMhpProfile>();
-        final s3UploadService = sl<S3UploadService>();
-        print("✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Dependencies retrieved from service locator");
-        final newController = UserProfileController(
-          createMhpProfile: createMhpProfile,
-          s3UploadService: s3UploadService,
-        );
-        final registeredController = Get.put(
-          newController,
-          tag: 'UserProfileController',
-          permanent: false,
-        );
-        print("✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Controller registered: ${registeredController.hashCode}");
-        return registeredController;
-      } catch (slError) {
-        print("❌ [MHP PROFILE FORM] [CONTROLLER GETTER] Error getting CreateMhpProfile: $slError");
-        final s3UploadService = sl<S3UploadService>();
-        final fallbackController = UserProfileController(
-          createMhpProfile: null,
-          s3UploadService: s3UploadService,
-        );
-        final registeredController = Get.put(
-          fallbackController,
-          tag: 'UserProfileController',
-          permanent: false,
-        );
-        print("✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Fallback controller registered: ${registeredController.hashCode}");
-        return registeredController;
-      }
+      final createMhpProfile = sl<CreateMhpProfile>();
+      final createUserProfile = sl<CreateUserProfile>();
+      final s3UploadService = sl<S3UploadService>();
+      print(
+        "✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Dependencies retrieved from service locator",
+      );
+      final newController = UserProfileController(
+        createMhpProfile: createMhpProfile,
+        createUserProfile: createUserProfile,
+        s3UploadService: s3UploadService,
+      );
+      print(
+        "✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Controller created: ${newController.hashCode}",
+      );
+      return Get.put(
+        newController,
+        tag: 'UserProfileController',
+        permanent: false,
+      );
+    } catch (slError) {
+      print(
+        "❌ [MHP PROFILE FORM] [CONTROLLER GETTER] Error getting dependencies: $slError",
+      );
+      // Fallback: create controller with minimal dependencies
+      final s3UploadService = sl<S3UploadService>();
+      final fallbackController = UserProfileController(
+        createMhpProfile: null,
+        createUserProfile: null,
+        s3UploadService: s3UploadService,
+      );
+      print(
+        "✅ [MHP PROFILE FORM] [CONTROLLER GETTER] Fallback controller created: ${fallbackController.hashCode}",
+      );
+      return Get.put(
+        fallbackController,
+        tag: 'UserProfileController',
+        permanent: false,
+      );
     }
   }
 
@@ -75,10 +91,16 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
       print("🔍 [MHP PROFILE FORM] [INIT STATE] Initializing controller...");
       final ctrl = controller;
       ctrl.role.value = role; // Set role on controller for S3 uploads
-      print("✅ [MHP PROFILE FORM] [INIT STATE] Controller initialized: ${ctrl.hashCode}");
-      print("✅ [MHP PROFILE FORM] [INIT STATE] Controller role set to: ${ctrl.role.value}");
+      print(
+        "✅ [MHP PROFILE FORM] [INIT STATE] Controller initialized: ${ctrl.hashCode}",
+      );
+      print(
+        "✅ [MHP PROFILE FORM] [INIT STATE] Controller role set to: ${ctrl.role.value}",
+      );
     } catch (e, stackTrace) {
-      print("❌ [MHP PROFILE FORM] [INIT STATE] Error initializing controller: $e");
+      print(
+        "❌ [MHP PROFILE FORM] [INIT STATE] Error initializing controller: $e",
+      );
       print("📚 [MHP PROFILE FORM] [INIT STATE] Stack trace: $stackTrace");
     }
     print("✅ [MHP PROFILE FORM] [INIT STATE] initState completed");
@@ -149,12 +171,16 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
                       ProfileImagePicker(
                         role: "mhp", // 👈 send role down
                         onImagePicked: (file) async {
-                          print('📸 [MHP PROFILE FORM] Image picked: ${file.path}');
+                          print(
+                            '📸 [MHP PROFILE FORM] Image picked: ${file.path}',
+                          );
                           controller.selectedImage.value = file;
                           // Don't set picturePath here - it will be set after S3 upload
                           // Clear any previous S3 path so upload will trigger
                           controller.picturePath.value = '';
-                          print('✅ [MHP PROFILE FORM] Image selected, will upload to S3 on profile creation');
+                          print(
+                            '✅ [MHP PROFILE FORM] Image selected, will upload to S3 on profile creation',
+                          );
                           await controller.saveToCache();
                         },
                       ),

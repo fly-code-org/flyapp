@@ -7,6 +7,7 @@ import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
+import 'package:fly/features/profile_creation/domain/usecases/create_user_profile.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
@@ -24,59 +25,38 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
   // Get controller safely - finds existing or creates new
   UserProfileController get controller {
     print("🔍 [MHP MORE INFO] [CONTROLLER GETTER] Accessing controller...");
+    
+    // Check if controller is already registered
+    if (Get.isRegistered<UserProfileController>(tag: 'UserProfileController')) {
+      print("✅ [MHP MORE INFO] [CONTROLLER GETTER] Found existing controller");
+      return Get.find<UserProfileController>(tag: 'UserProfileController');
+    }
+    
+    // Create new controller
+    print("📝 [MHP MORE INFO] [CONTROLLER GETTER] Creating new controller...");
     try {
-      print(
-        "🔍 [MHP MORE INFO] [CONTROLLER GETTER] Attempting to find existing controller...",
+      final createMhpProfile = sl<CreateMhpProfile>();
+      final createUserProfile = sl<CreateUserProfile>();
+      final s3UploadService = sl<S3UploadService>();
+      print("✅ [MHP MORE INFO] [CONTROLLER GETTER] Dependencies retrieved from service locator");
+      final newController = UserProfileController(
+        createMhpProfile: createMhpProfile,
+        createUserProfile: createUserProfile,
+        s3UploadService: s3UploadService,
       );
-      final foundController = Get.find<UserProfileController>(
-        tag: 'UserProfileController',
+      print("✅ [MHP MORE INFO] [CONTROLLER GETTER] Controller created: ${newController.hashCode}");
+      return Get.put(newController, tag: 'UserProfileController', permanent: false);
+    } catch (slError) {
+      print("❌ [MHP MORE INFO] [CONTROLLER GETTER] Error getting dependencies: $slError");
+      // Fallback: create controller with minimal dependencies
+      final s3UploadService = sl<S3UploadService>();
+      final fallbackController = UserProfileController(
+        createMhpProfile: null,
+        createUserProfile: null,
+        s3UploadService: s3UploadService,
       );
-      print(
-        "✅ [MHP MORE INFO] [CONTROLLER GETTER] Found existing controller: ${foundController.hashCode}",
-      );
-      return foundController;
-    } catch (e) {
-      print(
-        "📝 [MHP MORE INFO] [CONTROLLER GETTER] Controller not found, creating new one. Error: $e",
-      );
-      try {
-        final createMhpProfile = sl<CreateMhpProfile>();
-        final s3UploadService = sl<S3UploadService>();
-        print(
-          "✅ [MHP MORE INFO] [CONTROLLER GETTER] Dependencies retrieved from service locator",
-        );
-        final newController = UserProfileController(
-          createMhpProfile: createMhpProfile,
-          s3UploadService: s3UploadService,
-        );
-        final registeredController = Get.put(
-          newController,
-          tag: 'UserProfileController',
-          permanent: false,
-        );
-        print(
-          "✅ [MHP MORE INFO] [CONTROLLER GETTER] Controller registered: ${registeredController.hashCode}",
-        );
-        return registeredController;
-      } catch (slError) {
-        print(
-          "❌ [MHP MORE INFO] [CONTROLLER GETTER] Error getting CreateMhpProfile: $slError",
-        );
-        final s3UploadService = sl<S3UploadService>();
-        final fallbackController = UserProfileController(
-          createMhpProfile: null,
-          s3UploadService: s3UploadService,
-        );
-        final registeredController = Get.put(
-          fallbackController,
-          tag: 'UserProfileController',
-          permanent: false,
-        );
-        print(
-          "✅ [MHP MORE INFO] [CONTROLLER GETTER] Fallback controller registered: ${registeredController.hashCode}",
-        );
-        return registeredController;
-      }
+      print("✅ [MHP MORE INFO] [CONTROLLER GETTER] Fallback controller created: ${fallbackController.hashCode}");
+      return Get.put(fallbackController, tag: 'UserProfileController', permanent: false);
     }
   }
 

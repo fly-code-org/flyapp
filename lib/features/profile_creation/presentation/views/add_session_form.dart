@@ -7,6 +7,7 @@ import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
+import 'package:fly/features/profile_creation/domain/usecases/create_user_profile.dart';
 import 'package:get/get.dart';
 
 class AddSessionScreen extends StatefulWidget {
@@ -22,75 +23,39 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
 
   // Get controller safely - finds existing or creates new
   UserProfileController get controller {
-    print("🔍 [CONTROLLER GETTER] Accessing controller...");
+    print("🔍 [ADD SESSION FORM] [CONTROLLER GETTER] Accessing controller...");
+    
+    // Check if controller is already registered
+    if (Get.isRegistered<UserProfileController>(tag: 'UserProfileController')) {
+      print("✅ [ADD SESSION FORM] [CONTROLLER GETTER] Found existing controller");
+      return Get.find<UserProfileController>(tag: 'UserProfileController');
+    }
+    
+    // Create new controller
+    print("📝 [ADD SESSION FORM] [CONTROLLER GETTER] Creating new controller...");
     try {
-      // Try to find existing controller
-      print("🔍 [CONTROLLER GETTER] Attempting to find existing controller...");
-      final foundController = Get.find<UserProfileController>(
-        tag: 'UserProfileController',
+      final createMhpProfile = sl<CreateMhpProfile>();
+      final createUserProfile = sl<CreateUserProfile>();
+      final s3UploadService = sl<S3UploadService>();
+      print("✅ [ADD SESSION FORM] [CONTROLLER GETTER] Dependencies retrieved from service locator");
+      final newController = UserProfileController(
+        createMhpProfile: createMhpProfile,
+        createUserProfile: createUserProfile,
+        s3UploadService: s3UploadService,
       );
-      print(
-        "✅ [CONTROLLER GETTER] Found existing controller: ${foundController.hashCode}",
+      print("✅ [ADD SESSION FORM] [CONTROLLER GETTER] Controller created: ${newController.hashCode}");
+      return Get.put(newController, tag: 'UserProfileController', permanent: false);
+    } catch (slError) {
+      print("❌ [ADD SESSION FORM] [CONTROLLER GETTER] Error getting dependencies: $slError");
+      // Fallback: create controller with minimal dependencies
+      final s3UploadService = sl<S3UploadService>();
+      final fallbackController = UserProfileController(
+        createMhpProfile: null,
+        createUserProfile: null,
+        s3UploadService: s3UploadService,
       );
-      print(
-        "🔍 [CONTROLLER GETTER] Controller createMhpProfile: ${foundController.createMhpProfile != null}",
-      );
-      return foundController;
-    } catch (e) {
-      // If not found, create a new one
-      print(
-        "📝 [CONTROLLER GETTER] Controller not found, creating new one. Error: $e",
-      );
-      try {
-        print(
-          "🔍 [CONTROLLER GETTER] Accessing service locator for dependencies...",
-        );
-        final createMhpProfile = sl<CreateMhpProfile>();
-        final s3UploadService = sl<S3UploadService>();
-        print(
-          "✅ [CONTROLLER GETTER] Dependencies retrieved from service locator",
-        );
-        final newController = UserProfileController(
-          createMhpProfile: createMhpProfile,
-          s3UploadService: s3UploadService,
-        );
-        print(
-          "✅ [CONTROLLER GETTER] New controller created: ${newController.hashCode}",
-        );
-        final registeredController = Get.put(
-          newController,
-          tag: 'UserProfileController',
-          permanent: false,
-        );
-        print(
-          "✅ [CONTROLLER GETTER] Controller registered with GetX: ${registeredController.hashCode}",
-        );
-        return registeredController;
-      } catch (slError) {
-        print(
-          "❌ [CONTROLLER GETTER] Error getting CreateMhpProfile from service locator: $slError",
-        );
-        print(
-          "📝 [CONTROLLER GETTER] Creating fallback controller without use case...",
-        );
-        final s3UploadService = sl<S3UploadService>();
-        final fallbackController = UserProfileController(
-          createMhpProfile: null,
-          s3UploadService: s3UploadService,
-        );
-        print(
-          "✅ [CONTROLLER GETTER] Fallback controller created: ${fallbackController.hashCode}",
-        );
-        final registeredController = Get.put(
-          fallbackController,
-          tag: 'UserProfileController',
-          permanent: false,
-        );
-        print(
-          "✅ [CONTROLLER GETTER] Fallback controller registered: ${registeredController.hashCode}",
-        );
-        return registeredController;
-      }
+      print("✅ [ADD SESSION FORM] [CONTROLLER GETTER] Fallback controller created: ${fallbackController.hashCode}");
+      return Get.put(fallbackController, tag: 'UserProfileController', permanent: false);
     }
   }
 

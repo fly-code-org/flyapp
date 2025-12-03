@@ -9,6 +9,7 @@ import 'package:fly/features/profile_creation/presentation/widgets/dob_input_fie
 import 'package:fly/features/profile_creation/presentation/widgets/profile_picture_picker.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/user_name_input_field.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_user_profile.dart';
+import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import 'package:get/get.dart';
 
 class CreateUserProfileScreen extends StatefulWidget {
@@ -26,43 +27,38 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
   // Get controller safely - finds existing or creates new
   UserProfileController get controller {
     print("🔍 [USER PROFILE FORM] [CONTROLLER GETTER] Accessing controller...");
+    
+    // Check if controller is already registered
+    if (Get.isRegistered<UserProfileController>(tag: 'UserProfileController')) {
+      print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Found existing controller");
+      return Get.find<UserProfileController>(tag: 'UserProfileController');
+    }
+    
+    // Create new controller
+    print("📝 [USER PROFILE FORM] [CONTROLLER GETTER] Creating new controller...");
     try {
-      print("🔍 [USER PROFILE FORM] [CONTROLLER GETTER] Attempting to find existing controller...");
-      final foundController = Get.find<UserProfileController>(tag: 'UserProfileController');
-      print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Found existing controller: ${foundController.hashCode}");
-      return foundController;
-    } catch (e) {
-      print("📝 [USER PROFILE FORM] [CONTROLLER GETTER] Controller not found, creating new one. Error: $e");
-        try {
-          final createUserProfile = sl<CreateUserProfile>();
-          final s3UploadService = sl<S3UploadService>();
-          print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Dependencies retrieved from service locator");
-          final newController = UserProfileController(
-            createUserProfile: createUserProfile,
-            s3UploadService: s3UploadService,
-          );
-        final registeredController = Get.put(
-          newController,
-          tag: 'UserProfileController',
-          permanent: false,
-        );
-        print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Controller registered: ${registeredController.hashCode}");
-        return registeredController;
-      } catch (slError) {
-        print("❌ [USER PROFILE FORM] [CONTROLLER GETTER] Error getting CreateUserProfile: $slError");
-          final s3UploadService = sl<S3UploadService>();
-          final fallbackController = UserProfileController(
-            createUserProfile: null,
-            s3UploadService: s3UploadService,
-          );
-        final registeredController = Get.put(
-          fallbackController,
-          tag: 'UserProfileController',
-          permanent: false,
-        );
-        print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Fallback controller registered: ${registeredController.hashCode}");
-        return registeredController;
-      }
+      final createMhpProfile = sl<CreateMhpProfile>();
+      final createUserProfile = sl<CreateUserProfile>();
+      final s3UploadService = sl<S3UploadService>();
+      print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Dependencies retrieved from service locator");
+      final newController = UserProfileController(
+        createMhpProfile: createMhpProfile,
+        createUserProfile: createUserProfile,
+        s3UploadService: s3UploadService,
+      );
+      print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Controller created: ${newController.hashCode}");
+      return Get.put(newController, tag: 'UserProfileController', permanent: false);
+    } catch (slError) {
+      print("❌ [USER PROFILE FORM] [CONTROLLER GETTER] Error getting dependencies: $slError");
+      // Fallback: create controller with minimal dependencies
+      final s3UploadService = sl<S3UploadService>();
+      final fallbackController = UserProfileController(
+        createMhpProfile: null,
+        createUserProfile: null,
+        s3UploadService: s3UploadService,
+      );
+      print("✅ [USER PROFILE FORM] [CONTROLLER GETTER] Fallback controller created: ${fallbackController.hashCode}");
+      return Get.put(fallbackController, tag: 'UserProfileController', permanent: false);
     }
   }
 
