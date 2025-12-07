@@ -132,7 +132,7 @@ class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
                         final leftLabels = options
                             .map((opt) => opt.optionText)
                             .toList();
-                        final rightLabels = ["🤩", "😀", "😊", "😐", "😟"];
+                        final rightLabels = ["🤝", "📝", "👥", "📲", "📚"];
 
                         // Adjust right labels to match left labels count
                         final adjustedRightLabels =

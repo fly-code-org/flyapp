@@ -126,7 +126,7 @@ class _MhpQuestionSecondScreenState extends State<MhpQuestionSecondScreen> {
                         }
 
                         final options = question.options;
-                        final rightLabels = ["🤩", "😀", "😊", "😐", "😟"];
+                        final rightLabels = ["🩷", "💪🏻", "🧠", "😌", "📢"];
                         final adjustedRightLabels =
                             rightLabels.length >= options.length
                             ? rightLabels.sublist(0, options.length)

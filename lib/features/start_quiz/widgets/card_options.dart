@@ -67,6 +67,7 @@ class _OptionsGridState extends State<OptionsGrid> {
               ),
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
@@ -83,6 +84,8 @@ class _OptionsGridState extends State<OptionsGrid> {
                       fontWeight: FontWeight.w500,
                       color: Colors.black87,
                     ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
