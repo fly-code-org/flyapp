@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/quiz/presentation/controllers/quiz_controller.dart';
 import 'package:fly/features/start_quiz/widgets/gradient_button.dart';
 import 'package:fly/features/start_quiz/widgets/mhp_card_options.dart';
-import 'package:fly/features/start_quiz/widgets/vertical_progress_bar.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
@@ -17,15 +17,42 @@ class MhpQuestionFourthScreen extends StatefulWidget {
 class _MhpQuestionFourthScreenState extends State<MhpQuestionFourthScreen> {
   double _dragPosition = 0.8;
   late final String role;
-
-  // Track which button text to show
-  bool _showSureLetsGo = true;
+  late final QuizController quizController;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     final args = Get.arguments ?? {};
-    role = (args['role'] ?? 'user').toLowerCase();
+    role = (args['role'] ?? 'mhp').toLowerCase();
+
+    // Get or create QuizController
+    if (Get.isRegistered<QuizController>()) {
+      quizController = Get.find<QuizController>();
+    } else {
+      quizController = sl<QuizController>();
+      Get.put(quizController);
+    }
+
+    // Defer initialization to avoid calling setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeQuestion();
+    });
+  }
+
+  Future<void> _initializeQuestion() async {
+    if (_isInitialized) return;
+    _isInitialized = true;
+
+    await quizController.fetchQuestions(category: role, tags: ['fourth']);
+
+    if (quizController.errorMessage.value.isNotEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(quizController.errorMessage.value)),
+        );
+      }
+    }
   }
 
   @override
@@ -76,29 +103,131 @@ class _MhpQuestionFourthScreenState extends State<MhpQuestionFourthScreen> {
                   child: ListView(
                     controller: scrollController,
                     children: [
-                      AnimatedOpacity(
-                        opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 300),
-                        child: const Text(
-                          "How important is a safe, anonymous space for mental wellness?",
-                          style: TextStyle(
-                            fontFamily: 'Lexend',
-                            fontSize: 27,
-                            fontWeight: FontWeight.normal,
-                            // color: Color(0xFF8545E1),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-                      SelectableCards(),
-                      const SizedBox(height: 20),
-                      GradientButton(
-                        text: "Next >>>>",
-                        onPressed: () {
-                          Get.toNamed(AppRoutes.CreateSupportCommunity);
-                        },
-                      ),
+                      Obx(() {
+                        final question = quizController.currentQuestion.value;
+                        final isLoading = quizController.isLoading.value;
+
+                        if (isLoading) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+
+                        if (question == null) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.0),
+                              child: Text('No question available'),
+                            ),
+                          );
+                        }
+
+                        final options = question.options;
+                        final defaultIcons = [Icons.check, Icons.close];
+                        final cardsData = options.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          return {
+                            'icon': index < defaultIcons.length
+                                ? defaultIcons[index]
+                                : Icons.radio_button_unchecked,
+                            'title': entry.value.optionText,
+                            'subtitle': entry.value.optionText,
+                          };
+                        }).toList();
+
+                        return Column(
+                          children: [
+                            AnimatedOpacity(
+                              opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: Text(
+                                question.question,
+                                style: const TextStyle(
+                                  fontFamily: 'Lexend',
+                                  fontSize: 27,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            SelectableCards(
+                              cards: cardsData,
+                              onOptionSelected: (index) {
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  if (index >= 0 && index < options.length) {
+                                    quizController.selectOption(
+                                      options[index].id,
+                                    );
+                                  }
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            Obx(
+                              () => GradientButton(
+                                text: quizController.isSubmitting.value
+                                    ? "Submitting..."
+                                    : "Next >>>>",
+                                onPressed:
+                                    quizController
+                                            .selectedOptionId
+                                            .value
+                                            .isEmpty ||
+                                        quizController.isSubmitting.value
+                                    ? () {
+                                        if (quizController
+                                            .selectedOptionId
+                                            .value
+                                            .isEmpty) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Please select an option',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    : () {
+                                        quizController
+                                            .submitCurrentAnswer()
+                                            .then((success) {
+                                              if (success) {
+                                                Get.toNamed(
+                                                  AppRoutes
+                                                      .CreateSupportCommunity,
+                                                );
+                                              } else if (quizController
+                                                  .submitError
+                                                  .value
+                                                  .isNotEmpty) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      quizController
+                                                          .submitError
+                                                          .value,
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            });
+                                      },
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
                     ],
                   ),
                 ),

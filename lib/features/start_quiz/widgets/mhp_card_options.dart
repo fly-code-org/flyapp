@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 class SelectableCards extends StatefulWidget {
-  const SelectableCards({Key? key}) : super(key: key);
+  final List<Map<String, dynamic>>? cards;
+  final void Function(int)? onOptionSelected;
+  
+  const SelectableCards({Key? key, this.cards, this.onOptionSelected}) : super(key: key);
 
   @override
   State<SelectableCards> createState() => _SelectableCardsState();
@@ -14,6 +17,9 @@ class _SelectableCardsState extends State<SelectableCards> {
     setState(() {
       selectedIndex = index;
     });
+    if (widget.onOptionSelected != null) {
+      widget.onOptionSelected!(index);
+    }
   }
 
   Widget _buildCard({
@@ -41,6 +47,7 @@ class _SelectableCardsState extends State<SelectableCards> {
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Circular icon
@@ -68,6 +75,8 @@ class _SelectableCardsState extends State<SelectableCards> {
                 fontWeight: FontWeight.w600,
                 color: isSelected ? Colors.white : Colors.black87,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 6),
 
@@ -79,6 +88,8 @@ class _SelectableCardsState extends State<SelectableCards> {
                 fontSize: 14,
                 color: isSelected ? Colors.white70 : Colors.grey[600],
               ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -88,22 +99,28 @@ class _SelectableCardsState extends State<SelectableCards> {
 
   @override
   Widget build(BuildContext context) {
+    final cardsData = widget.cards ?? [
+      {
+        'icon': Icons.check,
+        'title': "Yes, one or multiple",
+        'subtitle': "Found helpful tools, Explored mindfulness, Accessed therapy resources",
+      },
+      {
+        'icon': Icons.close,
+        'title': "I haven't used any apps",
+        'subtitle': "Prefer traditional methods, Not familiar with apps.",
+      },
+    ];
+
     return Column(
-      children: [
-        _buildCard(
-          index: 0,
-          icon: Icons.check,
-          title: "Yes, one or multiple",
-          subtitle:
-              "Found helpful tools, Explored mindfulness, Accessed therapy resources",
-        ),
-        _buildCard(
-          index: 1,
-          icon: Icons.close,
-          title: "I haven't used any apps",
-          subtitle: "Prefer traditional methods, Not familiar with apps.",
-        ),
-      ],
+      children: List.generate(cardsData.length, (index) {
+        return _buildCard(
+          index: index,
+          icon: cardsData[index]['icon'] as IconData,
+          title: cardsData[index]['title'] as String,
+          subtitle: cardsData[index]['subtitle'] as String,
+        );
+      }),
     );
   }
 }

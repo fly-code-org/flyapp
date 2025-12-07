@@ -24,7 +24,7 @@ class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
     super.initState();
     final args = Get.arguments ?? {};
     role = (args['role'] ?? 'user').toLowerCase();
-    
+
     // Get or create QuizController
     if (Get.isRegistered<QuizController>()) {
       quizController = Get.find<QuizController>();
@@ -32,21 +32,23 @@ class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
     } else {
       quizController = sl<QuizController>();
       Get.put(quizController);
-      print("✅ [USER FIRST QUESTION] Created and registered new QuizController");
+      print(
+        "✅ [USER FIRST QUESTION] Created and registered new QuizController",
+      );
     }
-    
-    _initializeQuestion();
+
+    // Defer initialization to avoid calling setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeQuestion();
+    });
   }
 
   Future<void> _initializeQuestion() async {
     if (_isInitialized) return;
     _isInitialized = true;
-    
-    await quizController.fetchQuestions(
-      category: role,
-      tags: ['first'],
-    );
-    
+
+    await quizController.fetchQuestions(category: role, tags: ['first']);
+
     if (quizController.errorMessage.value.isNotEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,7 +109,7 @@ class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
                       Obx(() {
                         final question = quizController.currentQuestion.value;
                         final isLoading = quizController.isLoading.value;
-                        
+
                         if (isLoading) {
                           return const Center(
                             child: Padding(
@@ -116,7 +118,7 @@ class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
                             ),
                           );
                         }
-                        
+
                         if (question == null) {
                           return const Center(
                             child: Padding(
@@ -125,16 +127,25 @@ class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
                             ),
                           );
                         }
-                        
+
                         final options = question.options;
-                        final leftLabels = options.map((opt) => opt.optionText).toList();
+                        final leftLabels = options
+                            .map((opt) => opt.optionText)
+                            .toList();
                         final rightLabels = ["🤩", "😀", "😊", "😐", "😟"];
-                        
+
                         // Adjust right labels to match left labels count
-                        final adjustedRightLabels = rightLabels.length >= leftLabels.length
+                        final adjustedRightLabels =
+                            rightLabels.length >= leftLabels.length
                             ? rightLabels.sublist(0, leftLabels.length)
-                            : [...rightLabels, ...List.filled(leftLabels.length - rightLabels.length, "😐")];
-                        
+                            : [
+                                ...rightLabels,
+                                ...List.filled(
+                                  leftLabels.length - rightLabels.length,
+                                  "😐",
+                                ),
+                              ];
+
                         return Column(
                           children: [
                             AnimatedOpacity(
@@ -155,45 +166,80 @@ class _UserQuestionOneScreenState extends State<UserQuestionOneScreen> {
                               leftLabels: leftLabels,
                               rightLabels: adjustedRightLabels,
                               onOptionSelected: (index, _) {
-                                // VerticalOptionsSelector uses reversed index: 0 = bottom, length-1 = top
-                                // But our options array is in normal order: 0 = first option
-                                // So we need to reverse the index to match
-                                final reversedIndex = (options.length - 1) - index;
-                                if (reversedIndex >= 0 && reversedIndex < options.length) {
-                                  quizController.selectOption(options[reversedIndex].id);
-                                }
+                                // Defer state update to avoid calling setState during build
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  // VerticalOptionsSelector uses reversed index: 0 = bottom, length-1 = top
+                                  // But our options array is in normal order: 0 = first option
+                                  // So we need to reverse the index to match
+                                  final reversedIndex =
+                                      (options.length - 1) - index;
+                                  if (reversedIndex >= 0 &&
+                                      reversedIndex < options.length) {
+                                    quizController.selectOption(
+                                      options[reversedIndex].id,
+                                    );
+                                  }
+                                });
                               },
                             ),
                             const SizedBox(height: 20),
-                            Obx(() => GradientButton(
-                              text: quizController.isSubmitting.value
-                                  ? "Submitting..."
-                                  : "Next >>>>",
-                              onPressed: quizController.selectedOptionId.value.isEmpty ||
-                                      quizController.isSubmitting.value
-                                  ? () {
-                                      if (quizController.selectedOptionId.value.isEmpty) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Please select an option'),
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  : () {
-                                      quizController.submitCurrentAnswer().then((success) {
-                                        if (success) {
-                                          Get.toNamed(AppRoutes.UserQuestion2);
-                                        } else if (quizController.submitError.value.isNotEmpty) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(quizController.submitError.value),
+                            Obx(
+                              () => GradientButton(
+                                text: quizController.isSubmitting.value
+                                    ? "Submitting..."
+                                    : "Next >>>>",
+                                onPressed:
+                                    quizController
+                                            .selectedOptionId
+                                            .value
+                                            .isEmpty ||
+                                        quizController.isSubmitting.value
+                                    ? () {
+                                        if (quizController
+                                            .selectedOptionId
+                                            .value
+                                            .isEmpty) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Please select an option',
+                                              ),
                                             ),
                                           );
                                         }
-                                      });
-                                    },
-                            )),
+                                      }
+                                    : () {
+                                        quizController
+                                            .submitCurrentAnswer()
+                                            .then((success) {
+                                              if (success) {
+                                                Get.toNamed(
+                                                  AppRoutes.UserQuestion2,
+                                                );
+                                              } else if (quizController
+                                                  .submitError
+                                                  .value
+                                                  .isNotEmpty) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      quizController
+                                                          .submitError
+                                                          .value,
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            });
+                                      },
+                              ),
+                            ),
                           ],
                         );
                       }),

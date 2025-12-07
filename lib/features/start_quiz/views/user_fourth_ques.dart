@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
-import 'package:fly/features/start_quiz/widgets/card_options.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/quiz/presentation/controllers/quiz_controller.dart';
 import 'package:fly/features/start_quiz/widgets/gradient_button.dart';
-import 'package:fly/features/start_quiz/widgets/number_picker.dart';
 import 'package:fly/features/start_quiz/widgets/option_picker.dart';
-import 'package:fly/features/start_quiz/widgets/vertical_progress_bar.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
@@ -12,18 +10,49 @@ class UserQuestionFourthScreen extends StatefulWidget {
   const UserQuestionFourthScreen({super.key});
 
   @override
-  State<UserQuestionFourthScreen> createState() => _UserQuestionFourthScreenState();
+  State<UserQuestionFourthScreen> createState() =>
+      _UserQuestionFourthScreenState();
 }
 
 class _UserQuestionFourthScreenState extends State<UserQuestionFourthScreen> {
   double _dragPosition = 0.8;
   late final String role;
+  late final QuizController quizController;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     final args = Get.arguments ?? {};
     role = (args['role'] ?? 'user').toLowerCase();
+
+    // Get or create QuizController
+    if (Get.isRegistered<QuizController>()) {
+      quizController = Get.find<QuizController>();
+    } else {
+      quizController = sl<QuizController>();
+      Get.put(quizController);
+    }
+
+    // Defer initialization to avoid calling setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeQuestion();
+    });
+  }
+
+  Future<void> _initializeQuestion() async {
+    if (_isInitialized) return;
+    _isInitialized = true;
+
+    await quizController.fetchQuestions(category: role, tags: ['fourth']);
+
+    if (quizController.errorMessage.value.isNotEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(quizController.errorMessage.value)),
+        );
+      }
+    }
   }
 
   @override
@@ -33,10 +62,7 @@ class _UserQuestionFourthScreenState extends State<UserQuestionFourthScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg_fly.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
           ),
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
@@ -77,39 +103,136 @@ class _UserQuestionFourthScreenState extends State<UserQuestionFourthScreen> {
                   child: ListView(
                     controller: scrollController,
                     children: [
-                      AnimatedOpacity(
-                        opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 300),
-                        child: const Text(
-                          "What kind of support would you prefer when you're extremely upset",
-                          style: TextStyle(
-                            fontFamily: 'Lexend',
-                            fontSize: 27,
-                            fontWeight: FontWeight.normal,
-                            // color: Color(0xFF8545E1),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-                      GradientOptionSelector(
-                        options: [
-                          OptionItem(icon: Icons.favorite, label: "I REALLY NEED THIS!!"),
-                          OptionItem(icon: Icons.favorite, label: "It matters a lot"),
-                          OptionItem(icon: Icons.favorite, label: "It’s nice to have"),
-                          OptionItem(icon: Icons.heart_broken, label: "I don’t need it"),
-                        ],
-                        onSelected: (index) {
-                          print("Selected option: ${index + 1}");
-                        },
-                      ),
-                      const SizedBox(height: 50),
-                      GradientButton(
-                        text: "Next >>>>",
-                        onPressed: () {
-                          Get.toNamed(AppRoutes.GetInterest);
-                        },
-                      ),
+                      Obx(() {
+                        final question = quizController.currentQuestion.value;
+                        final isLoading = quizController.isLoading.value;
+
+                        if (isLoading) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+
+                        if (question == null) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.0),
+                              child: Text('No question available'),
+                            ),
+                          );
+                        }
+
+                        final options = question.options;
+                        final defaultIcons = [
+                          Icons.favorite,
+                          Icons.favorite,
+                          Icons.favorite,
+                          Icons.heart_broken,
+                        ];
+                        final optionItems = options.asMap().entries.map((
+                          entry,
+                        ) {
+                          final index = entry.key;
+                          return OptionItem(
+                            icon: index < defaultIcons.length
+                                ? defaultIcons[index]
+                                : Icons.radio_button_unchecked,
+                            label: entry.value.optionText,
+                          );
+                        }).toList();
+
+                        return Column(
+                          children: [
+                            AnimatedOpacity(
+                              opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: Text(
+                                question.question,
+                                style: const TextStyle(
+                                  fontFamily: 'Lexend',
+                                  fontSize: 27,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            GradientOptionSelector(
+                              options: optionItems,
+                              onSelected: (index) {
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  if (index >= 0 && index < options.length) {
+                                    quizController.selectOption(
+                                      options[index].id,
+                                    );
+                                  }
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 50),
+                            Obx(
+                              () => GradientButton(
+                                text: quizController.isSubmitting.value
+                                    ? "Submitting..."
+                                    : "Next >>>>",
+                                onPressed:
+                                    quizController
+                                            .selectedOptionId
+                                            .value
+                                            .isEmpty ||
+                                        quizController.isSubmitting.value
+                                    ? () {
+                                        if (quizController
+                                            .selectedOptionId
+                                            .value
+                                            .isEmpty) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Please select an option',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    : () {
+                                        quizController
+                                            .submitCurrentAnswer()
+                                            .then((success) {
+                                              if (success) {
+                                                Get.toNamed(
+                                                  AppRoutes.GetInterest,
+                                                );
+                                              } else if (quizController
+                                                  .submitError
+                                                  .value
+                                                  .isNotEmpty) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      quizController
+                                                          .submitError
+                                                          .value,
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            });
+                                      },
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
                     ],
                   ),
                 ),

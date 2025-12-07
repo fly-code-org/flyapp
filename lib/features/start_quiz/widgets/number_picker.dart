@@ -70,61 +70,64 @@ class _PickerWithBallState extends State<PickerWithBall> {
             color: Colors.grey[200],
             borderRadius: BorderRadius.circular(40),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(widget.options.length, (index) {
-              String option = widget.options[index];
-              bool isSelected = index == selectedIndex;
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(widget.options.length, (index) {
+                String option = widget.options[index];
+                bool isSelected = index == selectedIndex;
 
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedIndex = index;
-                  });
-                  if (widget.onChanged != null) {
-                    widget.onChanged!(option, index);
-                  }
-                },
-                child: Container(
-                  width: 50,
-                  height: 40,
-                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Circular purple ball behind selected item
-                      if (isSelected)
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: purpleRadialGradient,
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0xAA7B2FF7),
-                                blurRadius: 10,
-                                spreadRadius: 3,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedIndex = index;
+                    });
+                    if (widget.onChanged != null) {
+                      widget.onChanged!(option, index);
+                    }
+                  },
+                  child: Container(
+                    width: 50,
+                    height: 40,
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Circular purple ball behind selected item
+                        if (isSelected)
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: purpleRadialGradient,
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0xAA7B2FF7),
+                                  blurRadius: 10,
+                                  spreadRadius: 3,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        // Option text (emoji/number/string)
+                        Text(
+                          option,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? Colors.white : Colors.black87,
                           ),
                         ),
-
-                      // Option text (emoji/number/string)
-                      Text(
-                        option,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }),
+                );
+              }),
+            ),
           ),
         ),
       ],

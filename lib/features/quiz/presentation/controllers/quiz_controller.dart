@@ -106,11 +106,21 @@ class QuizController extends GetxController {
       print('   - Answer: ${answerText.value}');
       print('   - Option ID: ${selectedOptionId.value}');
 
+      // Get the actual option text if an option is selected
+      String answerToSubmit = answerText.value;
+      if (answerText.value.isEmpty && selectedOptionId.value.isNotEmpty) {
+        // Find the selected option and get its text
+        final selectedOption = currentQuestion.value!.options.firstWhere(
+          (option) => option.id == selectedOptionId.value,
+          orElse: () => throw Exception('Selected option not found'),
+        );
+        answerToSubmit = selectedOption.optionText;
+        print('   - Using option text: $answerToSubmit');
+      }
+
       final response = await submitAnswer(
         questionId: currentQuestion.value!.id,
-        answer: answerText.value.isNotEmpty
-            ? answerText.value
-            : 'Selected option',
+        answer: answerToSubmit,
         optionId: selectedOptionId.value.isNotEmpty
             ? selectedOptionId.value
             : null,

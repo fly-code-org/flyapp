@@ -35,7 +35,10 @@ class _MhpQuestionOneScreenState extends State<MhpQuestionOneScreen> {
       print("✅ [MHP FIRST QUESTION] Created and registered new QuizController");
     }
 
-    _initializeQuestion();
+    // Defer initialization to avoid calling setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeQuestion();
+    });
   }
 
   Future<void> _initializeQuestion() async {
@@ -161,37 +164,43 @@ class _MhpQuestionOneScreenState extends State<MhpQuestionOneScreen> {
                               leftLabels: leftLabels,
                               rightLabels: adjustedRightLabels,
                               onOptionSelected: (index, _) {
-                                // VerticalOptionsSelector uses reversed index: 0 = bottom, length-1 = top
-                                // But our options array is in normal order: 0 = first option
-                                // So we need to reverse the index to match
-                                final reversedIndex =
-                                    (options.length - 1) - index;
-                                print(
-                                  '📌 [MHP FIRST QUESTION] Option selected - visual index: $index, reversed index: $reversedIndex, total options: ${options.length}',
-                                );
-                                if (reversedIndex >= 0 &&
-                                    reversedIndex < options.length) {
-                                  final selectedOption = options[reversedIndex];
+                                // Defer state update to avoid calling setState during build
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  // VerticalOptionsSelector uses reversed index: 0 = bottom, length-1 = top
+                                  // But our options array is in normal order: 0 = first option
+                                  // So we need to reverse the index to match
+                                  final reversedIndex =
+                                      (options.length - 1) - index;
                                   print(
-                                    '✅ [MHP FIRST QUESTION] Selecting option: ${selectedOption.optionText} (id: "${selectedOption.id}")',
+                                    '📌 [MHP FIRST QUESTION] Option selected - visual index: $index, reversed index: $reversedIndex, total options: ${options.length}',
                                   );
-                                  if (selectedOption.id.isEmpty) {
+                                  if (reversedIndex >= 0 &&
+                                      reversedIndex < options.length) {
+                                    final selectedOption =
+                                        options[reversedIndex];
                                     print(
-                                      '❌ [MHP FIRST QUESTION] Option ID is empty!',
+                                      '✅ [MHP FIRST QUESTION] Selecting option: ${selectedOption.optionText} (id: "${selectedOption.id}")',
                                     );
-                                    return;
+                                    if (selectedOption.id.isEmpty) {
+                                      print(
+                                        '❌ [MHP FIRST QUESTION] Option ID is empty!',
+                                      );
+                                      return;
+                                    }
+                                    quizController.selectOption(
+                                      selectedOption.id,
+                                    );
+                                    print(
+                                      '✅ [MHP FIRST QUESTION] Selected option ID set to: "${quizController.selectedOptionId.value}"',
+                                    );
+                                  } else {
+                                    print(
+                                      '❌ [MHP FIRST QUESTION] Invalid reversed index: $reversedIndex (options length: ${options.length})',
+                                    );
                                   }
-                                  quizController.selectOption(
-                                    selectedOption.id,
-                                  );
-                                  print(
-                                    '✅ [MHP FIRST QUESTION] Selected option ID set to: "${quizController.selectedOptionId.value}"',
-                                  );
-                                } else {
-                                  print(
-                                    '❌ [MHP FIRST QUESTION] Invalid reversed index: $reversedIndex (options length: ${options.length})',
-                                  );
-                                }
+                                });
                               },
                             ),
                             const SizedBox(height: 20),
