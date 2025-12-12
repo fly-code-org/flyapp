@@ -32,6 +32,10 @@ import '../../features/quiz/domain/repositories/quiz_repository.dart';
 import '../../features/quiz/domain/usecases/get_quiz_questions.dart';
 import '../../features/quiz/domain/usecases/submit_answer.dart';
 import '../../features/quiz/presentation/controllers/quiz_controller.dart';
+import '../../features/interests/data/datasources/interests_remote_data_source.dart';
+import '../../features/interests/data/repositories/interests_repository_impl.dart';
+import '../../features/interests/domain/repositories/interests_repository.dart';
+import '../../features/interests/domain/usecases/save_interests.dart';
 import '../services/s3_upload_service.dart';
 
 final sl = GetIt.instance;
@@ -147,6 +151,20 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<QuizRemoteDataSource>(
     () => QuizRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  //! Features - Interests
+  // Use cases
+  sl.registerLazySingleton(() => SaveInterests(sl()));
+
+  // Repository
+  sl.registerLazySingleton<InterestsRepository>(
+    () => InterestsRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<InterestsRemoteDataSource>(
+    () => InterestsRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Core

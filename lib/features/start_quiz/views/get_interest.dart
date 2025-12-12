@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/interests/data/models/tag_mapping.dart';
+import 'package:fly/features/interests/domain/entities/interests.dart';
+import 'package:fly/features/interests/domain/usecases/save_interests.dart';
 import 'package:fly/features/start_quiz/widgets/communities_grid.dart';
 import 'package:fly/features/start_quiz/widgets/separator.dart';
 import 'package:fly/features/start_quiz/widgets/social_tags.dart';
@@ -16,6 +20,15 @@ class GetInterestScreen extends StatefulWidget {
 class _GetInterestScreenState extends State<GetInterestScreen> {
   double _dragPosition = 0.8;
   late final String role;
+
+  // Track selected tags (tag names)
+  final Set<String> _selectedTags = {};
+
+  // Track selected community IDs
+  final Set<String> _selectedCommunities = {};
+
+  // Loading state
+  bool _isSaving = false;
 
   final sampleCommunities = [
     {
@@ -42,30 +55,103 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
       'communityId': 'anxiety_987',
       'followerCount': 2300,
     },
-    // add more...
   ];
-
-  // Track which button text to show
-  bool _showSureLetsGo = true;
 
   @override
   void initState() {
     super.initState();
     final args = Get.arguments ?? {};
     role = (args['role'] ?? 'user').toLowerCase();
-    print("PhoneVerification role: $role");
+    print("GetInterestScreen role: $role");
   }
 
-  void _handleButtonPressed() {
-    if (_showSureLetsGo) {
-      // Navigate with "Sure, let's go"
-      Get.toNamed('/intro-quiz', arguments: {'text': "Sure, let's go"});
-      setState(() {
-        _showSureLetsGo = false; // Switch text on next render
-      });
-    } else {
-      // Navigate with "Next >>>>"
-      Get.toNamed('/intro-quiz', arguments: {'text': "Next >>>>"});
+  void _toggleTag(String tagName) {
+    setState(() {
+      if (_selectedTags.contains(tagName)) {
+        _selectedTags.remove(tagName);
+      } else {
+        _selectedTags.add(tagName);
+      }
+    });
+    print("Selected tags: $_selectedTags");
+  }
+
+  void _toggleCommunity(String communityId) {
+    setState(() {
+      if (_selectedCommunities.contains(communityId)) {
+        _selectedCommunities.remove(communityId);
+      } else {
+        _selectedCommunities.add(communityId);
+      }
+    });
+    print("Selected communities: $_selectedCommunities");
+  }
+
+  Future<void> _saveInterests() async {
+    if (_selectedTags.isEmpty && _selectedCommunities.isEmpty) {
+      // Allow saving even with no selections (optional)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least one tag or community'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      // Convert selected tags to Tag entities with IDs
+      final tags = _selectedTags
+          .map((tagName) {
+            final tagId = TagMapping.getTagId(tagName);
+            if (tagId == null) {
+              print('Warning: Tag ID not found for "$tagName"');
+              return null;
+            }
+            return Tag(tagId: tagId, name: tagName);
+          })
+          .whereType<Tag>()
+          .toList();
+
+      final interests = Interests(
+        tags: tags,
+        communities: _selectedCommunities.toList(),
+      );
+
+      final saveInterests = sl<SaveInterests>();
+      await saveInterests(interests);
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Interests saved successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      // Navigate to explore screen
+      Get.toNamed(AppRoutes.Explore);
+    } catch (e) {
+      print('Error saving interests: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving interests: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
     }
   }
 
@@ -140,57 +226,80 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                             imageUrl:
                                 "https://cdn.flyapp.in/assets/social-tags/motivational.svg",
                             rightText: "Motivational",
-                            onTap: () {
-                              print("Motivational clicked");
-                            },
+                            isSelected: _selectedTags.contains("Motivational"),
+                            onTap: () => _toggleTag("Motivational"),
                           ),
                           SocialTag(
                             categoryLabel: "Lifestyle",
                             imageUrl:
                                 "https://cdn.flyapp.in/assets/social-tags/lifestyle.svg",
                             rightText: "Lifestyle",
+                            isSelected: _selectedTags.contains("Lifestyle"),
+                            onTap: () => _toggleTag("Lifestyle"),
                           ),
                           SocialTag(
                             categoryLabel: "Art & Creatives",
                             imageUrl:
                                 "https://cdn.flyapp.in/assets/social-tags/artAndCreativity.svg",
                             rightText: "Art & Creatives",
+                            isSelected: _selectedTags.contains(
+                              "Art & Creatives",
+                            ),
+                            onTap: () => _toggleTag("Art & Creatives"),
                           ),
                           SocialTag(
                             categoryLabel: "Awwdorable",
                             imageUrl:
                                 "https://cdn.flyapp.in/assets/social-tags/awdorable.svg",
                             rightText: "Awwdorable",
+                            isSelected: _selectedTags.contains("Awwdorable"),
+                            onTap: () => _toggleTag("Awwdorable"),
                           ),
                           SocialTag(
                             categoryLabel: "Fun & Humor",
                             imageUrl:
                                 "https://cdn.flyapp.in/assets/social-tags/funAndHumor.svg",
                             rightText: "Fun & Humor",
+                            isSelected: _selectedTags.contains("Fun & Humor"),
+                            onTap: () => _toggleTag("Fun & Humor"),
                           ),
                           SocialTag(
                             categoryLabel: "Peace",
                             imageUrl:
                                 "https://cdn.flyapp.in/assets/social-tags/peace.svg",
                             rightText: "Peace",
+                            isSelected: _selectedTags.contains("Peace"),
+                            onTap: () => _toggleTag("Peace"),
                           ),
                           SocialTag(
                             categoryLabel: "Words of Wisdom",
                             imageUrl:
                                 "https://cdn.flyapp.in/assets/social-tags/wordsOfWisdom.svg",
                             rightText: "Words of Wisdom",
+                            isSelected: _selectedTags.contains(
+                              "Words of Wisdom",
+                            ),
+                            onTap: () => _toggleTag("Words of Wisdom"),
                           ),
                           SocialTag(
                             categoryLabel: "News & Insights",
                             imageUrl:
                                 "https://cdn.flyapp.in/assets/social-tags/newsAndInsights.svg",
                             rightText: "News & Insights",
+                            isSelected: _selectedTags.contains(
+                              "News & Insights",
+                            ),
+                            onTap: () => _toggleTag("News & Insights"),
                           ),
                           SocialTag(
                             categoryLabel: "Movies & Shows",
                             imageUrl:
                                 "https://cdn.flyapp.in/assets/social-tags/moviesAndShows.svg",
                             rightText: "Movies & Shows",
+                            isSelected: _selectedTags.contains(
+                              "Movies & Shows",
+                            ),
+                            onTap: () => _toggleTag("Movies & Shows"),
                           ),
                         ],
                       ),
@@ -207,9 +316,10 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                                 "https://cdn.flyapp.in/assets/support-tags/emotionalHealing.svg",
                             rightText: "Emotional Healing",
                             iconShape: IconShape.square,
-                            onTap: () {
-                              print("Motivational clicked");
-                            },
+                            isSelected: _selectedTags.contains(
+                              "Emotional Healing",
+                            ),
+                            onTap: () => _toggleTag("Emotional Healing"),
                           ),
                           SocialTag(
                             categoryLabel: "Anxiety & Stress",
@@ -217,6 +327,10 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                                 "https://cdn.flyapp.in/assets/support-tags/anxietyAndStress.svg",
                             rightText: "Anxiety & Stress",
                             iconShape: IconShape.square,
+                            isSelected: _selectedTags.contains(
+                              "Anxiety & Stress",
+                            ),
+                            onTap: () => _toggleTag("Anxiety & Stress"),
                           ),
                           SocialTag(
                             categoryLabel: "Grief & Heartbreak",
@@ -224,6 +338,10 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                                 "https://cdn.flyapp.in/assets/support-tags/griefAndHeartbreak.svg",
                             rightText: "Grief & Heartbreak",
                             iconShape: IconShape.square,
+                            isSelected: _selectedTags.contains(
+                              "Grief & Heartbreak",
+                            ),
+                            onTap: () => _toggleTag("Grief & Heartbreak"),
                           ),
                           SocialTag(
                             categoryLabel: "Work & Career",
@@ -231,6 +349,8 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                                 "https://cdn.flyapp.in/assets/support-tags/workAndCareer.svg",
                             rightText: "Work & Career",
                             iconShape: IconShape.square,
+                            isSelected: _selectedTags.contains("Work & Career"),
+                            onTap: () => _toggleTag("Work & Career"),
                           ),
                           SocialTag(
                             categoryLabel: "Trauma",
@@ -238,6 +358,8 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                                 "https://cdn.flyapp.in/assets/support-tags/traumaAndHealing.svg",
                             rightText: "Trauma",
                             iconShape: IconShape.square,
+                            isSelected: _selectedTags.contains("Trauma"),
+                            onTap: () => _toggleTag("Trauma"),
                           ),
                           SocialTag(
                             categoryLabel: "Family & Relations",
@@ -245,6 +367,10 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                                 "https://cdn.flyapp.in/assets/support-tags/familyAndRelationship.svg",
                             rightText: "Family & Relations",
                             iconShape: IconShape.square,
+                            isSelected: _selectedTags.contains(
+                              "Family & Relations",
+                            ),
+                            onTap: () => _toggleTag("Family & Relations"),
                           ),
                           SocialTag(
                             categoryLabel: "Self-Worth & Identity",
@@ -252,19 +378,29 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                                 "https://cdn.flyapp.in/assets/support-tags/selfWorthAndIdentity.svg",
                             rightText: "Self-Worth & Identity",
                             iconShape: IconShape.square,
+                            isSelected: _selectedTags.contains(
+                              "Self-Worth & Identity",
+                            ),
+                            onTap: () => _toggleTag("Self-Worth & Identity"),
                           ),
                         ],
                       ),
                       const SizedBox(height: 20),
                       Separator(text: "Communities by MHPs✨"),
                       const SizedBox(height: 20),
-                      CommunitiesGrid(communities: sampleCommunities),
+                      CommunitiesGrid(
+                        communities: sampleCommunities,
+                        selectedCommunityIds: _selectedCommunities,
+                        onCommunityTap: _toggleCommunity,
+                      ),
                       const SizedBox(height: 20),
                       GradientButton(
-                        text: "Explore fly!",
-                        onPressed: () {
-                          Get.toNamed(AppRoutes.Explore);
-                        },
+                        text: _isSaving ? "Saving..." : "Explore fly!",
+                        onPressed: _isSaving
+                            ? () {} // No-op when saving
+                            : () {
+                                _saveInterests();
+                              },
                       ),
                     ],
                   ),

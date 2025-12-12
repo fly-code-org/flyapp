@@ -9,6 +9,7 @@ class SocialTag extends StatelessWidget {
   final String rightText;
   final VoidCallback? onTap;
   final IconShape iconShape;
+  final bool isSelected;
 
   const SocialTag({
     super.key,
@@ -17,6 +18,7 @@ class SocialTag extends StatelessWidget {
     required this.rightText,
     this.onTap,
     this.iconShape = IconShape.circular,
+    this.isSelected = false,
   });
 
   bool get isSvg => imageUrl.trim().toLowerCase().endsWith('.svg');
@@ -49,7 +51,10 @@ class SocialTag extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.grey.shade200,
+          color: isSelected ? Colors.blue.shade100 : Colors.grey.shade200,
+          border: isSelected
+              ? Border.all(color: Colors.blue, width: 2)
+              : null,
           borderRadius: iconShape == IconShape.circular
               ? BorderRadius.circular(30)
               : BorderRadius.circular(10), // smaller radius for square shape

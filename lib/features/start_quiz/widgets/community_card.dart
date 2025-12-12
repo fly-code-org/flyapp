@@ -6,6 +6,7 @@ class CommunityCard extends StatelessWidget {
   final String communityId;
   final int followerCount;
   final VoidCallback? onJoin;
+  final bool isSelected;
 
   const CommunityCard({
     super.key,
@@ -14,6 +15,7 @@ class CommunityCard extends StatelessWidget {
     required this.communityId,
     required this.followerCount,
     this.onJoin,
+    this.isSelected = false,
   });
 
   @override
@@ -22,10 +24,13 @@ class CommunityCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12), 
+        border: isSelected
+            ? Border.all(color: Colors.blue, width: 2)
+            : null,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: isSelected ? Colors.blue.shade100 : Colors.black12,
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -51,16 +56,20 @@ class CommunityCard extends StatelessWidget {
               TextButton(
                 onPressed: onJoin,
                 style: TextButton.styleFrom(
-                  backgroundColor: Colors.grey.shade300,
+                  backgroundColor:
+                      isSelected ? Colors.blue.shade100 : Colors.grey.shade300,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
-                child: const Text(
-                  'Join',
-                  style: TextStyle(color: Colors.black87),
+                child: Text(
+                  isSelected ? 'Joined' : 'Join',
+                  style: TextStyle(
+                    color: isSelected ? Colors.blue : Colors.black87,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
                 ),
               ),
             ],
