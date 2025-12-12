@@ -36,6 +36,11 @@ import '../../features/interests/data/datasources/interests_remote_data_source.d
 import '../../features/interests/data/repositories/interests_repository_impl.dart';
 import '../../features/interests/domain/repositories/interests_repository.dart';
 import '../../features/interests/domain/usecases/save_interests.dart';
+import '../../features/community/data/datasources/community_remote_data_source.dart';
+import '../../features/community/data/repositories/community_repository_impl.dart';
+import '../../features/community/domain/repositories/community_repository.dart';
+import '../../features/community/domain/usecases/create_community.dart';
+import '../../features/community/domain/usecases/get_communities_by_type.dart';
 import '../services/s3_upload_service.dart';
 
 final sl = GetIt.instance;
@@ -165,6 +170,21 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<InterestsRemoteDataSource>(
     () => InterestsRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  //! Features - Community
+  // Use cases
+  sl.registerLazySingleton(() => CreateCommunity(sl()));
+  sl.registerLazySingleton(() => GetCommunitiesByType(sl()));
+
+  // Repository
+  sl.registerLazySingleton<CommunityRepository>(
+    () => CommunityRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<CommunityRemoteDataSource>(
+    () => CommunityRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Core

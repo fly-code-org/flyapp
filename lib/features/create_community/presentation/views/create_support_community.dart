@@ -1,13 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/services/s3_upload_service.dart';
+import 'package:fly/features/community/domain/usecases/create_community.dart';
 import 'package:fly/features/create_community/controller/user_profile_controller.dart';
 import 'package:fly/features/create_community/presentation/widgets/bio_input_field.dart';
-import 'package:fly/features/create_community/presentation/widgets/community_tag.dart';
-import 'package:fly/features/create_community/presentation/widgets/dob_input_field.dart';
-import 'package:fly/features/create_community/presentation/widgets/list_input.dart';
 import 'package:fly/features/create_community/presentation/widgets/profile_picture_picker.dart';
 import 'package:fly/features/create_community/presentation/widgets/user_name_input_field.dart';
+import 'package:fly/features/interests/data/models/tag_mapping.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
@@ -25,6 +24,7 @@ class SupportCommunityPicker extends StatefulWidget {
   final bool isSocial; // true = social, false = supported
   final String placeholder;
   final SupportCommunity? defaultTag;
+  final Function(SupportCommunity?)? onTagSelected;
 
   const SupportCommunityPicker({
     super.key,
@@ -32,6 +32,7 @@ class SupportCommunityPicker extends StatefulWidget {
     required this.isSocial,
     this.placeholder = "Select a tag",
     this.defaultTag,
+    this.onTagSelected,
   });
 
   @override
@@ -122,6 +123,7 @@ class _SupportCommunityPickerState extends State<SupportCommunityPicker> {
                   title: Text(tag.name),
                   onTap: () {
                     setState(() => _selectedTag = tag);
+                    widget.onTagSelected?.call(tag);
                     Navigator.pop(context);
                   },
                 );
@@ -149,6 +151,10 @@ class _CreateSupportCommunityScreenState
   final CommunityMediaController mediaController = Get.put(
     CommunityMediaController(),
   );
+  
+  SupportCommunity? _selectedTag;
+  String _bio = '';
+  bool _isSaving = false;
 
   // Hardcoded lists
   final supportedTags = [
@@ -177,6 +183,112 @@ class _CreateSupportCommunityScreenState
   @override
   void initState() {
     super.initState();
+  }
+
+  Future<void> _saveCommunity() async {
+    // Validate inputs
+    if (controller.username.value.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a community name'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_bio.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a description'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedTag == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a tag'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Get tag ID
+    final tagId = TagMapping.getTagId(_selectedTag!.name);
+    if (tagId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invalid tag selected: ${_selectedTag!.name}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      String logoPath = '';
+      
+      // Upload image if selected
+      if (controller.selectedImage.value != null) {
+        final s3UploadService = sl<S3UploadService>();
+        logoPath = await s3UploadService.uploadFile(
+          file: controller.selectedImage.value!,
+          isProfilePicture: true,
+          role: 'mhp', // Community logo uploaded as MHP profile picture type
+        );
+        print('✅ [COMMUNITY] Logo uploaded: $logoPath');
+      }
+
+      // Create community
+      final createCommunity = sl<CreateCommunity>();
+      await createCommunity.call(
+        name: controller.username.value,
+        description: _bio,
+        type: 'support',
+        createdByType: 'mhp',
+        logoPath: logoPath,
+        tagId: tagId,
+      );
+
+      print('✅ [COMMUNITY] Community created successfully');
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Community created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      // Navigate to next screen
+      Get.toNamed(AppRoutes.CommunitySupportProfile);
+    } catch (e) {
+      print('❌ [COMMUNITY] Error creating community: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating community: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -297,25 +409,32 @@ class _CreateSupportCommunityScreenState
                       BioInputField(
                         hintText: "Tell us something about yourself...",
                         onChanged: (value) {
-                          print("Bio: $value");
+                          setState(() {
+                            _bio = value;
+                          });
                         },
                       ),
 
                       const SizedBox(height: 20),
 
                       /// 👇 Supported Community Tag Picker
-                      // const Text(
-                      //   "Select Supported Community Tag",
-                      //   style: TextStyle(
-                      //     fontFamily: 'Lexend',
-                      //     fontSize: 20,
-                      //     fontWeight: FontWeight.w400,
-                      //   ),
-                      // ),
+                      const Text(
+                        "Select Supported Community Tag",
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
                       const SizedBox(height: 10),
                       SupportCommunityPicker(
                         tags: supportedTags,
                         isSocial: false,
+                        onTagSelected: (tag) {
+                          setState(() {
+                            _selectedTag = tag;
+                          });
+                        },
                       ),
 
                       // const SizedBox(height: 20),
@@ -333,11 +452,12 @@ class _CreateSupportCommunityScreenState
                       // SupportCommunityPicker(tags: socialTags, isSocial: true),
                       const SizedBox(height: 30),
                       GradientButton(
-                        text: "Verify and Continue",
-                        onPressed: () {
-                          // Save selected tags if needed
-                          Get.toNamed(AppRoutes.CommunitySupportProfile);
-                        },
+                        text: _isSaving ? "Saving..." : "Verify and Continue",
+                        onPressed: _isSaving
+                            ? () {} // No-op when saving
+                            : () async {
+                                await _saveCommunity();
+                              },
                       ),
                     ],
                   ),

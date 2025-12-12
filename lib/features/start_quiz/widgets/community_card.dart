@@ -27,7 +27,7 @@ class CommunityCard extends StatelessWidget {
         border: isSelected
             ? Border.all(color: Colors.blue, width: 2)
             : null,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(12), 
         boxShadow: [
           BoxShadow(
             color: isSelected ? Colors.blue.shade100 : Colors.black12,

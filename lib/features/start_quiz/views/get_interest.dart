@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/community/domain/usecases/get_communities_by_type.dart';
 import 'package:fly/features/interests/data/models/tag_mapping.dart';
 import 'package:fly/features/interests/domain/entities/interests.dart';
 import 'package:fly/features/interests/domain/usecases/save_interests.dart';
@@ -29,33 +30,10 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
 
   // Loading state
   bool _isSaving = false;
-
-  final sampleCommunities = [
-    {
-      'profilePicUrl': 'https://cdn.flyapp.in/assets/community-demo.png',
-      'communityName': 'Mindfulness Group',
-      'communityId': 'mindfulness_123',
-      'followerCount': 1500,
-    },
-    {
-      'profilePicUrl': 'https://cdn.flyapp.in/assets/community-demo.png',
-      'communityName': 'Anxiety Support',
-      'communityId': 'anxiety_456',
-      'followerCount': 2300,
-    },
-    {
-      'profilePicUrl': 'https://cdn.flyapp.in/assets/community-demo.png',
-      'communityName': 'Mindfulness Group',
-      'communityId': 'mindfulness_789',
-      'followerCount': 1500,
-    },
-    {
-      'profilePicUrl': 'https://cdn.flyapp.in/assets/community-demo.png',
-      'communityName': 'Anxiety Support',
-      'communityId': 'anxiety_987',
-      'followerCount': 2300,
-    },
-  ];
+  bool _isLoadingCommunities = false;
+  
+  // Communities from API
+  List<Map<String, dynamic>> _communities = [];
 
   @override
   void initState() {
@@ -63,6 +41,47 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
     final args = Get.arguments ?? {};
     role = (args['role'] ?? 'user').toLowerCase();
     print("GetInterestScreen role: $role");
+    _loadCommunities();
+  }
+
+  Future<void> _loadCommunities() async {
+    setState(() {
+      _isLoadingCommunities = true;
+    });
+
+    try {
+      final getCommunitiesByType = sl<GetCommunitiesByType>();
+      final communities = await getCommunitiesByType.call('support');
+
+      setState(() {
+        _communities = communities.map((community) {
+          return {
+            'profilePicUrl': community.logoPath.isNotEmpty
+                ? community.logoPath
+                : 'https://cdn.flyapp.in/assets/community-demo.png',
+            'communityName': community.name,
+            'communityId': community.id,
+            'followerCount': community.members?.length ?? 0,
+          };
+        }).toList();
+      });
+    } catch (e) {
+      print('❌ Error loading communities: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading communities: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingCommunities = false;
+        });
+      }
+    }
   }
 
   void _toggleTag(String tagName) {
@@ -388,11 +407,31 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                       const SizedBox(height: 20),
                       Separator(text: "Communities by MHPs✨"),
                       const SizedBox(height: 20),
-                      CommunitiesGrid(
-                        communities: sampleCommunities,
-                        selectedCommunityIds: _selectedCommunities,
-                        onCommunityTap: _toggleCommunity,
-                      ),
+                      _isLoadingCommunities
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(40.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            )
+                          : _communities.isEmpty
+                              ? const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(40.0),
+                                    child: Text(
+                                      'No communities available',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : CommunitiesGrid(
+                                  communities: _communities,
+                                  selectedCommunityIds: _selectedCommunities,
+                                  onCommunityTap: _toggleCommunity,
+                                ),
                       const SizedBox(height: 20),
                       GradientButton(
                         text: _isSaving ? "Saving..." : "Explore fly!",

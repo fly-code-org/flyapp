@@ -99,9 +99,9 @@ flutter:
   assets:
     - assets/icon/google.png
     - assets/images/
-
     - assets/icon/social-tags/
     - assets/icon/support-tags/
+    - assets/icon/navbar/
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
