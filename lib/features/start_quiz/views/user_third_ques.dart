@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
-import 'package:fly/features/start_quiz/widgets/card_options.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/quiz/presentation/controllers/quiz_controller.dart';
 import 'package:fly/features/start_quiz/widgets/gradient_button.dart';
 import 'package:fly/features/start_quiz/widgets/number_picker.dart';
-import 'package:fly/features/start_quiz/widgets/vertical_progress_bar.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
@@ -18,12 +17,52 @@ class UserQuestionThirdScreen extends StatefulWidget {
 class _UserQuestionThirdScreenState extends State<UserQuestionThirdScreen> {
   double _dragPosition = 0.8;
   late final String role;
+  late final QuizController quizController;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     final args = Get.arguments ?? {};
     role = (args['role'] ?? 'user').toLowerCase();
+
+    // Get or create QuizController
+    if (Get.isRegistered<QuizController>()) {
+      quizController = Get.find<QuizController>();
+    } else {
+      quizController = sl<QuizController>();
+      Get.put(quizController);
+    }
+
+    // Defer initialization to avoid calling setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeQuestion();
+    });
+  }
+
+  Future<void> _initializeQuestion() async {
+    if (_isInitialized) return;
+    _isInitialized = true;
+
+    await quizController.fetchQuestions(category: role, tags: ['third']);
+
+    if (quizController.errorMessage.value.isNotEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(quizController.errorMessage.value)),
+        );
+      }
+      return;
+    }
+
+    // Auto-select first option if available (since picker defaults to index 0)
+    if (quizController.questions.isNotEmpty &&
+        quizController.currentQuestion.value != null) {
+      final options = quizController.currentQuestion.value!.options;
+      if (options.isNotEmpty) {
+        quizController.selectOption(options[0].id);
+      }
+    }
   }
 
   @override
@@ -74,35 +113,129 @@ class _UserQuestionThirdScreenState extends State<UserQuestionThirdScreen> {
                   child: ListView(
                     controller: scrollController,
                     children: [
-                      AnimatedOpacity(
-                        opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 300),
-                        child: const Text(
-                          "What kind of support would you prefer when you're extremely upset?",
-                          style: TextStyle(
-                            fontFamily: 'Lexend',
-                            fontSize: 27,
-                            fontWeight: FontWeight.normal,
-                            // color: Color(0xFF8545E1),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-                      // Example 1: Numbers
-                      PickerWithBall(
-                        options: ["1", "2", "3", "4", "5"],
-                        labels: ["1", "2", "3", "4", "5"], // top labels
-                        onChanged: (value, index) =>
-                            print("Picked $value ($index)"),
-                      ),
-                      const SizedBox(height: 50),
-                      GradientButton(
-                        text: "Next >>>>",
-                        onPressed: () {
-                          Get.toNamed(AppRoutes.UserQuestion4);
-                        },
-                      ),
+                      Obx(() {
+                        final question = quizController.currentQuestion.value;
+                        final isLoading = quizController.isLoading.value;
+
+                        if (isLoading) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+
+                        if (question == null) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(40.0),
+                              child: Text('No question available'),
+                            ),
+                          );
+                        }
+
+                        final options = question.options;
+
+                        return Column(
+                          children: [
+                            AnimatedOpacity(
+                              opacity: _dragPosition > 0.1 ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: Text(
+                                question.question,
+                                style: const TextStyle(
+                                  fontFamily: 'Lexend',
+                                  fontSize: 27,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            // Number picker mapped to question options
+                            PickerWithBall(
+                              options: List.generate(
+                                options.length,
+                                (index) => (index + 1).toString(),
+                              ),
+                              labels: List.generate(
+                                options.length,
+                                (index) => (index + 1).toString(),
+                              ),
+                              initialIndex: 0,
+                              onChanged: (value, index) {
+                                // Map the selected number index to the option ID
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  if (index >= 0 && index < options.length) {
+                                    quizController.selectOption(
+                                      options[index].id,
+                                    );
+                                  }
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 50),
+                            Obx(
+                              () => GradientButton(
+                                text: quizController.isSubmitting.value
+                                    ? "Submitting..."
+                                    : "Next >>>>",
+                                onPressed:
+                                    quizController
+                                            .selectedOptionId
+                                            .value
+                                            .isEmpty ||
+                                        quizController.isSubmitting.value
+                                    ? () {
+                                        if (quizController
+                                            .selectedOptionId
+                                            .value
+                                            .isEmpty) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Please select an option',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    : () {
+                                        quizController
+                                            .submitCurrentAnswer()
+                                            .then((success) {
+                                              if (success) {
+                                                Get.toNamed(
+                                                  AppRoutes.UserQuestion4,
+                                                );
+                                              } else if (quizController
+                                                  .submitError
+                                                  .value
+                                                  .isNotEmpty) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      quizController
+                                                          .submitError
+                                                          .value,
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            });
+                                      },
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
                     ],
                   ),
                 ),
