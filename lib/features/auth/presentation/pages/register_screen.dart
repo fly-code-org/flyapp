@@ -113,23 +113,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _handleGoogleAuthSuccess() async {
     if (_authController.message.value.isNotEmpty) {
-      print('✅ Google Signup Successful!');
+      print('✅ Google Auth Successful!');
       print('   📨 Message: ${_authController.message.value}');
       print('   🎫 Token stored: ${_authController.token.value.isNotEmpty}');
+      print('   🔐 Is Login Mode: $_isLogin');
 
-      // Navigate to profile creation screen based on role
-      // Convert to lowercase for comparison (RoleSelector returns "User" or "MHP")
-      final role = selectedRole.isNotEmpty
-          ? selectedRole.toLowerCase()
-          : 'user';
-      print('   👤 Navigating with role: $role');
-
-      if (role == 'user') {
-        print('   🚀 Navigating to: /create-user-profile');
-        Get.toNamed('/create-user-profile', arguments: {'role': role});
+      // Check if user is logging in or signing up
+      if (_isLogin) {
+        // Existing user logging in - navigate to home
+        print('✅ [GOOGLE LOGIN] Navigating to home screen...');
+        Get.offAllNamed(AppRoutes.Home);
+        print('✅ [GOOGLE LOGIN] Navigation to home completed');
       } else {
-        print('   🚀 Navigating to: /create-mhp-profile');
-        Get.toNamed('/create-mhp-profile', arguments: {'role': role});
+        // New user signing up - navigate to profile creation
+        print('✅ [GOOGLE SIGNUP] Navigating to profile creation...');
+        // Convert to lowercase for comparison (RoleSelector returns "User" or "MHP")
+        final role = selectedRole.isNotEmpty
+            ? selectedRole.toLowerCase()
+            : 'user';
+        print('   👤 Navigating with role: $role');
+
+        if (role == 'user') {
+          print('   🚀 Navigating to: /create-user-profile');
+          Get.toNamed(AppRoutes.createUserProfile, arguments: {'role': role});
+        } else {
+          print('   🚀 Navigating to: /create-mhp-profile');
+          Get.toNamed(AppRoutes.createMhpProfile, arguments: {'role': role});
+        }
       }
     }
   }
