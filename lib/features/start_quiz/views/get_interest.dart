@@ -5,7 +5,9 @@ import 'package:fly/features/community/domain/usecases/get_communities_by_type.d
 import 'package:fly/features/community/domain/usecases/unfollow_community.dart';
 import 'package:fly/features/interests/data/models/tag_mapping.dart';
 import 'package:fly/features/interests/domain/entities/interests.dart';
+import 'package:fly/features/interests/domain/usecases/follow_tag.dart';
 import 'package:fly/features/interests/domain/usecases/save_interests.dart';
+import 'package:fly/features/interests/domain/usecases/unfollow_tag.dart';
 import 'package:fly/features/start_quiz/widgets/communities_grid.dart';
 import 'package:fly/features/start_quiz/widgets/separator.dart';
 import 'package:fly/features/start_quiz/widgets/social_tags.dart';
@@ -112,15 +114,73 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
     }
   }
 
-  void _toggleTag(String tagName) {
+  Future<void> _toggleTag(String tagName) async {
+    final wasSelected = _selectedTags.contains(tagName);
+    final tagId = TagMapping.getTagId(tagName);
+    
+    if (tagId == null) {
+      print('⚠️ Tag ID not found for: $tagName');
+      return;
+    }
+    
+    // Prevent duplicate operations
+    final willBeSelected = !wasSelected;
+    if (willBeSelected && _selectedTags.contains(tagName)) {
+      print('⚠️ Tag already selected, skipping duplicate selection');
+      return;
+    }
+    if (!willBeSelected && !_selectedTags.contains(tagName)) {
+      print('⚠️ Tag already deselected, skipping duplicate deselection');
+      return;
+    }
+    
+    // Optimistically update UI first
     setState(() {
-      if (_selectedTags.contains(tagName)) {
-        _selectedTags.remove(tagName);
+      if (wasSelected) {
+        if (_selectedTags.contains(tagName)) {
+          _selectedTags.remove(tagName);
+        }
       } else {
-        _selectedTags.add(tagName);
+        if (!_selectedTags.contains(tagName)) {
+          _selectedTags.add(tagName);
+        }
       }
     });
+    
     print("Selected tags: $_selectedTags");
+    
+    // Update tag follow status in database
+    try {
+      if (wasSelected) {
+        // Unfollow tag
+        final unfollowTag = sl<UnfollowTag>();
+        await unfollowTag.call(tagId);
+        print('✅ Unfollowed tag: $tagName');
+      } else {
+        // Follow tag
+        final followTag = sl<FollowTag>();
+        await followTag.call(tagId, tagName);
+        print('✅ Followed tag: $tagName');
+      }
+    } catch (e) {
+      print('❌ Error updating tag follow status: $e');
+      // Revert the UI state on error
+      setState(() {
+        if (wasSelected) {
+          _selectedTags.add(tagName);
+        } else {
+          _selectedTags.remove(tagName);
+        }
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating tag: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _toggleCommunity(String communityId) async {

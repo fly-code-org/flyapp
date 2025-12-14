@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
-import 'package:fly/features/community/domain/usecases/follow_community.dart';
 import 'package:fly/features/community/domain/usecases/get_communities_by_type.dart';
-import 'package:fly/features/community/domain/usecases/unfollow_community.dart';
 import 'package:fly/features/explore/presentation/widgets/community_list_horizontal.dart';
 import 'package:fly/features/explore/presentation/widgets/conversation_card.dart';
 import 'package:fly/features/explore/presentation/widgets/search_bar.dart';
 import 'package:fly/features/explore/presentation/widgets/social_tag_h.dart';
+import 'package:fly/features/interests/data/models/tag_mapping.dart';
+import 'package:fly/features/interests/domain/usecases/follow_tag.dart';
+import 'package:fly/features/interests/domain/usecases/unfollow_tag.dart';
 import 'package:fly/features/user_profile/presentation/widgets/bottom_navbar.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -23,7 +24,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     {
       "categoryLabel": "Respect",
       "imagePath": "assets/icon/social-tags/artAndCreativity.svg",
-      "rightText": "Art & Creativity",
+      "rightText": "Art & Creatives",
     },
     {
       "categoryLabel": "On Topic",
@@ -74,12 +75,85 @@ class _ExploreScreenState extends State<ExploreScreen> {
   // Communities from API
   List<Map<String, dynamic>> _socialCommunities = [];
   List<Map<String, dynamic>> _supportCommunities = [];
+  
+  // Track followed tags by tag ID
+  final Set<int> _followedTagIds = {};
 
   @override
   void initState() {
     super.initState();
     _loadSocialCommunities();
     _loadSupportCommunities();
+    _loadFollowedTags();
+  }
+  
+  Future<void> _loadFollowedTags() async {
+    // TODO: Fetch user profile to get followed tags
+    // For now, we'll use an empty set
+    // This should be implemented when user profile API is available
+  }
+  
+  bool _isTagFollowed(String tagName) {
+    final tagId = TagMapping.getTagId(tagName);
+    return tagId != null && _followedTagIds.contains(tagId);
+  }
+  
+  Future<void> _toggleTag(String tagName) async {
+    final tagId = TagMapping.getTagId(tagName);
+    if (tagId == null) {
+      print('⚠️ Tag ID not found for: $tagName');
+      return;
+    }
+    
+    final isCurrentlyFollowed = _followedTagIds.contains(tagId);
+    
+    try {
+      if (isCurrentlyFollowed) {
+        // Unfollow tag
+        final unfollowTag = sl<UnfollowTag>();
+        await unfollowTag.call(tagId);
+        setState(() {
+          _followedTagIds.remove(tagId);
+        });
+        print('✅ Unfollowed tag: $tagName');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Unfollowed $tagName'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        // Follow tag
+        final followTag = sl<FollowTag>();
+        await followTag.call(tagId, tagName);
+        setState(() {
+          _followedTagIds.add(tagId);
+        });
+        print('✅ Followed tag: $tagName');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Followed $tagName'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Error updating tag follow status: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadSocialCommunities() async {
@@ -277,15 +351,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Row(
                           children: socialTags.map((tag) {
+                            final tagName = tag["rightText"]!;
+                            final isFollowed = _isTagFollowed(tagName);
                             return Padding(
                               padding: const EdgeInsets.only(right: 12),
                               child: SocialTagHorizontal(
                                 categoryLabel: tag["categoryLabel"]!,
-                                imagePath:
-                                    tag["imagePath"]!, // switched from imagePath → imagePath
-                                rightText: tag["rightText"]!,
+                                imagePath: tag["imagePath"]!,
+                                rightText: tagName,
+                                isFollowed: isFollowed,
                                 onTap: () {
-                                  print("Tapped ${tag["categoryLabel"]}");
+                                  _toggleTag(tagName);
                                 },
                               ),
                             );
@@ -342,7 +418,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Wrap(
+                      Wrap(
                       spacing: 16,
                       runSpacing: 16,
                       children: [
@@ -352,8 +428,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               "assets/icon/support-tags/emotionalHealing.svg",
                           rightText: "Emotional Healing",
                           iconShape: IconShape.square,
+                          isFollowed: _isTagFollowed("Emotional Healing"),
                           onTap: () {
-                            print("Motivational clicked");
+                            _toggleTag("Emotional Healing");
                           },
                         ),
                         SocialTagHorizontal(
@@ -362,6 +439,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               "assets/icon/support-tags/anxietyAndStress.svg",
                           rightText: "Anxiety & Stress",
                           iconShape: IconShape.square,
+                          isFollowed: _isTagFollowed("Anxiety & Stress"),
+                          onTap: () {
+                            _toggleTag("Anxiety & Stress");
+                          },
                         ),
                         SocialTagHorizontal(
                           categoryLabel: "Grief & Heartbreak",
@@ -369,6 +450,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               "assets/icon/support-tags/griefAndHeartbreak.svg",
                           rightText: "Grief & Heartbreak",
                           iconShape: IconShape.square,
+                          isFollowed: _isTagFollowed("Grief & Heartbreak"),
+                          onTap: () {
+                            _toggleTag("Grief & Heartbreak");
+                          },
                         ),
                         SocialTagHorizontal(
                           categoryLabel: "Work & Career",
@@ -376,6 +461,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               "assets/icon/support-tags/workAndCareer.svg",
                           rightText: "Work & Career",
                           iconShape: IconShape.square,
+                          isFollowed: _isTagFollowed("Work & Career"),
+                          onTap: () {
+                            _toggleTag("Work & Career");
+                          },
                         ),
                         SocialTagHorizontal(
                           categoryLabel: "Trauma",
@@ -383,6 +472,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               "assets/icon/support-tags/traumaAndHealing.svg",
                           rightText: "Trauma",
                           iconShape: IconShape.square,
+                          isFollowed: _isTagFollowed("Trauma"),
+                          onTap: () {
+                            _toggleTag("Trauma");
+                          },
                         ),
                         SocialTagHorizontal(
                           categoryLabel: "Family & Relations",
@@ -390,6 +483,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               "assets/icon/support-tags/familyAndRelationship.svg",
                           rightText: "Family & Relations",
                           iconShape: IconShape.square,
+                          isFollowed: _isTagFollowed("Family & Relations"),
+                          onTap: () {
+                            _toggleTag("Family & Relations");
+                          },
                         ),
                         SocialTagHorizontal(
                           categoryLabel: "Self-Worth & Identity",
@@ -397,6 +494,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               "assets/icon/support-tags/selfWorthAndIdentity.svg",
                           rightText: "Self-Worth & Identity",
                           iconShape: IconShape.square,
+                          isFollowed: _isTagFollowed("Self-Worth & Identity"),
+                          onTap: () {
+                            _toggleTag("Self-Worth & Identity");
+                          },
                         ),
                       ],
                     ),

@@ -22,5 +22,15 @@ class InterestsRepositoryImpl implements InterestsRepository {
     // Exceptions from data source will propagate up
     await remoteDataSource.saveInterests(request: requestModel);
   }
+
+  @override
+  Future<void> followTag(int tagId, String tagName) async {
+    await remoteDataSource.followTag(tagId, tagName);
+  }
+
+  @override
+  Future<void> unfollowTag(int tagId) async {
+    await remoteDataSource.unfollowTag(tagId);
+  }
 }
 

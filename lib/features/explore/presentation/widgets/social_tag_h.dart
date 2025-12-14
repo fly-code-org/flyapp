@@ -9,6 +9,7 @@ class SocialTagHorizontal extends StatelessWidget {
   final String rightText;
   final VoidCallback? onTap;
   final IconShape iconShape;
+  final bool isFollowed; // New parameter to indicate if tag is followed
 
   const SocialTagHorizontal({
     super.key,
@@ -17,6 +18,7 @@ class SocialTagHorizontal extends StatelessWidget {
     required this.rightText,
     this.onTap,
     this.iconShape = IconShape.circular,
+    this.isFollowed = false, // Default to not followed
   });
 
   bool get isSvg => imagePath.trim().toLowerCase().endsWith('.svg');
@@ -43,10 +45,23 @@ class SocialTagHorizontal extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.grey.shade200,
+          color: isFollowed ? Colors.blue.shade50 : Colors.grey.shade200,
           borderRadius: iconShape == IconShape.circular
               ? BorderRadius.circular(30)
               : BorderRadius.circular(10),
+          border: isFollowed
+              ? Border.all(color: Colors.blue.shade300, width: 1.5)
+              : null,
+          boxShadow: isFollowed
+              ? [
+                  BoxShadow(
+                    color: Colors.blue.shade100,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

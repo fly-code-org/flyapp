@@ -35,7 +35,9 @@ import '../../features/quiz/presentation/controllers/quiz_controller.dart';
 import '../../features/interests/data/datasources/interests_remote_data_source.dart';
 import '../../features/interests/data/repositories/interests_repository_impl.dart';
 import '../../features/interests/domain/repositories/interests_repository.dart';
+import '../../features/interests/domain/usecases/follow_tag.dart';
 import '../../features/interests/domain/usecases/save_interests.dart';
+import '../../features/interests/domain/usecases/unfollow_tag.dart';
 import '../../features/community/data/datasources/community_remote_data_source.dart';
 import '../../features/community/data/repositories/community_repository_impl.dart';
 import '../../features/community/domain/repositories/community_repository.dart';
@@ -163,6 +165,8 @@ Future<void> init() async {
   //! Features - Interests
   // Use cases
   sl.registerLazySingleton(() => SaveInterests(sl()));
+  sl.registerLazySingleton(() => FollowTag(sl()));
+  sl.registerLazySingleton(() => UnfollowTag(sl()));
 
   // Repository
   sl.registerLazySingleton<InterestsRepository>(

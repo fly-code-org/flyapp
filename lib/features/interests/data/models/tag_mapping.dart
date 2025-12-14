@@ -3,10 +3,13 @@
 // TODO: Update with actual tag IDs from database
 class TagMapping {
   // Social tags mapping
+  // Note: "Art & Creatives" in TagMapping matches "Art & Creativity" in explore.dart
+  // Using "Art & Creatives" as it's more consistent with the naming pattern
   static const Map<String, int> socialTags = {
     'Motivational': 1,
     'Lifestyle': 2,
-    'Art & Creatives': 3,
+    'Art & Creatives': 3, // Also matches "Art & Creativity" in explore.dart
+    'Art & Creativity': 3, // Alias for consistency
     'Awwdorable': 4,
     'Fun & Humor': 5,
     'Peace': 6,
@@ -34,6 +37,18 @@ class TagMapping {
     // Check support tags
     if (supportTags.containsKey(tagName)) {
       return supportTags[tagName];
+    }
+    return null;
+  }
+  
+  static String? getTagType(String tagName) {
+    // Check if it's a social tag
+    if (socialTags.containsKey(tagName)) {
+      return 'social';
+    }
+    // Check if it's a support tag
+    if (supportTags.containsKey(tagName)) {
+      return 'support';
     }
     return null;
   }

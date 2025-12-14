@@ -9,6 +9,8 @@ abstract class InterestsRemoteDataSource {
   Future<InterestsResponseModel> saveInterests({
     required InterestsRequestModel request,
   });
+  Future<void> followTag(int tagId, String tagName);
+  Future<void> unfollowTag(int tagId);
 }
 
 class InterestsRemoteDataSourceImpl implements InterestsRemoteDataSource {
@@ -102,6 +104,100 @@ class InterestsRemoteDataSourceImpl implements InterestsRemoteDataSource {
       if (e is ServerException || e is NetworkException) {
         rethrow;
       }
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> followTag(int tagId, String tagName) async {
+    try {
+      print('🏷️ [TAG API] Following tag...');
+      print('   - Tag ID: $tagId');
+      print('   - Tag Name: $tagName');
+
+      final response = await client.post(
+        '/users/external/v1/tag/follow',
+        data: {
+          'tag_id': tagId,
+          'tag_name': tagName,
+        },
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      print('📦 [TAG API] Follow Response Status: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      print('❌ [TAG API] Follow DioException: ${e.message}');
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        String errorMessage = 'An error occurred';
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('msg')) {
+          final msg = responseData['msg'];
+          if (msg is Map && msg.containsKey('err: ')) {
+            errorMessage = msg['err: '] as String;
+          } else if (msg is String) {
+            errorMessage = msg;
+          }
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> unfollowTag(int tagId) async {
+    try {
+      print('🏷️ [TAG API] Unfollowing tag...');
+      print('   - Tag ID: $tagId');
+
+      final response = await client.post(
+        '/users/external/v1/tag/unfollow',
+        data: {
+          'tag_id': tagId,
+        },
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      print('📦 [TAG API] Unfollow Response Status: ${response.statusCode}');
+
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      print('❌ [TAG API] Unfollow DioException: ${e.message}');
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        String errorMessage = 'An error occurred';
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('msg')) {
+          final msg = responseData['msg'];
+          if (msg is Map && msg.containsKey('err: ')) {
+            errorMessage = msg['err: '] as String;
+          } else if (msg is String) {
+            errorMessage = msg;
+          }
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
       throw ServerException('Unexpected error: ${e.toString()}');
     }
   }
