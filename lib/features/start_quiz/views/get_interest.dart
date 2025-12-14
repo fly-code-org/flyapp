@@ -55,10 +55,25 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
 
       setState(() {
         _communities = communities.map((community) {
+          // Convert relative path to full CDN URL
+          String profilePicUrl;
+          if (community.logoPath.isEmpty) {
+            profilePicUrl = 'https://cdn.flyapp.in/assets/community-demo.png';
+          } else if (community.logoPath.startsWith('http://') || 
+                     community.logoPath.startsWith('https://')) {
+            // Already a full URL
+            profilePicUrl = community.logoPath;
+          } else {
+            // Relative path - prepend CDN base URL
+            // Remove leading slash if present to avoid double slashes
+            final path = community.logoPath.startsWith('/') 
+                ? community.logoPath.substring(1) 
+                : community.logoPath;
+            profilePicUrl = 'https://cdn.flyapp.in/$path';
+          }
+          
           return {
-            'profilePicUrl': community.logoPath.isNotEmpty
-                ? community.logoPath
-                : 'https://cdn.flyapp.in/assets/community-demo.png',
+            'profilePicUrl': profilePicUrl,
             'communityName': community.name,
             'communityId': community.id,
             'followerCount': community.members?.length ?? 0,

@@ -38,7 +38,7 @@ class CommunityCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min, // important to avoid stretching vertically
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,6 +50,47 @@ class CommunityCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    print('❌ Error loading community image: $error');
+                    print('   URL: $profilePicUrl');
+                    return Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.group,
+                        color: Colors.grey.shade600,
+                        size: 24,
+                      ),
+                    );
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               Spacer(),
@@ -59,7 +100,9 @@ class CommunityCard extends StatelessWidget {
                   backgroundColor:
                       isSelected ? Colors.blue.shade100 : Colors.grey.shade300,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -69,36 +112,35 @@ class CommunityCard extends StatelessWidget {
                   style: TextStyle(
                     color: isSelected ? Colors.blue : Colors.black87,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 12,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            communityName,
-            style: const TextStyle(
-              fontFamily: 'Lexend',
-              fontSize: 15,
-              fontWeight: FontWeight.normal,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            communityId,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black87,
+          const SizedBox(height: 6),
+          Flexible(
+            child: Text(
+              communityName,
+              style: const TextStyle(
+                fontFamily: 'Lexend',
+                fontSize: 14,
+                fontWeight: FontWeight.normal,
+                color: Colors.black,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             '$followerCount followers',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: Colors.grey.shade600,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

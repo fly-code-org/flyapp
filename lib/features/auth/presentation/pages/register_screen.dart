@@ -11,6 +11,7 @@ import 'package:fly/features/auth/presentation/widgets/already_member_text.dart'
 import 'package:fly/features/auth/presentation/widgets/input_text_field.dart';
 import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
 import 'package:fly/features/auth/presentation/widgets/role_selector.dart';
+import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -93,12 +94,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_authController.message.value.isNotEmpty) {
       // Navigate based on mode
       if (_isLogin) {
-        // Navigate to home or main screen after login
-        Get.offAllNamed('/'); // Adjust route as needed
+        print('✅ [LOGIN] Navigating to home screen...');
+        // Navigate to home screen after login
+        Get.offAllNamed(AppRoutes.Home);
+        print('✅ [LOGIN] Navigation to home completed');
       } else {
         // Navigate to email verification after signup
         Get.toNamed(
-          '/email-verification',
+          AppRoutes.emailVerification,
           arguments: {
             'role': selectedRole,
             'email': emailController.text.trim(),
