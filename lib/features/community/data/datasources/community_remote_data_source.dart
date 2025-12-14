@@ -9,6 +9,8 @@ abstract class CommunityRemoteDataSource {
     CreateCommunityRequestModel request,
   );
   Future<List<CommunityModel>> getCommunitiesByType(String type);
+  Future<void> followCommunity(String communityId);
+  Future<void> unfollowCommunity(String communityId);
 }
 
 class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
@@ -109,6 +111,96 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
       }
     } on DioException catch (e) {
       print('❌ [COMMUNITY API] DioException: ${e.message}');
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        String errorMessage = 'An error occurred';
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('msg')) {
+          final msg = responseData['msg'];
+          if (msg is Map && msg.containsKey('err: ')) {
+            errorMessage = msg['err: '] as String;
+          } else if (msg is String) {
+            errorMessage = msg;
+          }
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> followCommunity(String communityId) async {
+    try {
+      print('👥 [COMMUNITY API] Following community...');
+      print('   - Community ID: $communityId');
+
+      final response = await client.post(
+        '/community/external/v1/community/follow',
+        data: {'community_id': communityId},
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      print('📦 [COMMUNITY API] Follow Response Status: ${response.statusCode}');
+      print('📦 [COMMUNITY API] Follow Response Data: ${response.data}');
+
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      print('❌ [COMMUNITY API] Follow DioException: ${e.message}');
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        String errorMessage = 'An error occurred';
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('msg')) {
+          final msg = responseData['msg'];
+          if (msg is Map && msg.containsKey('err: ')) {
+            errorMessage = msg['err: '] as String;
+          } else if (msg is String) {
+            errorMessage = msg;
+          }
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> unfollowCommunity(String communityId) async {
+    try {
+      print('👥 [COMMUNITY API] Unfollowing community...');
+      print('   - Community ID: $communityId');
+
+      final response = await client.post(
+        '/community/external/v1/community/unfollow',
+        data: {'community_id': communityId},
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      print('📦 [COMMUNITY API] Unfollow Response Status: ${response.statusCode}');
+      print('📦 [COMMUNITY API] Unfollow Response Data: ${response.data}');
+
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      print('❌ [COMMUNITY API] Unfollow DioException: ${e.message}');
       if (e.response != null) {
         final statusCode = e.response!.statusCode;
         final responseData = e.response!.data;

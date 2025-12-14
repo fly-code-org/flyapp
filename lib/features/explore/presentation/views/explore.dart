@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/create_community/controller/user_profile_controller.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/community/domain/usecases/follow_community.dart';
+import 'package:fly/features/community/domain/usecases/get_communities_by_type.dart';
+import 'package:fly/features/community/domain/usecases/unfollow_community.dart';
 import 'package:fly/features/explore/presentation/widgets/community_list_horizontal.dart';
 import 'package:fly/features/explore/presentation/widgets/conversation_card.dart';
 import 'package:fly/features/explore/presentation/widgets/search_bar.dart';
 import 'package:fly/features/explore/presentation/widgets/social_tag_h.dart';
 import 'package:fly/features/user_profile/presentation/widgets/bottom_navbar.dart';
-import 'package:get/get.dart';
 
-class ExploreScreen extends StatelessWidget {
-  ExploreScreen({super.key}); // no const
+class ExploreScreen extends StatefulWidget {
+  const ExploreScreen({super.key});
+
+  @override
+  State<ExploreScreen> createState() => _ExploreScreenState();
+}
+
+class _ExploreScreenState extends State<ExploreScreen> {
 
   // ✅ Use asset paths instead of network URLs
   final List<Map<String, String>> socialTags = [
@@ -59,9 +67,135 @@ class ExploreScreen extends StatelessWidget {
     },
   ];
 
+  // Loading states
+  bool _isLoadingSocialCommunities = false;
+  bool _isLoadingSupportCommunities = false;
+
+  // Communities from API
+  List<Map<String, dynamic>> _socialCommunities = [];
+  List<Map<String, dynamic>> _supportCommunities = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSocialCommunities();
+    _loadSupportCommunities();
+  }
+
+  Future<void> _loadSocialCommunities() async {
+    setState(() {
+      _isLoadingSocialCommunities = true;
+    });
+
+    try {
+      final getCommunitiesByType = sl<GetCommunitiesByType>();
+      final communities = await getCommunitiesByType.call('social');
+
+      setState(() {
+        _socialCommunities = communities.map((community) {
+          // Convert relative path to full CDN URL
+          String profilePicUrl;
+          if (community.logoPath.isEmpty) {
+            profilePicUrl = 'https://cdn.flyapp.in/assets/community-demo.png';
+          } else if (community.logoPath.startsWith('http://') ||
+              community.logoPath.startsWith('https://')) {
+            // Already a full URL
+            profilePicUrl = community.logoPath;
+          } else {
+            // Relative path - prepend CDN base URL
+            // Remove leading slash if present to avoid double slashes
+            final path = community.logoPath.startsWith('/')
+                ? community.logoPath.substring(1)
+                : community.logoPath;
+            profilePicUrl = 'https://cdn.flyapp.in/$path';
+          }
+
+          return {
+            'profilePicUrl': profilePicUrl,
+            'communityName': community.name,
+            'communityId': community.id,
+            'followerCount': community.members?.length ?? 0,
+            'members': community.members ?? [], // Store members array
+          };
+        }).toList();
+      });
+    } catch (e) {
+      print('❌ Error loading social communities: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading social communities: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingSocialCommunities = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadSupportCommunities() async {
+    setState(() {
+      _isLoadingSupportCommunities = true;
+    });
+
+    try {
+      final getCommunitiesByType = sl<GetCommunitiesByType>();
+      final communities = await getCommunitiesByType.call('support');
+
+      setState(() {
+        _supportCommunities = communities.map((community) {
+          // Convert relative path to full CDN URL
+          String profilePicUrl;
+          if (community.logoPath.isEmpty) {
+            profilePicUrl = 'https://cdn.flyapp.in/assets/community-demo.png';
+          } else if (community.logoPath.startsWith('http://') ||
+              community.logoPath.startsWith('https://')) {
+            // Already a full URL
+            profilePicUrl = community.logoPath;
+          } else {
+            // Relative path - prepend CDN base URL
+            // Remove leading slash if present to avoid double slashes
+            final path = community.logoPath.startsWith('/')
+                ? community.logoPath.substring(1)
+                : community.logoPath;
+            profilePicUrl = 'https://cdn.flyapp.in/$path';
+          }
+
+          return {
+            'profilePicUrl': profilePicUrl,
+            'communityName': community.name,
+            'communityId': community.id,
+            'followerCount': community.members?.length ?? 0,
+            'members': community.members ?? [], // Store members array
+          };
+        }).toList();
+      });
+    } catch (e) {
+      print('❌ Error loading support communities: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading support communities: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingSupportCommunities = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final CommunityController controller = Get.put(CommunityController());
     int _currentIndex = 1;
 
     return Scaffold(
@@ -162,17 +296,39 @@ class ExploreScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        SizedBox(height: 20),
-                        Text(
+                      children: [
+                        const SizedBox(height: 20),
+                        const Text(
                           "Top Social Circles",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 12),
-                        CommunityListHorizontal(), // <-- add it here
+                        const SizedBox(height: 12),
+                        _isLoadingSocialCommunities
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(20.0),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            : _socialCommunities.isEmpty
+                                ? const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(20.0),
+                                      child: Text(
+                                        'No social communities available',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : CommunityListHorizontal(
+                                    communities: _socialCommunities,
+                                  ),
                       ],
                     ),
 
@@ -247,17 +403,39 @@ class ExploreScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        SizedBox(height: 20),
-                        Text(
+                      children: [
+                        const SizedBox(height: 20),
+                        const Text(
                           "Top Support Square by MHP's",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 12),
-                        CommunityListHorizontal(), // <-- add it here
+                        const SizedBox(height: 12),
+                        _isLoadingSupportCommunities
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(20.0),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            : _supportCommunities.isEmpty
+                                ? const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(20.0),
+                                      child: Text(
+                                        'No support communities available',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : CommunityListHorizontal(
+                                    communities: _supportCommunities,
+                                  ),
                       ],
                     ),
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/community/domain/usecases/follow_community.dart';
 import 'package:fly/features/community/domain/usecases/get_communities_by_type.dart';
+import 'package:fly/features/community/domain/usecases/unfollow_community.dart';
 import 'package:fly/features/interests/data/models/tag_mapping.dart';
 import 'package:fly/features/interests/domain/entities/interests.dart';
 import 'package:fly/features/interests/domain/usecases/save_interests.dart';
@@ -34,6 +36,9 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
   
   // Communities from API
   List<Map<String, dynamic>> _communities = [];
+  
+  // Track follower counts for optimistic updates
+  final Map<String, int> _followerCounts = {};
 
   @override
   void initState() {
@@ -72,11 +77,19 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
             profilePicUrl = 'https://cdn.flyapp.in/$path';
           }
           
+          final followerCount = community.members?.length ?? 0;
+          final communityId = community.id;
+          
+          // Initialize follower count if not already set
+          if (!_followerCounts.containsKey(communityId)) {
+            _followerCounts[communityId] = followerCount;
+          }
+          
           return {
             'profilePicUrl': profilePicUrl,
             'communityName': community.name,
-            'communityId': community.id,
-            'followerCount': community.members?.length ?? 0,
+            'communityId': communityId,
+            'followerCount': _followerCounts[communityId] ?? followerCount,
           };
         }).toList();
       });
@@ -110,15 +123,105 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
     print("Selected tags: $_selectedTags");
   }
 
-  void _toggleCommunity(String communityId) {
+  Future<void> _toggleCommunity(String communityId) async {
+    final wasSelected = _selectedCommunities.contains(communityId);
+    
+    // Prevent duplicate operations
+    final willBeSelected = !wasSelected;
+    if (willBeSelected && _selectedCommunities.contains(communityId)) {
+      print('⚠️ Community already selected, skipping duplicate selection');
+      return;
+    }
+    if (!willBeSelected && !_selectedCommunities.contains(communityId)) {
+      print('⚠️ Community already deselected, skipping duplicate deselection');
+      return;
+    }
+    
+    // Optimistically update UI first
     setState(() {
-      if (_selectedCommunities.contains(communityId)) {
-        _selectedCommunities.remove(communityId);
+      if (wasSelected) {
+        // Only decrement if was actually selected
+        if (_selectedCommunities.contains(communityId)) {
+          _selectedCommunities.remove(communityId);
+          // Decrement follower count only if count > 0
+          final currentCount = _followerCounts[communityId] ?? 0;
+          if (currentCount > 0) {
+            _followerCounts[communityId] = currentCount - 1;
+          }
+        }
       } else {
-        _selectedCommunities.add(communityId);
+        // Only increment if wasn't already selected
+        if (!_selectedCommunities.contains(communityId)) {
+          _selectedCommunities.add(communityId);
+          // Increment follower count
+          _followerCounts[communityId] = (_followerCounts[communityId] ?? 0) + 1;
+        }
       }
+      
+      // Update the communities list with new follower count
+      _communities = _communities.map((community) {
+        if (community['communityId'] == communityId) {
+          return {
+            ...community,
+            'followerCount': _followerCounts[communityId] ?? community['followerCount'],
+          };
+        }
+        return community;
+      }).toList();
     });
+    
     print("Selected communities: $_selectedCommunities");
+    
+    // Update community members in database
+    try {
+      if (wasSelected) {
+        // Unfollow community
+        final unfollowCommunity = sl<UnfollowCommunity>();
+        await unfollowCommunity.call(communityId);
+        print('✅ Unfollowed community: $communityId');
+      } else {
+        // Follow community
+        final followCommunity = sl<FollowCommunity>();
+        await followCommunity.call(communityId);
+        print('✅ Followed community: $communityId');
+      }
+    } catch (e) {
+      print('❌ Error updating community membership: $e');
+      // Revert the UI state on error
+      setState(() {
+        if (wasSelected) {
+          _selectedCommunities.add(communityId);
+          // Revert follower count increment
+          _followerCounts[communityId] = (_followerCounts[communityId] ?? 0) + 1;
+        } else {
+          _selectedCommunities.remove(communityId);
+          // Revert follower count decrement
+          _followerCounts[communityId] = (_followerCounts[communityId] ?? 0) - 1;
+          if (_followerCounts[communityId]! < 0) {
+            _followerCounts[communityId] = 0;
+          }
+        }
+        
+        // Revert the communities list
+        _communities = _communities.map((community) {
+          if (community['communityId'] == communityId) {
+            return {
+              ...community,
+              'followerCount': _followerCounts[communityId] ?? community['followerCount'],
+            };
+          }
+          return community;
+        }).toList();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating community: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _saveInterests() async {

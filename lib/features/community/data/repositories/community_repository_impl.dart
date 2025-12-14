@@ -46,6 +46,16 @@ class CommunityRepositoryImpl implements CommunityRepository {
           updatedAt: model.updatedAt,
         )).toList();
   }
+
+  @override
+  Future<void> followCommunity(String communityId) async {
+    await remoteDataSource.followCommunity(communityId);
+  }
+
+  @override
+  Future<void> unfollowCommunity(String communityId) async {
+    await remoteDataSource.unfollowCommunity(communityId);
+  }
 }
 
 

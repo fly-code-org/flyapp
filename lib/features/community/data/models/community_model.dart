@@ -17,23 +17,43 @@ class CommunityModel extends Community {
   });
 
   factory CommunityModel.fromJson(Map<String, dynamic> json) {
-    // Handle UUID fields - backend may return as string or binary
-    String parseId(dynamic value) {
-      if (value == null) return '';
-      if (value is String) return value;
-      return value.toString();
-    }
-
-    // Handle datetime fields
-    DateTime parseDateTime(dynamic value) {
-      if (value == null) return DateTime.now();
-      if (value is DateTime) return value;
-      if (value is String) return DateTime.parse(value);
-      if (value is Map && value.containsKey('\$date')) {
-        return DateTime.parse(value['\$date']);
+    try {
+      // Handle UUID fields - backend may return as string or binary
+      String parseId(dynamic value) {
+        if (value == null) return '';
+        if (value is String) return value;
+        // Handle MongoDB binary UUID format
+        if (value is Map && value.containsKey('\$binary')) {
+          final binary = value['\$binary'];
+          if (binary is Map && binary.containsKey('base64')) {
+            // For now, return empty string as we can't decode binary UUID easily
+            // The backend should return it as string in JSON
+            return '';
+          }
+        }
+        return value.toString();
       }
-      return DateTime.now();
-    }
+
+      // Handle datetime fields
+      DateTime parseDateTime(dynamic value) {
+        if (value == null) return DateTime.now();
+        if (value is DateTime) return value;
+        if (value is String) {
+          try {
+            return DateTime.parse(value);
+          } catch (e) {
+            return DateTime.now();
+          }
+        }
+        if (value is Map && value.containsKey('\$date')) {
+          try {
+            return DateTime.parse(value['\$date']);
+          } catch (e) {
+            return DateTime.now();
+          }
+        }
+        return DateTime.now();
+      }
 
     // Handle members array (list of UUIDs)
     List<String>? parseMembers(dynamic value) {
@@ -44,28 +64,64 @@ class CommunityModel extends Community {
       return null;
     }
 
+    // Handle tag_id - can be int, string, or MongoDB $numberLong format
+    int parseTagId(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) {
+        return int.tryParse(value) ?? 0;
+      }
+      // Handle MongoDB $numberLong format: {"$numberLong": "2"}
+      if (value is Map && value.containsKey('\$numberLong')) {
+        final longValue = value['\$numberLong'];
+        if (longValue is String) {
+          return int.tryParse(longValue) ?? 0;
+        }
+        if (longValue is int) {
+          return longValue;
+        }
+      }
+      return int.tryParse(value.toString()) ?? 0;
+    }
+
     // Try uppercase ID first, then lowercase id, then _id
     final id = parseId(json['ID'] ?? json['id'] ?? json['_id'] ?? '');
     final createdBy = parseId(json['created_by'] ?? '');
     final createdByType = json['created_by_type']?.toString() ?? '';
     final logoPath = json['logo_path']?.toString() ?? '';
-    final tagId = json['tag_id'] is int
-        ? json['tag_id'] as int
-        : int.tryParse(json['tag_id']?.toString() ?? '0') ?? 0;
+    final tagId = parseTagId(json['tag_id']);
 
-    return CommunityModel(
-      id: id,
-      name: json['name']?.toString() ?? '',
-      description: json['description']?.toString() ?? '',
-      type: json['type']?.toString() ?? '',
-      createdBy: createdBy,
-      createdByType: createdByType,
-      logoPath: logoPath,
-      tagId: tagId,
-      members: parseMembers(json['members']),
-      createdAt: parseDateTime(json['created_at']),
-      updatedAt: parseDateTime(json['updated_at']),
-    );
+      return CommunityModel(
+        id: id,
+        name: json['name']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        type: json['type']?.toString() ?? '',
+        createdBy: createdBy,
+        createdByType: createdByType,
+        logoPath: logoPath,
+        tagId: tagId,
+        members: parseMembers(json['members']),
+        createdAt: parseDateTime(json['created_at']),
+        updatedAt: parseDateTime(json['updated_at']),
+      );
+    } catch (e) {
+      print('❌ Error parsing CommunityModel from JSON: $e');
+      print('   JSON: $json');
+      // Return a default community model to prevent crashes
+      return CommunityModel(
+        id: '',
+        name: json['name']?.toString() ?? 'Unknown',
+        description: json['description']?.toString() ?? '',
+        type: json['type']?.toString() ?? '',
+        createdBy: '',
+        createdByType: '',
+        logoPath: json['logo_path']?.toString() ?? '',
+        tagId: 0,
+        members: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {

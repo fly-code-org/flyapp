@@ -40,7 +40,9 @@ import '../../features/community/data/datasources/community_remote_data_source.d
 import '../../features/community/data/repositories/community_repository_impl.dart';
 import '../../features/community/domain/repositories/community_repository.dart';
 import '../../features/community/domain/usecases/create_community.dart';
+import '../../features/community/domain/usecases/follow_community.dart';
 import '../../features/community/domain/usecases/get_communities_by_type.dart';
+import '../../features/community/domain/usecases/unfollow_community.dart';
 import '../services/s3_upload_service.dart';
 
 final sl = GetIt.instance;
@@ -176,6 +178,8 @@ Future<void> init() async {
   // Use cases
   sl.registerLazySingleton(() => CreateCommunity(sl()));
   sl.registerLazySingleton(() => GetCommunitiesByType(sl()));
+  sl.registerLazySingleton(() => FollowCommunity(sl()));
+  sl.registerLazySingleton(() => UnfollowCommunity(sl()));
 
   // Repository
   sl.registerLazySingleton<CommunityRepository>(

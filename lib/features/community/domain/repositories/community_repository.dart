@@ -11,7 +11,6 @@ abstract class CommunityRepository {
     required int tagId,
   });
   Future<List<Community>> getCommunitiesByType(String type);
+  Future<void> followCommunity(String communityId);
+  Future<void> unfollowCommunity(String communityId);
 }
-
-
-
