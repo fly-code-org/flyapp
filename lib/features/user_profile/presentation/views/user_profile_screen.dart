@@ -34,10 +34,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       Get.put(_profileController, permanent: true);
     }
     
-    // Fetch profile if not already loaded
-    if (_profileController.profileData.value == null) {
-      _profileController.fetchUserProfile();
-    }
+    // Always fetch profile to ensure we have latest data
+    // The controller will handle caching internally
+    print('🔍 [PROFILE SCREEN] Initializing, fetching user profile...');
+    _profileController.fetchUserProfile(forceRefresh: false);
     
     // Initialize and prefetch journal data (color templates + journals)
     // This ensures data is ready when user clicks on "My Journal" tab
@@ -261,7 +261,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                               child: Column(
                                 children: [
                                   const SizedBox(height: 60),
-                                  UserInfo(
+                                  Obx(() => UserInfo(
                                     userId: _profileController.username.value.isEmpty
                                         ? "Anonymous"
                                         : _profileController.username.value,
@@ -270,7 +270,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                                         : _profileController.bio.value,
                                     location: _profileController.location.value,
                                     date: _profileController.createdAt.value,
-                                  ),
+                                  )),
                                   const SizedBox(height: 40),
                                   // Tabs Row
                                   Row(
@@ -318,13 +318,23 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                     Positioned(
                       top: -60,
                       left: 16,
-                      child: Obx(() => ProfileAvatar(
-                            imagePath: _profileController.picturePath.value.isEmpty
-                                ? 'assets/images/mydp.JPG'
-                                : _profileController.picturePath.value,
+                      child: Obx(() {
+                        // Extract user ID from profile data for avatar generation
+                        final userId = _profileController.profileData.value?['user_id'] as String?;
+                        // Only pass imagePath if it's a valid URL, otherwise let ProfileAvatar generate avatar
+                        final picturePath = _profileController.picturePath.value;
+                        final imagePath = (picturePath.isNotEmpty && 
+                                          picturePath.startsWith('http'))
+                            ? picturePath
+                            : ''; // Empty string will trigger avatar generation
+                        print('🖼️ [PROFILE SCREEN] picturePath: "$picturePath", imagePath: "$imagePath", userId: "$userId"');
+                        return ProfileAvatar(
+                            imagePath: imagePath,
+                            userId: userId,
                             size: 120,
                             showEditIcon: false,
-                          )),
+                          );
+                      }),
                     ),
                   ],
                 ),

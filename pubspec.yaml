@@ -46,6 +46,7 @@ dependencies:
   flutter_secure_storage: ^9.0.0 # For storing JWTs securely
   shared_preferences: ^2.2.2     # For simple key-value storage
   logger: ^2.4.0          # For logging
+  crypto: ^3.0.6          # For hashing (avatar generation)
   json_annotation: ^4.9.0
   flutter_dotenv: ^5.1.0  # For environment variables
   image_picker: ^1.1.2

@@ -2,6 +2,8 @@
 import 'package:get/get.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/utils/jwt_decoder.dart';
+import '../../../../core/storage/token_storage.dart';
 import '../../../profile_creation/domain/usecases/get_user_profile.dart';
 
 class UserProfileController extends GetxController {
@@ -70,11 +72,17 @@ class UserProfileController extends GetxController {
       final userProfile = await getUserProfile.call();
 
       print('✅ [PROFILE] Profile fetched successfully');
+      print('📦 [PROFILE] Profile data keys: ${userProfile.keys.toList()}');
       print('📦 [PROFILE] Profile data: $userProfile');
+      
+      // Log specific fields for debugging
+      print('📋 [PROFILE] Username from API: "${userProfile['username']}"');
+      print('📋 [PROFILE] Bio from API: "${userProfile['bio']}"');
+      print('📋 [PROFILE] Picture path from API: "${userProfile['picture_path']}"');
 
       profileData.value = userProfile;
       _lastFetchTime = DateTime.now();
-      _updateObservableFields(userProfile);
+      await _updateObservableFields(userProfile);
 
       print('✅ [PROFILE] Profile data updated in controller');
     } on ServerException catch (e) {
@@ -91,15 +99,49 @@ class UserProfileController extends GetxController {
     }
   }
 
-  void _updateObservableFields(Map<String, dynamic> data) {
-    // Username
-    username.value = data['username'] as String? ?? '';
+  Future<void> _updateObservableFields(Map<String, dynamic> data) async {
+    print('🔍 [PROFILE] Updating observable fields from data: ${data.keys.toList()}');
+    
+    // Username - handle both string and null
+    // If username is empty, try to get it from JWT token as fallback
+    final usernameValue = data['username'];
+    String finalUsername = '';
+    if (usernameValue != null && usernameValue.toString().trim().isNotEmpty) {
+      finalUsername = usernameValue.toString().trim();
+    } else {
+      // Fallback: try to get username from JWT token
+      try {
+        final token = await TokenStorage.getToken();
+        if (token != null && token.isNotEmpty) {
+          final jwtUsername = JwtDecoder.getUserName(token);
+          if (jwtUsername != null && jwtUsername.isNotEmpty) {
+            finalUsername = jwtUsername;
+            print('📝 [PROFILE] Using username from JWT token: "$finalUsername"');
+          }
+        }
+      } catch (e) {
+        print('⚠️ [PROFILE] Could not get username from JWT: $e');
+      }
+    }
+    username.value = finalUsername;
+    print('📝 [PROFILE] Username set to: "${username.value}"');
 
-    // Bio
-    bio.value = data['bio'] as String? ?? '';
+    // Bio - handle null pointer from backend
+    final bioValue = data['bio'];
+    if (bioValue != null) {
+      bio.value = bioValue.toString().trim();
+    } else {
+      bio.value = '';
+    }
+    print('📝 [PROFILE] Bio set to: "${bio.value}"');
 
-    // Picture path - prepend CDN if relative
-    final picPath = data['picture_path'] as String? ?? '';
+    // Picture path - handle null pointer from backend, prepend CDN if relative
+    final picPathValue = data['picture_path'];
+    String picPath = '';
+    if (picPathValue != null) {
+      picPath = picPathValue.toString().trim();
+    }
+    
     if (picPath.isNotEmpty) {
       if (picPath.startsWith('http://') || picPath.startsWith('https://')) {
         picturePath.value = picPath;
@@ -109,6 +151,7 @@ class UserProfileController extends GetxController {
     } else {
       picturePath.value = '';
     }
+    print('📝 [PROFILE] Picture path set to: "${picturePath.value}"');
 
     // Location - prefer location_details over geo_location
     String locationStr = '';

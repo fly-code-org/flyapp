@@ -54,5 +54,33 @@ class JwtDecoder {
     final role = getRole(token);
     return role?.toLowerCase() == 'mhp';
   }
+
+  /// Extract user ID from JWT token
+  static String? getUserId(String? token) {
+    if (token == null || token.isEmpty) {
+      return null;
+    }
+
+    final payload = decodePayload(token);
+    if (payload == null) {
+      return null;
+    }
+
+    return payload['user_id'] as String?;
+  }
+
+  /// Extract user name from JWT token
+  static String? getUserName(String? token) {
+    if (token == null || token.isEmpty) {
+      return null;
+    }
+
+    final payload = decodePayload(token);
+    if (payload == null) {
+      return null;
+    }
+
+    return payload['user_name'] as String?;
+  }
 }
 

@@ -102,5 +102,10 @@ class ApiClient {
     }
     return _cachedToken;
   }
+
+  // Get current auth token (synchronous)
+  static String? getAuthToken() {
+    return _cachedToken;
+  }
 }
 
