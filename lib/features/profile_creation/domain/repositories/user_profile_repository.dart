@@ -5,5 +5,6 @@ abstract class UserProfileRepository {
   Future<UserProfileResponse> createProfile({
     required Map<String, dynamic> profileData,
   });
+  Future<Map<String, dynamic>> getUserProfile();
 }
 

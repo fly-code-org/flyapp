@@ -8,6 +8,7 @@ import 'package:fly/features/explore/presentation/widgets/social_tag_h.dart';
 import 'package:fly/features/interests/data/models/tag_mapping.dart';
 import 'package:fly/features/interests/domain/usecases/follow_tag.dart';
 import 'package:fly/features/interests/domain/usecases/unfollow_tag.dart';
+import 'package:fly/features/profile_creation/domain/usecases/get_user_profile.dart';
 import 'package:fly/features/user_profile/presentation/widgets/bottom_navbar.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -76,8 +77,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<Map<String, dynamic>> _socialCommunities = [];
   List<Map<String, dynamic>> _supportCommunities = [];
   
-  // Track followed tags by tag ID
-  final Set<int> _followedTagIds = {};
+  // Track followed tags by tag name (more reliable than ID since IDs overlap between social/support)
+  final Set<String> _followedTagNames = {};
 
   @override
   void initState() {
@@ -88,14 +89,75 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
   
   Future<void> _loadFollowedTags() async {
-    // TODO: Fetch user profile to get followed tags
-    // For now, we'll use an empty set
-    // This should be implemented when user profile API is available
+    try {
+      print('🔍 [EXPLORE] Fetching user profile to get followed tags...');
+      final getUserProfile = sl<GetUserProfile>();
+      final userProfile = await getUserProfile.call();
+      
+      print('📦 [EXPLORE] User profile data: $userProfile');
+      print('📦 [EXPLORE] Full followed_interests: ${userProfile['followed_interests']}');
+      
+      // Extract followed_interests from user profile
+      if (userProfile.containsKey('followed_interests') && 
+          userProfile['followed_interests'] is List) {
+        final followedInterests = userProfile['followed_interests'] as List;
+        
+        setState(() {
+          _followedTagNames.clear();
+          for (var interest in followedInterests) {
+            if (interest is Map<String, dynamic>) {
+              // Use tag name for comparison (more reliable than ID)
+              if (interest.containsKey('name') && interest['name'] is String) {
+                final tagName = interest['name'] as String;
+                // Normalize tag name (trim whitespace)
+                final normalizedName = tagName.trim();
+                _followedTagNames.add(normalizedName);
+                print('   📌 Added followed tag: "$normalizedName" (original: "$tagName")');
+              } else {
+                print('   ⚠️ Interest missing name: $interest');
+              }
+            }
+          }
+        });
+        
+        print('✅ [EXPLORE] Loaded ${_followedTagNames.length} followed tags: $_followedTagNames');
+      } else {
+        print('ℹ️ [EXPLORE] No followed_interests found in user profile');
+        setState(() {
+          _followedTagNames.clear();
+        });
+      }
+    } catch (e) {
+      print('❌ [EXPLORE] Error loading followed tags: $e');
+      // Don't show error to user, just use empty set
+      setState(() {
+        _followedTagNames.clear();
+      });
+    }
   }
   
   bool _isTagFollowed(String tagName) {
-    final tagId = TagMapping.getTagId(tagName);
-    return tagId != null && _followedTagIds.contains(tagId);
+    // Direct name comparison (more reliable than ID since IDs overlap between types)
+    // Normalize tag name for comparison (trim whitespace)
+    final normalizedTagName = tagName.trim();
+    final isFollowed = _followedTagNames.contains(normalizedTagName);
+    
+    // Debug: log mismatches for troubleshooting
+    if (!isFollowed && _followedTagNames.isNotEmpty) {
+      // Check for case-insensitive match
+      final lowerTagName = normalizedTagName.toLowerCase();
+      final hasCaseInsensitiveMatch = _followedTagNames.any((followed) => 
+        followed.toLowerCase() == lowerTagName
+      );
+      if (hasCaseInsensitiveMatch) {
+        final matchedName = _followedTagNames.firstWhere((f) => f.toLowerCase() == lowerTagName);
+        print('⚠️ [EXPLORE] Case mismatch: UI="$normalizedTagName" vs DB="$matchedName"');
+        // Use case-insensitive match
+        return true;
+      }
+    }
+    
+    return isFollowed;
   }
   
   Future<void> _toggleTag(String tagName) async {
@@ -105,17 +167,29 @@ class _ExploreScreenState extends State<ExploreScreen> {
       return;
     }
     
-    final isCurrentlyFollowed = _followedTagIds.contains(tagId);
+    final isCurrentlyFollowed = _followedTagNames.contains(tagName);
+    
+    print('🔄 [EXPLORE] Toggling tag: $tagName (ID: $tagId, Currently followed: $isCurrentlyFollowed)');
+    
+    // Optimistic UI update
+    setState(() {
+      if (isCurrentlyFollowed) {
+        _followedTagNames.remove(tagName);
+        print('   📉 Removed from followed: $tagName');
+      } else {
+        _followedTagNames.add(tagName);
+        print('   📈 Added to followed: $tagName');
+      }
+    });
     
     try {
       if (isCurrentlyFollowed) {
         // Unfollow tag
         final unfollowTag = sl<UnfollowTag>();
         await unfollowTag.call(tagId);
-        setState(() {
-          _followedTagIds.remove(tagId);
-        });
         print('✅ Unfollowed tag: $tagName');
+        // Refresh from server to ensure consistency
+        await _loadFollowedTags();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -129,10 +203,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
         // Follow tag
         final followTag = sl<FollowTag>();
         await followTag.call(tagId, tagName);
-        setState(() {
-          _followedTagIds.add(tagId);
-        });
         print('✅ Followed tag: $tagName');
+        // Refresh from server to ensure consistency
+        await _loadFollowedTags();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -145,6 +218,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
       }
     } catch (e) {
       print('❌ Error updating tag follow status: $e');
+      // Revert optimistic update on error
+      setState(() {
+        if (isCurrentlyFollowed) {
+          _followedTagNames.add(tagName);
+        } else {
+          _followedTagNames.remove(tagName);
+        }
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

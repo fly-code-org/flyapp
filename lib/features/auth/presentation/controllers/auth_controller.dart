@@ -24,6 +24,7 @@ class AuthController extends GetxController {
   var token = ''.obs;
   var message = ''.obs;
   var errorMessage = ''.obs;
+  var isNewUser = false.obs; // Indicates if a new user was created (for Google login)
 
   Future<void> signup({
     required String userName,
@@ -169,12 +170,14 @@ class AuthController extends GetxController {
 
       token.value = response.token;
       message.value = response.message;
+      isNewUser.value = response.isNewUser;
 
-      print('🎉 Google Signup completed successfully!');
+      print('🎉 Google login completed successfully!');
       print('   ✅ Token stored securely');
       print('   ✅ API client configured');
       print('   📧 Email verified: ${response.isEmailVerified}');
       print('   📱 Phone verified: ${response.isPhoneVerified}');
+      print('   🆕 Is new user: ${response.isNewUser}');
       print('   ✅ Ready for navigation');
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
@@ -199,5 +202,6 @@ class AuthController extends GetxController {
     token.value = '';
     message.value = '';
     errorMessage.value = '';
+    isNewUser.value = false;
   }
 }

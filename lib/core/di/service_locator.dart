@@ -22,6 +22,7 @@ import '../../features/profile_creation/domain/repositories/mhp_profile_reposito
 import '../../features/profile_creation/domain/repositories/user_profile_repository.dart';
 import '../../features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import '../../features/profile_creation/domain/usecases/create_user_profile.dart';
+import '../../features/profile_creation/domain/usecases/get_user_profile.dart';
 import '../../features/file_upload/data/datasources/upload_remote_data_source.dart';
 import '../../features/file_upload/data/repositories/upload_repository_impl.dart';
 import '../../features/file_upload/domain/repositories/upload_repository.dart';
@@ -111,6 +112,7 @@ Future<void> init() async {
   //! Features - Profile Creation (User)
   // Use cases
   sl.registerLazySingleton(() => CreateUserProfile(sl()));
+  sl.registerLazySingleton(() => GetUserProfile(sl()));
 
   // Repository
   sl.registerLazySingleton<UserProfileRepository>(

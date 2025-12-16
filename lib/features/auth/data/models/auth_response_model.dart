@@ -8,6 +8,7 @@ class AuthResponseModel extends AuthResponse {
     required super.message,
     super.isEmailVerified = false,
     super.isPhoneVerified = false,
+    super.isNewUser = false,
   });
 
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
@@ -26,12 +27,14 @@ class AuthResponseModel extends AuthResponse {
         // Extract verification status from login response if available
         final isEmailVerified = tokenMap['is_email_verified'] as bool? ?? false;
         final isPhoneVerified = tokenMap['is_phone_verified'] as bool? ?? false;
+        final isNewUser = tokenMap['is_new_user'] as bool? ?? false;
 
         return AuthResponseModel(
           token: jwtToken,
           message: 'Login successful',
           isEmailVerified: isEmailVerified,
           isPhoneVerified: isPhoneVerified,
+          isNewUser: isNewUser,
         );
       }
     }
@@ -57,14 +60,16 @@ class AuthResponseModel extends AuthResponse {
         if (token != null) {
           print('✅ Found token in nested "data" object');
 
-          // Extract email verification status for Google login
+          // Extract email verification status and is_new_user for Google login
           final isEmailVerified =
               dataMap['is_email_verified'] as bool? ?? false;
           final isPhoneVerified =
               dataMap['is_phone_verified'] as bool? ?? false;
+          final isNewUser = dataMap['is_new_user'] as bool? ?? false;
 
           print('📧 Email verified: $isEmailVerified');
           print('📱 Phone verified: $isPhoneVerified');
+          print('🆕 Is new user: $isNewUser');
 
           return AuthResponseModel(
             token: token,
@@ -74,6 +79,7 @@ class AuthResponseModel extends AuthResponse {
                 'Success',
             isEmailVerified: isEmailVerified,
             isPhoneVerified: isPhoneVerified,
+            isNewUser: isNewUser,
           );
         }
       }

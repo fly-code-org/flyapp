@@ -16,5 +16,10 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
     );
     return response;
   }
+
+  @override
+  Future<Map<String, dynamic>> getUserProfile() async {
+    return await remoteDataSource.getUserProfile();
+  }
 }
 

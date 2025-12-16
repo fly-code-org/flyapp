@@ -117,16 +117,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       print('   📨 Message: ${_authController.message.value}');
       print('   🎫 Token stored: ${_authController.token.value.isNotEmpty}');
       print('   🔐 Is Login Mode: $_isLogin');
+      print('   🆕 Is New User: ${_authController.isNewUser.value}');
 
-      // Check if user is logging in or signing up
-      if (_isLogin) {
-        // Existing user logging in - navigate to home
-        print('✅ [GOOGLE LOGIN] Navigating to home screen...');
-        Get.offAllNamed(AppRoutes.Home);
-        print('✅ [GOOGLE LOGIN] Navigation to home completed');
-      } else {
-        // New user signing up - navigate to profile creation
-        print('✅ [GOOGLE SIGNUP] Navigating to profile creation...');
+      // Use isNewUser from backend response to determine navigation
+      // This is more reliable than _isLogin because backend knows if user was created
+      if (_authController.isNewUser.value) {
+        // New user was created - navigate to profile creation
+        print('✅ [GOOGLE SIGNUP] New user created, navigating to profile creation...');
         // Convert to lowercase for comparison (RoleSelector returns "User" or "MHP")
         final role = selectedRole.isNotEmpty
             ? selectedRole.toLowerCase()
@@ -140,6 +137,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           print('   🚀 Navigating to: /create-mhp-profile');
           Get.toNamed(AppRoutes.createMhpProfile, arguments: {'role': role});
         }
+      } else {
+        // Existing user logging in - navigate to home
+        print('✅ [GOOGLE LOGIN] Existing user, navigating to home screen...');
+        Get.offAllNamed(AppRoutes.Home);
+        print('✅ [GOOGLE LOGIN] Navigation to home completed');
       }
     }
   }

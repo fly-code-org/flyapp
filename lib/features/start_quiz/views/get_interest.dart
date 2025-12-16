@@ -8,6 +8,7 @@ import 'package:fly/features/interests/domain/entities/interests.dart';
 import 'package:fly/features/interests/domain/usecases/follow_tag.dart';
 import 'package:fly/features/interests/domain/usecases/save_interests.dart';
 import 'package:fly/features/interests/domain/usecases/unfollow_tag.dart';
+import 'package:fly/features/profile_creation/domain/usecases/get_user_profile.dart';
 import 'package:fly/features/start_quiz/widgets/communities_grid.dart';
 import 'package:fly/features/start_quiz/widgets/separator.dart';
 import 'package:fly/features/start_quiz/widgets/social_tags.dart';
@@ -49,6 +50,46 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
     role = (args['role'] ?? 'user').toLowerCase();
     print("GetInterestScreen role: $role");
     _loadCommunities();
+    _loadFollowedTags();
+  }
+  
+  Future<void> _loadFollowedTags() async {
+    try {
+      print('🔍 [GET_INTEREST] Fetching user profile to get followed tags...');
+      final getUserProfile = sl<GetUserProfile>();
+      final userProfile = await getUserProfile.call();
+      
+      print('📦 [GET_INTEREST] User profile data: $userProfile');
+      
+      // Extract followed_interests from user profile
+      if (userProfile.containsKey('followed_interests') && 
+          userProfile['followed_interests'] is List) {
+        final followedInterests = userProfile['followed_interests'] as List;
+        
+        setState(() {
+          _selectedTags.clear();
+          for (var interest in followedInterests) {
+            if (interest is Map<String, dynamic> && interest.containsKey('name')) {
+              final tagName = interest['name'] as String;
+              _selectedTags.add(tagName);
+            }
+          }
+        });
+        
+        print('✅ [GET_INTEREST] Loaded ${_selectedTags.length} followed tags: $_selectedTags');
+      } else {
+        print('ℹ️ [GET_INTEREST] No followed_interests found in user profile');
+        setState(() {
+          _selectedTags.clear();
+        });
+      }
+    } catch (e) {
+      print('❌ [GET_INTEREST] Error loading followed tags: $e');
+      // Don't show error to user, just use empty set
+      setState(() {
+        _selectedTags.clear();
+      });
+    }
   }
 
   Future<void> _loadCommunities() async {
