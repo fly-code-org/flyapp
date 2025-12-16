@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:fly/features/create_community/presentation/widgets/bottom_navbar.dart';
+import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/home/presentation/widgets/community_tabs.dart';
 import 'package:fly/features/home/presentation/views/creat_post_screen.dart';
 import 'package:fly/features/home/presentation/widgets/social_feed.dart';
@@ -50,10 +50,15 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
+  Widget _buildBottomNavBar() {
+    // Use the user profile bottom navbar which routes correctly
+    return BottomNavBar(currentIndex: _currentIndex);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: BottomNavBar(currentIndex: _currentIndex),
+      bottomNavigationBar: _buildBottomNavBar(),
       body: SafeArea(
         child: Stack(
           children: [

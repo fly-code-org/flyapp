@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/create_community/presentation/widgets/bottom_navbar.dart';
+import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:get/get.dart';
 import '../../controller/notification_controller.dart';
 import '../widget/notification_card.dart';

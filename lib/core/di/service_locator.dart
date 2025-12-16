@@ -23,6 +23,8 @@ import '../../features/profile_creation/domain/repositories/user_profile_reposit
 import '../../features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import '../../features/profile_creation/domain/usecases/create_user_profile.dart';
 import '../../features/profile_creation/domain/usecases/get_user_profile.dart';
+import '../../features/user_profile/presentation/controllers/user_profile_controller.dart';
+import '../../features/journal/presentation/controllers/journal_controller.dart';
 import '../../features/file_upload/data/datasources/upload_remote_data_source.dart';
 import '../../features/file_upload/data/repositories/upload_repository_impl.dart';
 import '../../features/file_upload/domain/repositories/upload_repository.dart';
@@ -46,6 +48,14 @@ import '../../features/community/domain/usecases/create_community.dart';
 import '../../features/community/domain/usecases/follow_community.dart';
 import '../../features/community/domain/usecases/get_communities_by_type.dart';
 import '../../features/community/domain/usecases/unfollow_community.dart';
+import '../../features/journal/data/datasources/journal_remote_data_source.dart';
+import '../../features/journal/data/repositories/journal_repository_impl.dart';
+import '../../features/journal/domain/repositories/journal_repository.dart';
+import '../../features/journal/domain/usecases/get_journals.dart';
+import '../../features/journal/domain/usecases/create_journal.dart';
+import '../../features/journal/domain/usecases/update_journal.dart';
+import '../../features/journal/domain/usecases/get_color_templates.dart';
+import '../../features/journal/domain/usecases/create_color_template.dart';
 import '../services/s3_upload_service.dart';
 
 final sl = GetIt.instance;
@@ -195,6 +205,32 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<CommunityRemoteDataSource>(
     () => CommunityRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  //! Features - User Profile
+  // Controllers
+  sl.registerLazySingleton(() => UserProfileController());
+
+  //! Features - Journal
+  // Controllers
+  sl.registerLazySingleton(() => JournalController());
+
+  //! Features - Journal
+  // Use cases
+  sl.registerLazySingleton(() => GetJournals(sl()));
+  sl.registerLazySingleton(() => CreateJournal(sl()));
+  sl.registerLazySingleton(() => UpdateJournal(sl()));
+  sl.registerLazySingleton(() => GetColorTemplates(sl()));
+  sl.registerLazySingleton(() => CreateColorTemplate(sl()));
+
+  // Repository
+  sl.registerLazySingleton<JournalRepository>(
+    () => JournalRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<JournalRemoteDataSource>(
+    () => JournalRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Core

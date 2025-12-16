@@ -2,27 +2,63 @@ import 'package:flutter/material.dart';
 
 class CommunityMediaSection extends StatelessWidget {
   final String type;
-  const CommunityMediaSection({super.key, required this.type});
+  final List<String>? postIds; // For Activities tab
+  final List<Map<String, dynamic>>? bookmarkedPosts; // For Bookmarks tab
+
+  const CommunityMediaSection({
+    super.key,
+    required this.type,
+    this.postIds,
+    this.bookmarkedPosts,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Mocked posts
-    final posts = [
-      {"type": "image", "url": "https://picsum.photos/200"},
-      {"type": "video", "url": "https://picsum.photos/201"},
-      {"type": "text", "content": "This is a text post"},
-      {"type": "image", "url": "https://picsum.photos/202"},
-      {"type": "video", "url": "https://picsum.photos/203"},
-      {"type": "text", "content": "Another text post"},
-      {"type": "image", "url": "https://picsum.photos/204"},
-      {"type": "video", "url": "https://picsum.photos/205"},
-      {"type": "image", "url": "https://picsum.photos/206"},
-      {"type": "image", "url": "https://picsum.photos/204"},
-      {"type": "video", "url": "https://picsum.photos/205"},
-      {"type": "image", "url": "https://picsum.photos/206"},
-    ];
+    // Determine which data to use
+    List<Map<String, dynamic>> posts = [];
+
+    if (type == "Activities" && postIds != null && postIds!.isNotEmpty) {
+      // For activities, we have post IDs
+      // TODO: Fetch actual post data from post IDs
+      // For now, show placeholder
+      posts = postIds!.map((postId) => {
+        "type": "image",
+        "url": "https://picsum.photos/200?random=$postId",
+        "post_id": postId,
+      }).toList();
+    } else if (type == "Bookmarks" &&
+        bookmarkedPosts != null &&
+        bookmarkedPosts!.isNotEmpty) {
+      // For bookmarks, we have bookmarked post data
+      // TODO: Fetch actual post data from bookmarked post IDs
+      // For now, show placeholder
+      posts = bookmarkedPosts!.map((bookmark) => {
+        "type": "image",
+        "url": "https://picsum.photos/200?random=${bookmark['post_id']}",
+        "post_id": bookmark['post_id'],
+        "bookmarked_at": bookmark['bookmarked_at'],
+      }).toList();
+    } else {
+      // No data - show empty state
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Text(
+            type == "Activities"
+                ? "No activities yet"
+                : "No bookmarks yet",
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+            ),
+          ),
+        ),
+      );
+    }
 
     return GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
       padding: EdgeInsets.zero,
       itemCount: posts.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

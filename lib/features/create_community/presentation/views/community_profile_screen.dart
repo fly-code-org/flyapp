@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/create_community/presentation/widgets/bottom_navbar.dart';
+import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/create_community/presentation/widgets/community_menu.dart';
 import 'package:fly/features/create_community/presentation/widgets/community_post_grid.dart';
 import 'package:fly/features/create_community/presentation/widgets/community_profile_card.dart';

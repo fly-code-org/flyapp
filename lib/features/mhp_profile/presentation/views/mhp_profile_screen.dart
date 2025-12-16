@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fly/features/create_community/presentation/widgets/edit_community_button.dart';
 import 'package:fly/features/create_community/presentation/widgets/invite_members.dart';
-import 'package:fly/features/mhp_profile/presentation/widgets/bottom_navbar.dart';
+import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/community_post_grid.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/edit_profile_button.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/mhp_squares.dart';

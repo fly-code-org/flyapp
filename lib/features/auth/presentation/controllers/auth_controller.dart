@@ -8,6 +8,8 @@ import '../../domain/entities/auth_response.dart';
 import '../../domain/usecases/google_login_user.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/signup_user.dart';
+import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
+import '../../../../core/di/service_locator.dart' as sl;
 
 class AuthController extends GetxController {
   final SignupUser signupUser;
@@ -107,6 +109,9 @@ class AuthController extends GetxController {
 
       token.value = response.token;
       message.value = response.message;
+
+      // Prefetch user profile after successful login
+      _prefetchUserProfile();
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
       errorMessage.value = e.message;
@@ -119,6 +124,23 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
       print('🏁 Login process completed');
+    }
+  }
+
+  // Prefetch user profile after login
+  void _prefetchUserProfile() {
+    try {
+      // Use service locator to get controller
+      final profileController = sl.sl<UserProfileController>();
+      // Register it with GetX if not already registered
+      if (!Get.isRegistered<UserProfileController>()) {
+        Get.put(profileController, permanent: true);
+      }
+      profileController.fetchUserProfile(forceRefresh: true);
+      print('✅ [AUTH] Prefetching user profile...');
+    } catch (e) {
+      print('⚠️ [AUTH] Error prefetching profile: $e');
+      // Don't fail login if profile prefetch fails
     }
   }
 
@@ -179,6 +201,11 @@ class AuthController extends GetxController {
       print('   📱 Phone verified: ${response.isPhoneVerified}');
       print('   🆕 Is new user: ${response.isNewUser}');
       print('   ✅ Ready for navigation');
+
+      // Prefetch user profile after successful login (only if not a new user)
+      if (!response.isNewUser) {
+        _prefetchUserProfile();
+      }
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
       errorMessage.value = e.message;

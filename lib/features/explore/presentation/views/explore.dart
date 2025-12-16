@@ -9,7 +9,7 @@ import 'package:fly/features/interests/data/models/tag_mapping.dart';
 import 'package:fly/features/interests/domain/usecases/follow_tag.dart';
 import 'package:fly/features/interests/domain/usecases/unfollow_tag.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_user_profile.dart';
-import 'package:fly/features/user_profile/presentation/widgets/bottom_navbar.dart';
+import 'package:fly/core/widgets/bottom_navbar.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});

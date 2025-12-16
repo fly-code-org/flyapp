@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:get/get.dart';
+import '../../../journal/presentation/controllers/journal_controller.dart';
+import '../../../journal/domain/entities/journal.dart';
+import '../../../../core/di/service_locator.dart';
 
 class CreateJournalScreen extends StatefulWidget {
-  const CreateJournalScreen({super.key});
+  final Journal? journal; // Optional journal for editing
+
+  const CreateJournalScreen({super.key, this.journal});
 
   @override
   State<CreateJournalScreen> createState() => _CreateJournalScreenState();
@@ -11,8 +17,10 @@ class CreateJournalScreen extends StatefulWidget {
 class _CreateJournalScreenState extends State<CreateJournalScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
+  late final JournalController _journalController;
 
   Color selectedColor = Colors.white;
+  String selectedMood = 'Neutral, minimal, open to interpretation';
 
   final List<Map<String, dynamic>> moods = const [
     {'color': Colors.white, 'text': 'Neutral, minimal, open to interpretation'},
@@ -23,7 +31,37 @@ class _CreateJournalScreenState extends State<CreateJournalScreen> {
     {'color': Color(0xFFD6F5E3), 'text': 'Calm, relaxed, or peaceful'},
   ];
 
-  void _saveJournal() {
+  @override
+  void initState() {
+    super.initState();
+    // Get or create controller
+    if (Get.isRegistered<JournalController>()) {
+      _journalController = Get.find<JournalController>();
+    } else {
+      _journalController = sl<JournalController>();
+      Get.put(_journalController, permanent: true);
+    }
+
+    // Ensure color templates are loaded (needed for journal creation)
+    if (_journalController.colorTemplates.isEmpty) {
+      _journalController.fetchColorTemplates();
+    }
+
+    // If editing, populate fields
+    if (widget.journal != null) {
+      _titleController.text = widget.journal!.title;
+      _descController.text = widget.journal!.content;
+      selectedMood = widget.journal!.mood ?? 'Neutral, minimal, open to interpretation';
+      
+      // Get color from template
+      final color = _journalController.getColorFromTemplateId(widget.journal!.colorTemplate);
+      if (color != null) {
+        selectedColor = color;
+      }
+    }
+  }
+
+  Future<void> _saveJournal() async {
     final title = _titleController.text.trim();
     final desc = _descController.text.trim();
 
@@ -34,11 +72,64 @@ class _CreateJournalScreenState extends State<CreateJournalScreen> {
       return;
     }
 
-    Navigator.pop(context, {
-      'title': title,
-      'desc': desc,
-      'color': selectedColor,
-    });
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    // Create or update journal via API
+    final success = widget.journal != null
+        ? await _journalController.updateJournalEntry(
+            journalId: widget.journal!.id,
+            title: title,
+            content: desc,
+            selectedColor: selectedColor,
+            mood: selectedMood,
+          )
+        : await _journalController.createJournalEntry(
+            title: title,
+            content: desc,
+            selectedColor: selectedColor,
+            mood: selectedMood,
+          );
+
+    // Hide loading
+    if (mounted) {
+      Navigator.pop(context); // Close loading dialog
+    }
+
+    if (success) {
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.journal != null
+                ? "Journal updated successfully!"
+                : "Journal created successfully!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+      
+      // Navigate back and refresh
+      if (mounted) {
+        Navigator.pop(context, true); // Return true to indicate success
+      }
+    } else {
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_journalController.errorMessage.value.isNotEmpty
+                ? _journalController.errorMessage.value
+                : "Failed to create journal"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _openMoodPicker() {
@@ -75,7 +166,10 @@ class _CreateJournalScreenState extends State<CreateJournalScreen> {
                 ),
                 title: Text(mood['text']),
                 onTap: () {
-                  setState(() => selectedColor = mood['color']);
+                  setState(() {
+                    selectedColor = mood['color'];
+                    selectedMood = mood['text'];
+                  });
                   Navigator.pop(context);
                 },
               );
@@ -95,38 +189,45 @@ class _CreateJournalScreenState extends State<CreateJournalScreen> {
         backgroundColor: selectedColor,
         title: Row(
           children: [
-            const SizedBox(width: 8),
-            const Text(
-              "My Daily Journal",
-              style: TextStyle(fontWeight: FontWeight.w400),
-            ),
-            const SizedBox(width: 25),
-            DottedBorder(
-              options: const RoundedRectDottedBorderOptions(
-                color: Colors.black54,
-                strokeWidth: 1.5,
-                dashPattern: [6, 3],
-                radius: Radius.circular(12),
-                padding: EdgeInsets.all(0),
+            const Flexible(
+              child: Text(
+                "My Daily Journal",
+                style: TextStyle(fontWeight: FontWeight.w400),
+                overflow: TextOverflow.ellipsis,
               ),
-              child: InkWell(
-                onTap: _openMoodPicker,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.mood, color: Colors.black54),
-                      const SizedBox(width: 8),
-                      const Text(
-                        "Add your mood",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black54,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: DottedBorder(
+                options: const RoundedRectDottedBorderOptions(
+                  color: Colors.black54,
+                  strokeWidth: 1.5,
+                  dashPattern: [6, 3],
+                  radius: Radius.circular(12),
+                  padding: EdgeInsets.all(0),
+                ),
+                child: InkWell(
+                  onTap: _openMoodPicker,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.mood, color: Colors.black54, size: 18),
+                        SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            "Add your mood",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black54,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -155,31 +256,29 @@ class _CreateJournalScreenState extends State<CreateJournalScreen> {
                   border: InputBorder.none,
                 ),
               ),
-              const SizedBox(height: 20),
-
               const SizedBox(height: 40),
 
-              // SizedBox(
-              //   width: double.infinity,
-              //   height: 50,
-              //   child: ElevatedButton(
-              //     onPressed: _saveJournal,
-              //     style: ElevatedButton.styleFrom(
-              //       backgroundColor: const Color(0xFF855DFC),
-              //       shape: RoundedRectangleBorder(
-              //         borderRadius: BorderRadius.circular(12),
-              //       ),
-              //     ),
-              //     child: const Text(
-              //       "Save Journal",
-              //       style: TextStyle(
-              //         fontSize: 16,
-              //         fontWeight: FontWeight.w600,
-              //         color: Colors.white,
-              //       ),
-              //     ),
-              //   ),
-              // ),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _saveJournal,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF855DFC),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    widget.journal != null ? "Update Journal" : "Save Journal",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
