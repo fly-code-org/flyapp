@@ -4,6 +4,9 @@ import 'package:get/get.dart';
 import '../../../core/error/exceptions.dart';
 import '../../../core/storage/mhp_profile_cache.dart';
 import '../../../core/services/s3_upload_service.dart';
+import '../../../core/utils/jwt_decoder.dart';
+import '../../../core/storage/token_storage.dart';
+import '../../../features/user_profile/data/utils/default_profile_picture.dart';
 import '../domain/usecases/create_mhp_profile.dart';
 import '../domain/usecases/create_user_profile.dart';
 
@@ -573,12 +576,65 @@ class UserProfileController extends GetxController {
       print('🔍 [CREATE USER PROFILE] Accessing form fields...');
 
       print('   - Accessing username...');
-      final usernameValue = username.value;
+      var usernameValue = username.value.trim();
       print('   ✅ username.value = "$usernameValue"');
+      
+      // Auto-assign username if empty (for Google signups)
+      if (usernameValue.isEmpty) {
+        try {
+          final token = await TokenStorage.getToken();
+          if (token != null && token.isNotEmpty) {
+            final jwtUsername = JwtDecoder.getUserName(token);
+            if (jwtUsername != null && jwtUsername.isNotEmpty) {
+              usernameValue = jwtUsername;
+              username.value = usernameValue; // Update observable
+              print('🎲 [CREATE USER PROFILE] Auto-assigned username from JWT: "$usernameValue"');
+            }
+          }
+        } catch (e) {
+          print('⚠️ [CREATE USER PROFILE] Could not get username from JWT: $e');
+        }
+      }
+      
+      // Ensure username is not empty (fallback)
+      if (usernameValue.isEmpty) {
+        try {
+          final token = await TokenStorage.getToken();
+          if (token != null && token.isNotEmpty) {
+            final userId = JwtDecoder.getUserId(token);
+            if (userId != null && userId.isNotEmpty) {
+              usernameValue = 'user_${userId.substring(0, 8)}';
+              username.value = usernameValue; // Update observable
+              print('🎲 [CREATE USER PROFILE] Generated fallback username: "$usernameValue"');
+            }
+          }
+        } catch (e) {
+          print('⚠️ [CREATE USER PROFILE] Could not generate fallback username: $e');
+        }
+      }
 
       print('   - Accessing picturePath...');
-      final picPath = picturePath.value;
+      var picPath = picturePath.value;
       print('   ✅ picturePath.value = "$picPath"');
+      
+      // Auto-assign random profile picture if empty (for Google signups)
+      // Only assign if user hasn't selected an image (selectedImage is null)
+      if (picPath.isEmpty && selectedImage.value == null) {
+        try {
+          final token = await TokenStorage.getToken();
+          if (token != null && token.isNotEmpty) {
+            final userId = JwtDecoder.getUserId(token);
+            if (userId != null && userId.isNotEmpty) {
+              // Get relative path (without CDN URL) for backend
+              picPath = DefaultProfilePicture.getRandomProfilePicturePath(userId);
+              picturePath.value = picPath; // Update observable with relative path
+              print('🎲 [CREATE USER PROFILE] Auto-assigned random profile picture: "$picPath"');
+            }
+          }
+        } catch (e) {
+          print('⚠️ [CREATE USER PROFILE] Could not assign random profile picture: $e');
+        }
+      }
 
       print('   - Accessing bio...');
       final bioValue = bio.value;
@@ -597,6 +653,7 @@ class UserProfileController extends GetxController {
       print('   ✅ bookmarkedPosts.toList() = $bookmarkedList');
 
       // Build profile data for user profile API
+      // Always include username (required) and picture_path if available
       final profileData = <String, dynamic>{
         'username': usernameValue,
         if (picPath.isNotEmpty) 'picture_path': picPath,

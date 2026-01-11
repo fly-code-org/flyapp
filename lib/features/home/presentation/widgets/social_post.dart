@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fly/core/utils/profile_picture_helper.dart';
 import 'package:fly/features/home/model/post_model.dart';
+import 'package:fly/core/widgets/safe_svg_icon.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -17,26 +19,39 @@ class SocialPost extends StatefulWidget {
 
 class _SocialPostState extends State<SocialPost> {
   VideoPlayerController? _videoController;
+  PageController? _pageController;
   bool isLiked = false;
   bool isBookmarked = false;
   bool isTextExpanded = false;
   int _currentPage = 0;
-  final PageController _pageController = PageController();
 
   @override
   void initState() {
     super.initState();
-    if (widget.post.isVideo && !kIsWeb) {
+    
+    // Only create PageController if there are multiple images
+    if (widget.post.mediaUrls != null && widget.post.mediaUrls!.length > 1) {
+      _pageController = PageController();
+    }
+    
+    if (widget.post.isVideo && !kIsWeb && widget.post.mediaUrl != null) {
       _videoController =
           VideoPlayerController.networkUrl(
-              Uri.parse(widget.post.mediaUrl ?? ''),
+              Uri.parse(widget.post.mediaUrl!),
               videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
             )
             ..initialize().then((_) {
-              setState(() {});
-              _videoController?.setLooping(true);
-              _videoController?.setVolume(0);
-              _videoController?.play();
+              if (mounted) {
+                setState(() {});
+                _videoController?.setLooping(true);
+                _videoController?.setVolume(0);
+                _videoController?.play();
+              }
+            }).catchError((error) {
+              print('❌ [SOCIAL POST] Error initializing video: $error');
+              if (mounted) {
+                setState(() {});
+              }
             });
     }
   }
@@ -44,81 +59,266 @@ class _SocialPostState extends State<SocialPost> {
   @override
   void dispose() {
     _videoController?.dispose();
-    _pageController.dispose();
+    _pageController?.dispose();
     super.dispose();
   }
 
   Widget _buildProfilePicture() {
+    final profileUrl = widget.post.profileUrl;
+    
+    // Check if this is a local asset path
+    final isLocalAsset = ProfilePictureHelper.isLocalAsset(profileUrl);
+    
+    Widget profileWidget;
+    
+    if (isLocalAsset) {
+      // Handle local asset profile pictures (e.g., /assets/profile_2.svg)
+      final assetPath = ProfilePictureHelper.getAssetPath(profileUrl);
+      final isSvg = assetPath.toLowerCase().endsWith('.svg');
+      
+      if (isSvg) {
+        profileWidget = SvgPicture.asset(
+          assetPath,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+          placeholderBuilder: (context) => Container(
+            width: 40,
+            height: 40,
+            color: Colors.grey[300],
+            child: const Icon(Icons.person, color: Colors.grey, size: 20),
+          ),
+          errorBuilder: (context, error, stackTrace) {
+            debugPrint('⚠️ [SOCIAL POST] Error loading SVG profile picture from assets: $assetPath - $error');
+            return Container(
+              width: 40,
+              height: 40,
+              color: Colors.grey[300],
+              child: const Icon(Icons.person, color: Colors.grey, size: 20),
+            );
+          },
+          semanticsLabel: 'Profile picture',
+        );
+      } else {
+        // Handle regular image from assets
+        profileWidget = Image.asset(
+          assetPath,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('⚠️ [SOCIAL POST] Error loading profile image from assets: $assetPath - $error');
+            return Container(
+              width: 40,
+              height: 40,
+              color: Colors.grey[300],
+              child: const Icon(Icons.person, color: Colors.grey, size: 20),
+            );
+          },
+        );
+      }
+    } else {
+      // Handle network/CDN profile pictures
+      final isSvg = profileUrl.toLowerCase().endsWith('.svg');
+      
+      if (isSvg) {
+        // Handle SVG profile pictures (from CDN) with error handling
+        // Use errorBuilder to catch SVG parsing errors (async errors won't be caught by try-catch)
+        profileWidget = SvgPicture.network(
+          profileUrl,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+          placeholderBuilder: (context) => Container(
+            width: 40,
+            height: 40,
+            color: Colors.grey[300],
+            child: const Icon(Icons.person, color: Colors.grey, size: 20),
+          ),
+          // errorBuilder catches SVG parsing errors (like "unhandled element")
+          errorBuilder: (context, error, stackTrace) {
+            debugPrint('⚠️ [SOCIAL POST] Error loading SVG profile picture: $profileUrl - $error');
+            return Container(
+              width: 40,
+              height: 40,
+              color: Colors.grey[300],
+              child: const Icon(Icons.person, color: Colors.grey, size: 20),
+            );
+          },
+          semanticsLabel: 'Profile picture',
+        );
+      } else {
+        // Handle regular image profile pictures
+        profileWidget = CachedNetworkImage(
+          imageUrl: profileUrl,
+          width: 40,
+          height: 40,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            width: 40,
+            height: 40,
+            color: Colors.grey[300],
+            child: const Icon(Icons.person, color: Colors.grey, size: 20),
+          ),
+          errorWidget: (context, url, error) {
+            // Log error for debugging but don't block
+            print('⚠️ [SOCIAL POST] Error loading profile image: $url - $error');
+            return Container(
+              width: 40,
+              height: 40,
+              color: Colors.grey[300],
+              child: const Icon(Icons.person, color: Colors.grey, size: 20),
+            );
+          },
+          fadeInDuration: const Duration(milliseconds: 200),
+          fadeOutDuration: const Duration(milliseconds: 100),
+          memCacheWidth: 80,
+          memCacheHeight: 80,
+          // Add timeout to prevent hanging
+          httpHeaders: const {'Cache-Control': 'max-age=3600'},
+        );
+      }
+    }
+    
     if (widget.isSocialTab) {
-      return CircleAvatar(
-        radius: 20,
-        backgroundImage: NetworkImage(widget.post.profileUrl),
-      );
+      return ClipOval(child: profileWidget);
     } else {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          widget.post.profileUrl,
-          height: 40,
-          width: 40,
-          fit: BoxFit.cover,
-        ),
+        child: profileWidget,
       );
     }
   }
+  
+  Widget _buildTagIcon(String iconPath) {
+    // Tag icons are asset paths, use SafeSvgIcon for robust error handling
+    if (iconPath.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    // Use SafeSvgIcon which handles SVG parsing errors gracefully
+    return SafeSvgIcon(
+      assetPath: iconPath,
+      width: 20,
+      height: 20,
+      fit: BoxFit.contain,
+      fallback: const Icon(Icons.tag, size: 16, color: Colors.grey),
+    );
+  }
 
   Widget _buildImageCarousel(List<String> mediaUrls) {
+    // If single image, no need for PageView
+    if (mediaUrls.length == 1) {
+      return RepaintBoundary(
+        child: CachedNetworkImage(
+          imageUrl: mediaUrls[0],
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: 300,
+          placeholder: (context, url) => Container(
+            height: 300,
+            color: Colors.grey[200],
+            child: const Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+          errorWidget: (context, url, error) => Container(
+            height: 300,
+            color: Colors.grey[200],
+            child: const Center(
+              child: Icon(Icons.broken_image, color: Colors.grey, size: 48),
+            ),
+          ),
+          fadeInDuration: const Duration(milliseconds: 200),
+          fadeOutDuration: const Duration(milliseconds: 100),
+          // Limit image resolution to prevent memory issues
+          maxWidthDiskCache: 800,
+          maxHeightDiskCache: 800,
+          memCacheWidth: 800,
+          memCacheHeight: 800,
+        ),
+      );
+    }
+    
+    // Multiple images - use PageView
     return Column(
       children: [
         SizedBox(
           height: 300,
           child: PageView.builder(
-            controller: _pageController,
+            controller: _pageController ?? PageController(),
             itemCount: mediaUrls.length,
             onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
+              if (mounted) {
+                setState(() {
+                  _currentPage = index;
+                });
+              }
             },
             itemBuilder: (context, index) {
-              return CachedNetworkImage(
-                imageUrl: mediaUrls[index],
-                fit: BoxFit.cover,
-                width: double.infinity,
+              return RepaintBoundary(
+                key: ValueKey('image_$index'),
+                child: CachedNetworkImage(
+                  imageUrl: mediaUrls[index],
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  placeholder: (context, url) => Container(
+                    height: 300,
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    height: 300,
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: Icon(Icons.broken_image, color: Colors.grey, size: 48),
+                    ),
+                  ),
+                  fadeInDuration: const Duration(milliseconds: 200),
+                  fadeOutDuration: const Duration(milliseconds: 100),
+                  // Limit image resolution to prevent memory issues
+                  maxWidthDiskCache: 800,
+                  maxHeightDiskCache: 800,
+                  memCacheWidth: 800,
+                  memCacheHeight: 800,
+                ),
               );
             },
           ),
         ),
-        if (mediaUrls.length > 1)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                mediaUrls.length,
-                (index) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _currentPage == index ? Colors.black : Colors.grey,
-                  ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              mediaUrls.length,
+              (index) => Container(
+                key: ValueKey('dot_$index'),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentPage == index ? Colors.black : Colors.grey,
                 ),
               ),
             ),
           ),
+        ),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return RepaintBoundary(
+      child: Card(
+        margin: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Profile Row
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -147,13 +347,13 @@ class _SocialPostState extends State<SocialPost> {
                     ],
                   ),
                 ),
-                SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: SvgPicture.asset(
-                    'assets/icon/social-tags/artAndCreativity.svg',
+                // Display tag icon if available (with safe async loading)
+                if (widget.post.tagIconUrl.isNotEmpty)
+                  SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: _buildTagIcon(widget.post.tagIconUrl),
                   ),
-                ),
                 const SizedBox(width: 8),
                 const Icon(Icons.more_horiz),
               ],
@@ -281,6 +481,7 @@ class _SocialPostState extends State<SocialPost> {
             ),
           ),
         ],
+        ),
       ),
     );
   }

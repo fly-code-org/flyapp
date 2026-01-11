@@ -3,8 +3,11 @@ import 'package:get/get.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/utils/jwt_decoder.dart';
+import '../../../../core/utils/profile_picture_helper.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../profile_creation/domain/usecases/get_user_profile.dart';
+import '../../data/utils/default_profile_picture.dart';
+import '../../data/services/profile_update_service.dart';
 
 class UserProfileController extends GetxController {
   final GetUserProfile getUserProfile;
@@ -143,13 +146,30 @@ class UserProfileController extends GetxController {
     }
     
     if (picPath.isNotEmpty) {
-      if (picPath.startsWith('http://') || picPath.startsWith('https://')) {
-        picturePath.value = picPath;
-      } else {
-        picturePath.value = 'https://cdn.flyapp.in$picPath';
-      }
+      // Use ProfilePictureHelper to handle asset paths vs CDN URLs
+      picturePath.value = ProfilePictureHelper.getProfilePictureUrl(picPath);
     } else {
-      picturePath.value = '';
+      // If no profile picture, use random default picture
+      try {
+        final userId = data['user_id'] as String?;
+        if (userId != null && userId.isNotEmpty) {
+          // Use random default profile picture
+          final randomProfilePicture = DefaultProfilePicture.getRandomProfilePicture(userId);
+          picturePath.value = randomProfilePicture;
+          print('🎲 [PROFILE] Assigned random default profile picture: ${picturePath.value}');
+          
+          // Try to save to backend (will fail gracefully if endpoint not available)
+          _saveProfilePictureToBackend(userId, randomProfilePicture).catchError((e) {
+            // Silently fail - saving is optional, just for future use
+            print('⚠️ [PROFILE] Could not save profile picture to backend: $e');
+          });
+        } else {
+          picturePath.value = '';
+        }
+      } catch (e) {
+        print('⚠️ [PROFILE] Error assigning random profile picture: $e');
+        picturePath.value = '';
+      }
     }
     print('📝 [PROFILE] Picture path set to: "${picturePath.value}"');
 
@@ -261,6 +281,28 @@ class UserProfileController extends GetxController {
     print('   - Streaks: ${streakCount.value}');
     print('   - Activities: ${activities.length}');
     print('   - Bookmarks: ${bookmarkedPosts.length}');
+  }
+
+  // Save profile picture to backend (placeholder for when endpoint is available)
+  Future<void> _saveProfilePictureToBackend(String userId, String profilePictureUrl) async {
+    try {
+      // Extract the relative path from the full URL
+      String relativePath = profilePictureUrl;
+      if (profilePictureUrl.startsWith('https://cdn.flyapp.in')) {
+        relativePath = profilePictureUrl.replaceFirst('https://cdn.flyapp.in', '');
+      }
+      
+      final updateService = ProfileUpdateService();
+      final success = await updateService.updateProfilePicture(relativePath);
+      if (success) {
+        print('✅ [PROFILE] Profile picture saved to backend: $relativePath');
+      } else {
+        print('ℹ️ [PROFILE] Profile picture update endpoint not yet available');
+      }
+    } catch (e) {
+      // Silently fail - this is optional functionality
+      print('⚠️ [PROFILE] Error saving profile picture to backend: $e');
+    }
   }
 
   // Clear cache (useful for logout)

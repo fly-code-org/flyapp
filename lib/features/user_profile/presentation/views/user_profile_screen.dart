@@ -321,15 +321,11 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       child: Obx(() {
                         // Extract user ID from profile data for avatar generation
                         final userId = _profileController.profileData.value?['user_id'] as String?;
-                        // Only pass imagePath if it's a valid URL, otherwise let ProfileAvatar generate avatar
+                        // Pass picturePath directly - ProfileAvatar will handle asset paths vs URLs
                         final picturePath = _profileController.picturePath.value;
-                        final imagePath = (picturePath.isNotEmpty && 
-                                          picturePath.startsWith('http'))
-                            ? picturePath
-                            : ''; // Empty string will trigger avatar generation
-                        print('🖼️ [PROFILE SCREEN] picturePath: "$picturePath", imagePath: "$imagePath", userId: "$userId"');
+                        print('🖼️ [PROFILE SCREEN] picturePath: "$picturePath", userId: "$userId"');
                         return ProfileAvatar(
-                            imagePath: imagePath,
+                            imagePath: picturePath, // ProfileAvatar handles both assets and URLs
                             userId: userId,
                             size: 120,
                             showEditIcon: false,

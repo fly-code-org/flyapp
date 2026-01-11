@@ -56,6 +56,16 @@ import '../../features/journal/domain/usecases/create_journal.dart';
 import '../../features/journal/domain/usecases/update_journal.dart';
 import '../../features/journal/domain/usecases/get_color_templates.dart';
 import '../../features/journal/domain/usecases/create_color_template.dart';
+import '../../features/post/data/datasources/post_remote_data_source.dart';
+import '../../features/post/data/repositories/post_repository_impl.dart';
+import '../../features/post/domain/repositories/post_repository.dart';
+import '../../features/post/domain/usecases/create_post.dart';
+import '../../features/post/domain/usecases/get_posts_by_author.dart';
+import '../../features/post/domain/usecases/get_posts_by_community.dart';
+import '../../features/post/domain/usecases/get_posts_by_tag.dart';
+import '../../features/post/domain/usecases/get_posts_by_ids.dart';
+import '../../features/post/domain/usecases/delete_post.dart';
+import '../../features/post/presentation/controllers/post_controller.dart';
 import '../services/s3_upload_service.dart';
 
 final sl = GetIt.instance;
@@ -69,6 +79,7 @@ Future<void> init() async {
       signupUser: sl(),
       loginUser: sl(),
       googleLoginUser: sl(),
+      createUserProfile: sl(), // Optional: for auto-saving profile on Google signup
     ),
   );
 
@@ -231,6 +242,37 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<JournalRemoteDataSource>(
     () => JournalRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  //! Features - Post
+  // Controllers
+  sl.registerFactory(
+    () => PostController(
+      createPost: sl(),
+      getPostsByAuthor: sl(),
+      getPostsByCommunity: sl(),
+      getPostsByTag: sl(),
+      getPostsByIds: sl(),
+      deletePost: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => CreatePost(sl()));
+  sl.registerLazySingleton(() => GetPostsByAuthor(sl()));
+  sl.registerLazySingleton(() => GetPostsByCommunity(sl()));
+  sl.registerLazySingleton(() => GetPostsByTag(sl()));
+  sl.registerLazySingleton(() => GetPostsByIds(sl()));
+  sl.registerLazySingleton(() => DeletePost(sl()));
+
+  // Repository
+  sl.registerLazySingleton<PostRepository>(
+    () => PostRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<PostRemoteDataSource>(
+    () => PostRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Core

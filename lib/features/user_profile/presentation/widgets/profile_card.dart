@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/utils/avatar_generator.dart';
 import '../../../../core/utils/jwt_decoder.dart';
+import '../../../../core/utils/profile_picture_helper.dart';
 import '../../../../core/network/api_client.dart';
 
 class ProfileAvatar extends StatelessWidget {
@@ -20,10 +22,11 @@ class ProfileAvatar extends StatelessWidget {
   String _getAvatarUrl() {
     print('🔍 [AVATAR] _getAvatarUrl called with imagePath: "$imagePath", userId: "$userId"');
     
-    // If imagePath is provided and is a valid URL, use it
-    if (imagePath.isNotEmpty && imagePath.startsWith('http')) {
-      print('✅ [AVATAR] Using provided imagePath: $imagePath');
-      return imagePath;
+    // If imagePath is provided, process it through ProfilePictureHelper
+    if (imagePath.isNotEmpty) {
+      final processedPath = ProfilePictureHelper.getProfilePictureUrl(imagePath);
+      print('✅ [AVATAR] Processed imagePath: $processedPath');
+      return processedPath;
     }
     
     // Try to get userId from JWT if not provided
@@ -58,11 +61,12 @@ class ProfileAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final avatarUrl = _getAvatarUrl();
+    final isLocalAsset = ProfilePictureHelper.isLocalAsset(avatarUrl);
     final isNetworkImage = avatarUrl.startsWith("http");
-    final isAssetImage = avatarUrl.startsWith("assets/");
+    final isAssetImage = avatarUrl.startsWith("assets/") || isLocalAsset;
     
     print('🖼️ [AVATAR] Building avatar with URL: $avatarUrl');
-    print('🖼️ [AVATAR] isNetworkImage: $isNetworkImage, isAssetImage: $isAssetImage');
+    print('🖼️ [AVATAR] isLocalAsset: $isLocalAsset, isNetworkImage: $isNetworkImage, isAssetImage: $isAssetImage');
     
     return Center(
       child: Stack(
@@ -85,62 +89,7 @@ class ProfileAvatar extends StatelessWidget {
               ),
             ),
             child: ClipOval(
-              child: isNetworkImage
-                  ? Image.network(
-                      avatarUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        print('❌ [AVATAR] Network image failed, trying fallback');
-                        // If network image fails, try generated avatar
-                        final fallbackUrl = userId != null && userId!.isNotEmpty
-                            ? AvatarGenerator.generateFromUserId(userId!)
-                            : 'assets/images/mydp.JPG';
-                        print('🔄 [AVATAR] Fallback URL: $fallbackUrl');
-                        if (fallbackUrl.startsWith('http')) {
-                          return Image.network(
-                            fallbackUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              print('❌ [AVATAR] Generated avatar also failed, using default asset');
-                              return Image.asset('assets/images/mydp.JPG', fit: BoxFit.cover);
-                            },
-                          );
-                        } else {
-                          return Image.asset(fallbackUrl, fit: BoxFit.cover);
-                        }
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        );
-                      },
-                    )
-                  : Image.asset(
-                      avatarUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        print('❌ [AVATAR] Asset image failed, generating avatar');
-                        // If asset fails, generate avatar
-                        final fallbackUrl = userId != null && userId!.isNotEmpty
-                            ? AvatarGenerator.generateFromUserId(userId!)
-                            : AvatarGenerator.generateFromEmail('user@flyapp.in');
-                        print('🔄 [AVATAR] Generated avatar URL: $fallbackUrl');
-                        return Image.network(
-                          fallbackUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            print('❌ [AVATAR] Generated avatar failed, using default');
-                            return Image.asset('assets/images/mydp.JPG', fit: BoxFit.cover);
-                          },
-                        );
-                      },
-                    ),
+              child: _buildAvatarWidget(avatarUrl, isLocalAsset, isNetworkImage, isAssetImage),
             ),
           ),
           if (showEditIcon)
@@ -156,5 +105,112 @@ class ProfileAvatar extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildAvatarWidget(String avatarUrl, bool isLocalAsset, bool isNetworkImage, bool isAssetImage) {
+    // Handle local assets (e.g., /assets/profile_2.svg)
+    if (isLocalAsset) {
+      final assetPath = ProfilePictureHelper.getAssetPath(avatarUrl);
+      final isSvg = assetPath.toLowerCase().endsWith('.svg');
+      
+      if (isSvg) {
+        return SvgPicture.asset(
+          assetPath,
+          fit: BoxFit.cover,
+          placeholderBuilder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          errorBuilder: (context, error, stackTrace) {
+            print('❌ [AVATAR] SVG asset failed: $assetPath');
+            return _getFallbackAvatar();
+          },
+        );
+      } else {
+        return Image.asset(
+          assetPath,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('❌ [AVATAR] Asset image failed: $assetPath');
+            return _getFallbackAvatar();
+          },
+        );
+      }
+    }
+    
+    // Handle network images
+    if (isNetworkImage) {
+      final isSvg = avatarUrl.toLowerCase().endsWith('.svg');
+      
+      if (isSvg) {
+        // Wrap SVG loading in a try-catch-like widget structure
+        // Use errorBuilder to catch SVG parsing errors
+        return SvgPicture.network(
+          avatarUrl,
+          fit: BoxFit.cover,
+          placeholderBuilder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          errorBuilder: (context, error, stackTrace) {
+            print('❌ [AVATAR] Network SVG failed (error: $error), using fallback');
+            print('📚 [AVATAR] Stack trace: $stackTrace');
+            // Return fallback immediately on any SVG error
+            return _getFallbackAvatar();
+          },
+        );
+      } else {
+        return Image.network(
+          avatarUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('❌ [AVATAR] Network image failed, trying fallback');
+            return _getFallbackAvatar();
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+        );
+      }
+    }
+    
+    // Handle regular asset images (assets/...)
+    if (isAssetImage) {
+      return Image.asset(
+        avatarUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('❌ [AVATAR] Asset image failed, generating avatar');
+          return _getFallbackAvatar();
+        },
+      );
+    }
+    
+    // Fallback
+    return _getFallbackAvatar();
+  }
+
+  Widget _getFallbackAvatar() {
+    // Try generated avatar if userId is available
+    if (userId != null && userId!.isNotEmpty) {
+      final fallbackUrl = AvatarGenerator.generateFromUserId(userId!);
+      if (fallbackUrl.startsWith('http')) {
+        return Image.network(
+          fallbackUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Image.asset('assets/images/mydp.JPG', fit: BoxFit.cover);
+          },
+        );
+      }
+    }
+    // Default asset
+    return Image.asset('assets/images/mydp.JPG', fit: BoxFit.cover);
   }
 }

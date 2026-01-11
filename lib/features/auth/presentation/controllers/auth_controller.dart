@@ -4,10 +4,13 @@ import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/storage/user_verification_storage.dart';
+import '../../../../core/utils/jwt_decoder.dart';
+import '../../../../features/user_profile/data/utils/default_profile_picture.dart';
 import '../../domain/entities/auth_response.dart';
 import '../../domain/usecases/google_login_user.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/signup_user.dart';
+import '../../../profile_creation/domain/usecases/create_user_profile.dart';
 import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 import '../../../../core/di/service_locator.dart' as sl;
 
@@ -15,11 +18,13 @@ class AuthController extends GetxController {
   final SignupUser signupUser;
   final LoginUser loginUser;
   final GoogleLoginUser googleLoginUser;
+  final CreateUserProfile? createUserProfile;
 
   AuthController({
     required this.signupUser,
     required this.loginUser,
     required this.googleLoginUser,
+    this.createUserProfile,
   });
 
   var isLoading = false.obs;
@@ -127,6 +132,74 @@ class AuthController extends GetxController {
     }
   }
 
+  // Auto-save username and picture_path for new Google users
+  Future<void> _autoSaveProfileForNewGoogleUser(String token) async {
+    try {
+      print('🎲 [AUTH] Auto-saving profile for new Google user...');
+      
+      // Get user ID from JWT token
+      final userId = JwtDecoder.getUserId(token);
+      if (userId == null || userId.isEmpty) {
+        print('⚠️ [AUTH] Could not get user ID from token');
+        return;
+      }
+      
+      // Generate random username
+      String username;
+      try {
+        final jwtUsername = JwtDecoder.getUserName(token);
+        if (jwtUsername != null && jwtUsername.isNotEmpty) {
+          username = jwtUsername;
+        } else {
+          // Generate fallback username from user ID
+          username = 'user_${userId.substring(0, 8)}';
+        }
+      } catch (e) {
+        // Generate fallback username from user ID
+        username = 'user_${userId.substring(0, 8)}';
+      }
+      
+      // Get random profile picture path (relative path for backend)
+      final picturePath = DefaultProfilePicture.getRandomProfilePicturePath(userId);
+      
+      print('🎲 [AUTH] Generated username: "$username"');
+      print('🎲 [AUTH] Generated picture_path: "$picturePath"');
+      
+      // Create profile data
+      final profileData = <String, dynamic>{
+        'username': username,
+        'picture_path': picturePath,
+      };
+      
+      // Call create profile API if available
+      if (createUserProfile != null) {
+        print('🚀 [AUTH] Calling create profile API...');
+        try {
+          final response = await createUserProfile!.call(profileData: profileData);
+          print('✅ [AUTH] Profile auto-saved successfully: ${response.message}');
+        } catch (e) {
+          print('⚠️ [AUTH] Error auto-saving profile (non-fatal): $e');
+          // Don't fail login if profile save fails - it's optional
+        }
+      } else {
+        print('⚠️ [AUTH] CreateUserProfile use case not available');
+        // Try to get it from service locator
+        try {
+          final createUserProfileFromSl = sl.sl<CreateUserProfile>();
+          print('🚀 [AUTH] Calling create profile API (from service locator)...');
+          final response = await createUserProfileFromSl.call(profileData: profileData);
+          print('✅ [AUTH] Profile auto-saved successfully: ${response.message}');
+        } catch (e) {
+          print('⚠️ [AUTH] Error getting CreateUserProfile from service locator: $e');
+        }
+      }
+    } catch (e, stackTrace) {
+      print('⚠️ [AUTH] Error auto-saving profile for new Google user: $e');
+      print('📚 [AUTH] Stack trace: $stackTrace');
+      // Don't fail login if profile save fails - it's optional
+    }
+  }
+
   // Prefetch user profile after login
   void _prefetchUserProfile() {
     try {
@@ -202,8 +275,11 @@ class AuthController extends GetxController {
       print('   🆕 Is new user: ${response.isNewUser}');
       print('   ✅ Ready for navigation');
 
-      // Prefetch user profile after successful login (only if not a new user)
-      if (!response.isNewUser) {
+      // If new user, auto-save username and picture_path immediately
+      if (response.isNewUser) {
+        await _autoSaveProfileForNewGoogleUser(response.token);
+      } else {
+        // Prefetch user profile after successful login (only if not a new user)
         _prefetchUserProfile();
       }
     } on ServerException catch (e) {

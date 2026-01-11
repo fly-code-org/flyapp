@@ -37,7 +37,7 @@ class _MhpQuestionOneScreenState extends State<MhpQuestionOneScreen> {
 
     // Defer initialization to avoid calling setState during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeQuestion();
+    _initializeQuestion();
     });
   }
 
@@ -168,38 +168,38 @@ class _MhpQuestionOneScreenState extends State<MhpQuestionOneScreen> {
                                 WidgetsBinding.instance.addPostFrameCallback((
                                   _,
                                 ) {
-                                  // VerticalOptionsSelector uses reversed index: 0 = bottom, length-1 = top
-                                  // But our options array is in normal order: 0 = first option
-                                  // So we need to reverse the index to match
-                                  final reversedIndex =
-                                      (options.length - 1) - index;
-                                  print(
-                                    '📌 [MHP FIRST QUESTION] Option selected - visual index: $index, reversed index: $reversedIndex, total options: ${options.length}',
-                                  );
-                                  if (reversedIndex >= 0 &&
-                                      reversedIndex < options.length) {
+                                // VerticalOptionsSelector uses reversed index: 0 = bottom, length-1 = top
+                                // But our options array is in normal order: 0 = first option
+                                // So we need to reverse the index to match
+                                final reversedIndex =
+                                    (options.length - 1) - index;
+                                print(
+                                  '📌 [MHP FIRST QUESTION] Option selected - visual index: $index, reversed index: $reversedIndex, total options: ${options.length}',
+                                );
+                                if (reversedIndex >= 0 &&
+                                    reversedIndex < options.length) {
                                     final selectedOption =
                                         options[reversedIndex];
                                     print(
                                       '✅ [MHP FIRST QUESTION] Selecting option: ${selectedOption.optionText} (id: "${selectedOption.id}")',
                                     );
                                     if (selectedOption.id.isEmpty) {
-                                      print(
+                                  print(
                                         '❌ [MHP FIRST QUESTION] Option ID is empty!',
-                                      );
+                                  );
                                       return;
                                     }
-                                    quizController.selectOption(
-                                      selectedOption.id,
-                                    );
-                                    print(
+                                  quizController.selectOption(
+                                    selectedOption.id,
+                                  );
+                                  print(
                                       '✅ [MHP FIRST QUESTION] Selected option ID set to: "${quizController.selectedOptionId.value}"',
-                                    );
-                                  } else {
-                                    print(
-                                      '❌ [MHP FIRST QUESTION] Invalid reversed index: $reversedIndex (options length: ${options.length})',
-                                    );
-                                  }
+                                  );
+                                } else {
+                                  print(
+                                    '❌ [MHP FIRST QUESTION] Invalid reversed index: $reversedIndex (options length: ${options.length})',
+                                  );
+                                }
                                 });
                               },
                             ),
@@ -261,8 +261,8 @@ class _MhpQuestionOneScreenState extends State<MhpQuestionOneScreen> {
                                             const SnackBar(
                                               content: Text(
                                                 'Please select an option',
-                                              ),
-                                            ),
+                              ),
+                            ),
                                           );
                                         }
                                       },

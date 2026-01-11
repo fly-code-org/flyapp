@@ -51,7 +51,8 @@ class ImageProcessor {
 
       // Only resize if dimensions changed
       img.Image resizedImage;
-      if (newWidth != originalImage.width || newHeight != originalImage.height) {
+      if (newWidth != originalImage.width ||
+          newHeight != originalImage.height) {
         print('🔄 [IMAGE PROCESSOR] Resizing to: $newWidth x $newHeight');
         resizedImage = img.copyResize(
           originalImage,
@@ -60,22 +61,28 @@ class ImageProcessor {
           interpolation: img.Interpolation.linear,
         );
       } else {
-        print('ℹ️ [IMAGE PROCESSOR] Image already within size limits, no resize needed');
+        print(
+          'ℹ️ [IMAGE PROCESSOR] Image already within size limits, no resize needed',
+        );
         resizedImage = originalImage;
       }
 
       // Encode image
       Uint8List? encodedImage;
       final fileExtension = imageFile.path.split('.').last.toLowerCase();
-      
+
       if (fileExtension == 'png') {
         encodedImage = Uint8List.fromList(img.encodePng(resizedImage));
-        print('✅ [IMAGE PROCESSOR] Encoded as PNG: ${encodedImage.length} bytes');
+        print(
+          '✅ [IMAGE PROCESSOR] Encoded as PNG: ${encodedImage.length} bytes',
+        );
       } else {
         encodedImage = Uint8List.fromList(
           img.encodeJpg(resizedImage, quality: quality),
         );
-        print('✅ [IMAGE PROCESSOR] Encoded as JPEG (quality: $quality): ${encodedImage.length} bytes');
+        print(
+          '✅ [IMAGE PROCESSOR] Encoded as JPEG (quality: $quality): ${encodedImage.length} bytes',
+        );
       }
 
       print('✅ [IMAGE PROCESSOR] Image processing completed');
@@ -112,7 +119,7 @@ class ImageProcessor {
   /// - user_profile_pic, mhp_profile_pic (for profile pictures)
   /// - company_logo, video_thumbnail, additional_images, ml_file, ml_jd
   /// - invoice, blog_media, masked_cv, smarthire_audio_file, cv_analysis
-  /// - degree, custom_jd, pool_jd, applicant_invoice
+  /// - degree, custom_jd, pool_jd, applicant_invoice, post_image
   static String getFileType({
     required bool isProfilePicture,
     String? role, // 'user' or 'mhp' for profile pictures
@@ -131,7 +138,7 @@ class ImageProcessor {
       // Default to user_profile_pic if role not specified
       return 'user_profile_pic';
     }
-    
+
     // For non-profile pictures, use custom file type
     if (customFileType != null) {
       // Validate that it's one of the allowed types
@@ -150,8 +157,9 @@ class ImageProcessor {
         'custom_jd',
         'pool_jd',
         'applicant_invoice',
+        'post_image', // For social media post images
       ];
-      
+
       if (validTypes.contains(customFileType)) {
         return customFileType;
       } else {
@@ -160,13 +168,12 @@ class ImageProcessor {
         );
       }
     }
-    
+
     throw ArgumentError(
       'File type must be specified for non-profile pictures. '
       'Available types: company_logo, video_thumbnail, additional_images, ml_file, '
       'ml_jd, invoice, blog_media, masked_cv, smarthire_audio_file, cv_analysis, '
-      'degree, custom_jd, pool_jd, applicant_invoice',
+      'degree, custom_jd, pool_jd, applicant_invoice, post_image',
     );
   }
 }
-

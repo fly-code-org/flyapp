@@ -10,11 +10,24 @@ class SocialFeed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (posts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
     return ListView.builder(
       padding: EdgeInsets.zero,
+      // Optimize list rendering with cacheExtent
+      cacheExtent: 500.0,
       itemCount: posts.length,
       itemBuilder: (context, index) {
-        return SocialPost(post: posts[index], isSocialTab: isSocialTab);
+        final post = posts[index];
+        // Use a more stable key based on post content
+        final postKey = post.mediaUrl ?? post.text ?? '${post.timestamp}_$index';
+        return SocialPost(
+          key: ValueKey('post_${postKey}_$index'),
+          post: post,
+          isSocialTab: isSocialTab,
+        );
       },
     );
   }

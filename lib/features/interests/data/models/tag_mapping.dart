@@ -52,6 +52,23 @@ class TagMapping {
     }
     return null;
   }
+  
+  /// Get tag name by tag ID
+  static String? getTagNameById(int tagId) {
+    // Search in social tags
+    for (final entry in socialTags.entries) {
+      if (entry.value == tagId) {
+        return entry.key;
+      }
+    }
+    // Search in support tags if not found in social tags
+    for (final entry in supportTags.entries) {
+      if (entry.value == tagId) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
 
   static List<String> getAllSocialTagNames() {
     return socialTags.keys.toList();
