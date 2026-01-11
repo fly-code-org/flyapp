@@ -65,6 +65,8 @@ import '../../features/post/domain/usecases/get_posts_by_community.dart';
 import '../../features/post/domain/usecases/get_posts_by_tag.dart';
 import '../../features/post/domain/usecases/get_posts_by_ids.dart';
 import '../../features/post/domain/usecases/delete_post.dart';
+import '../../features/post/domain/usecases/like_post.dart';
+import '../../features/post/domain/usecases/unlike_post.dart';
 import '../../features/post/presentation/controllers/post_controller.dart';
 import '../services/s3_upload_service.dart';
 
@@ -254,6 +256,8 @@ Future<void> init() async {
       getPostsByTag: sl(),
       getPostsByIds: sl(),
       deletePost: sl(),
+      likePost: sl(),
+      unlikePost: sl(),
     ),
   );
 
@@ -264,6 +268,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetPostsByTag(sl()));
   sl.registerLazySingleton(() => GetPostsByIds(sl()));
   sl.registerLazySingleton(() => DeletePost(sl()));
+  sl.registerLazySingleton(() => LikePost(sl()));
+  sl.registerLazySingleton(() => UnlikePost(sl()));
 
   // Repository
   sl.registerLazySingleton<PostRepository>(

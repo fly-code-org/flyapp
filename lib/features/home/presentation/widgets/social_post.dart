@@ -6,12 +6,25 @@ import 'package:fly/features/home/model/post_model.dart';
 import 'package:fly/core/widgets/safe_svg_icon.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:get/get.dart';
+import 'package:fly/features/post/presentation/controllers/post_controller.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/utils/jwt_decoder.dart';
+import 'package:fly/core/network/api_client.dart';
 
 class SocialPost extends StatefulWidget {
   final Post post;
   final bool isSocialTab;
+  final Function(Post)? onPostUpdated;
+  final VoidCallback? onRefreshNeeded;
 
-  const SocialPost({super.key, required this.post, this.isSocialTab = true});
+  const SocialPost({
+    super.key,
+    required this.post,
+    this.isSocialTab = true,
+    this.onPostUpdated,
+    this.onRefreshNeeded,
+  });
 
   @override
   _SocialPostState createState() => _SocialPostState();
@@ -20,14 +33,27 @@ class SocialPost extends StatefulWidget {
 class _SocialPostState extends State<SocialPost> {
   VideoPlayerController? _videoController;
   PageController? _pageController;
-  bool isLiked = false;
+  late bool isLiked;
   bool isBookmarked = false;
   bool isTextExpanded = false;
   int _currentPage = 0;
+  bool _isLiking = false;
+  late PostController _postController;
 
   @override
   void initState() {
     super.initState();
+    
+    // Check if current user has already liked this post
+    isLiked = _checkIfUserLikedPost();
+    
+    // Get PostController
+    if (Get.isRegistered<PostController>()) {
+      _postController = Get.find<PostController>();
+    } else {
+      _postController = sl<PostController>();
+      Get.put(_postController);
+    }
     
     // Only create PageController if there are multiple images
     if (widget.post.mediaUrls != null && widget.post.mediaUrls!.length > 1) {
@@ -61,6 +87,141 @@ class _SocialPostState extends State<SocialPost> {
     _videoController?.dispose();
     _pageController?.dispose();
     super.dispose();
+  }
+
+  /// Checks if the current user has already liked this post
+  bool _checkIfUserLikedPost() {
+    try {
+      final token = ApiClient.getAuthToken();
+      if (token == null || token.isEmpty) {
+        return false;
+      }
+      
+      final currentUserId = JwtDecoder.getUserId(token);
+      if (currentUserId == null || currentUserId.isEmpty) {
+        return false;
+      }
+      
+      // Check if current user ID is in the likedBy list
+      final likedBy = widget.post.likedBy;
+      if (likedBy == null || likedBy.isEmpty) {
+        return false;
+      }
+      
+      return likedBy.contains(currentUserId);
+    } catch (e) {
+      print('⚠️ [SOCIAL POST] Error checking if user liked post: $e');
+      return false;
+    }
+  }
+
+  Future<void> _handleLikeToggle() async {
+    // Prevent multiple simultaneous like operations (check synchronously)
+    if (_isLiking) {
+      print('⚠️ [SOCIAL POST] Like operation already in progress, ignoring click');
+      return;
+    }
+
+    // Set flag immediately to prevent multiple clicks (before any async operations)
+    _isLiking = true;
+
+    // Store the current like state
+    final wasLiked = isLiked;
+    
+    // Get current user ID
+    String? currentUserId;
+    try {
+      final token = ApiClient.getAuthToken();
+      if (token != null && token.isNotEmpty) {
+        currentUserId = JwtDecoder.getUserId(token);
+      }
+    } catch (e) {
+      print('⚠️ [SOCIAL POST] Error getting current user ID: $e');
+      _isLiking = false;
+      return;
+    }
+    
+    if (currentUserId == null || currentUserId.isEmpty) {
+      print('⚠️ [SOCIAL POST] Current user ID not available, cannot like/unlike');
+      _isLiking = false;
+      return;
+    }
+    
+    // Prevent duplicate likes - if trying to like and already in likedBy list, prevent it
+    final likedBy = widget.post.likedBy ?? [];
+    if (!wasLiked && likedBy.contains(currentUserId)) {
+      print('⚠️ [SOCIAL POST] User has already liked this post, preventing duplicate like');
+      _isLiking = false;
+      // Update UI state to reflect that it's already liked
+      if (mounted) {
+        setState(() {
+          isLiked = true;
+        });
+      }
+      return;
+    }
+    
+    // Prevent unliking if user hasn't liked it
+    if (wasLiked && !likedBy.contains(currentUserId)) {
+      print('⚠️ [SOCIAL POST] User has not liked this post, preventing unlike');
+      _isLiking = false;
+      // Update UI state to reflect that it's not liked
+      if (mounted) {
+        setState(() {
+          isLiked = false;
+        });
+      }
+      return;
+    }
+
+    // Update UI state optimistically (just the heart icon, not the count)
+    // This will trigger the animation
+    if (mounted) {
+      setState(() {
+        isLiked = !isLiked;
+      });
+    }
+
+    try {
+      bool success;
+      if (!wasLiked) {
+        // User is liking the post
+        print('❤️ [SOCIAL POST] Attempting to like post: ${widget.post.id}');
+        success = await _postController.likePostEntry(widget.post.id);
+      } else {
+        // User is unliking the post
+        print('💔 [SOCIAL POST] Attempting to unlike post: ${widget.post.id}');
+        success = await _postController.unlikePostEntry(widget.post.id);
+      }
+
+      if (success) {
+        print('✅ [SOCIAL POST] Like/unlike API call succeeded');
+        // API call succeeded - refresh posts from server to get actual like count from database
+        // This ensures we have the correct count and likedBy list from the database
+        if (widget.onRefreshNeeded != null) {
+          widget.onRefreshNeeded!();
+        }
+      } else {
+        print('❌ [SOCIAL POST] Like/unlike API call failed, reverting');
+        // Revert the optimistic update if API call failed
+        if (mounted) {
+          setState(() {
+            isLiked = wasLiked;
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      print('❌ [SOCIAL POST] Error toggling like: $e');
+      print('📚 [SOCIAL POST] Stack trace: $stackTrace');
+      // Revert the like state on error
+      if (mounted) {
+        setState(() {
+          isLiked = wasLiked;
+        });
+      }
+    } finally {
+      _isLiking = false;
+    }
   }
 
   Widget _buildProfilePicture() {
@@ -437,15 +598,26 @@ class _SocialPostState extends State<SocialPost> {
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: () => setState(() => isLiked = !isLiked),
+                  onTap: _isLiking ? null : _handleLikeToggle,
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.favorite,
-                        color: isLiked ? Colors.red : Colors.grey,
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        transitionBuilder: (child, animation) {
+                          return ScaleTransition(
+                            scale: animation,
+                            child: child,
+                          );
+                        },
+                        child: Icon(
+                          Icons.favorite,
+                          key: ValueKey(isLiked),
+                          color: isLiked ? Colors.red : Colors.grey,
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 4),
-                      Text("${widget.post.likes + (isLiked ? 1 : 0)}"),
+                      Text("${widget.post.likes}"),
                     ],
                   ),
                 ),

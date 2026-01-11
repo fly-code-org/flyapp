@@ -1,5 +1,6 @@
 // post_model.dart
 class Post {
+  final String id;
   final String profileUrl;
   final String username;
   final String timestamp;
@@ -21,8 +22,12 @@ class Post {
 
   /// Optional poll options (if this post is a poll)
   final List<String>? pollOptions;
+  
+  /// List of user IDs who have liked this post (for checking if current user has liked)
+  final List<String>? likedBy;
 
   const Post({
+    required this.id,
     required this.profileUrl,
     required this.username,
     required this.timestamp,
@@ -35,10 +40,12 @@ class Post {
     required this.comments,
     required this.views,
     this.pollOptions,
+    this.likedBy,
   });
 
   // Optional: convenience factory to build from map (if you need later)
   factory Post.fromMap(Map<String, dynamic> m) => Post(
+    id: m['id'] as String? ?? '',
     profileUrl: m['profileUrl'] as String? ?? '',
     username: m['username'] as String? ?? '',
     timestamp: m['timestamp'] as String? ?? '',
@@ -51,9 +58,11 @@ class Post {
     comments: m['comments'] as int? ?? 0,
     views: m['views'] as int? ?? 0,
     pollOptions: (m['pollOptions'] as List<dynamic>?)?.cast<String>(),
+    likedBy: (m['likedBy'] as List<dynamic>?)?.cast<String>(),
   );
 
   Map<String, dynamic> toMap() => {
+    'id': id,
     'profileUrl': profileUrl,
     'username': username,
     'timestamp': timestamp,
@@ -66,5 +75,41 @@ class Post {
     'comments': comments,
     'views': views,
     'pollOptions': pollOptions,
+    'likedBy': likedBy,
   };
+  
+  /// Creates a copy of this Post with updated likes count
+  Post copyWith({
+    String? id,
+    String? profileUrl,
+    String? username,
+    String? timestamp,
+    String? tagIconUrl,
+    String? text,
+    String? mediaUrl,
+    List<String>? mediaUrls,
+    bool? isVideo,
+    int? likes,
+    int? comments,
+    int? views,
+    List<String>? pollOptions,
+    List<String>? likedBy,
+  }) {
+    return Post(
+      id: id ?? this.id,
+      profileUrl: profileUrl ?? this.profileUrl,
+      username: username ?? this.username,
+      timestamp: timestamp ?? this.timestamp,
+      tagIconUrl: tagIconUrl ?? this.tagIconUrl,
+      text: text ?? this.text,
+      mediaUrl: mediaUrl ?? this.mediaUrl,
+      mediaUrls: mediaUrls ?? this.mediaUrls,
+      isVideo: isVideo ?? this.isVideo,
+      likes: likes ?? this.likes,
+      comments: comments ?? this.comments,
+      views: views ?? this.views,
+      pollOptions: pollOptions ?? this.pollOptions,
+      likedBy: likedBy ?? this.likedBy,
+    );
+  }
 }

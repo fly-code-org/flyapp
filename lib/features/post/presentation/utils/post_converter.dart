@@ -75,6 +75,7 @@ class PostConverter {
         : 'user_${apiPost.authorId.substring(0, 8)}';
     
     return ui_model.Post(
+      id: apiPost.id,
       profileUrl: finalProfileUrl,
       username: finalUsername,
       timestamp: timestamp,
@@ -87,6 +88,7 @@ class PostConverter {
       comments: apiPost.commentCount,
       views: 0, // TODO: Add views to API
       pollOptions: pollOptions,
+      likedBy: apiPost.likes, // Pass the list of user IDs who liked the post
     );
   }
   

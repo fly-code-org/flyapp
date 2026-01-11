@@ -66,6 +66,16 @@ class PostRepositoryImpl implements PostRepository {
   Future<void> deletePost(String postId) async {
     await remoteDataSource.deletePost(postId);
   }
+
+  @override
+  Future<void> likePost(String postId) async {
+    await remoteDataSource.likePost(postId);
+  }
+
+  @override
+  Future<void> unlikePost(String postId) async {
+    await remoteDataSource.unlikePost(postId);
+  }
 }
 
 

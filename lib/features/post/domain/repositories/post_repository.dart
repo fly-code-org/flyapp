@@ -10,6 +10,8 @@ abstract class PostRepository {
   Future<List<Post>> getPostsByTagId(int tagId);
   Future<List<Post>> getPostsByIds(List<String> postIds);
   Future<void> deletePost(String postId);
+  Future<void> likePost(String postId);
+  Future<void> unlikePost(String postId);
 }
 
 

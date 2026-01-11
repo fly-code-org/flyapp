@@ -10,6 +10,8 @@ import '../../domain/usecases/get_posts_by_community.dart';
 import '../../domain/usecases/get_posts_by_tag.dart';
 import '../../domain/usecases/get_posts_by_ids.dart';
 import '../../domain/usecases/delete_post.dart';
+import '../../domain/usecases/like_post.dart';
+import '../../domain/usecases/unlike_post.dart';
 
 class PostController extends GetxController {
   final CreatePost createPost;
@@ -18,6 +20,8 @@ class PostController extends GetxController {
   final GetPostsByTag getPostsByTag;
   final GetPostsByIds getPostsByIds;
   final DeletePost deletePost;
+  final LikePost likePost;
+  final UnlikePost unlikePost;
 
   PostController({
     CreatePost? createPost,
@@ -26,12 +30,16 @@ class PostController extends GetxController {
     GetPostsByTag? getPostsByTag,
     GetPostsByIds? getPostsByIds,
     DeletePost? deletePost,
+    LikePost? likePost,
+    UnlikePost? unlikePost,
   })  : createPost = createPost ?? sl<CreatePost>(),
         getPostsByAuthor = getPostsByAuthor ?? sl<GetPostsByAuthor>(),
         getPostsByCommunity = getPostsByCommunity ?? sl<GetPostsByCommunity>(),
         getPostsByTag = getPostsByTag ?? sl<GetPostsByTag>(),
         getPostsByIds = getPostsByIds ?? sl<GetPostsByIds>(),
-        deletePost = deletePost ?? sl<DeletePost>();
+        deletePost = deletePost ?? sl<DeletePost>(),
+        likePost = likePost ?? sl<LikePost>(),
+        unlikePost = unlikePost ?? sl<UnlikePost>();
 
   // State
   var isLoading = false.obs;
@@ -279,6 +287,60 @@ class PostController extends GetxController {
       print('❌ [POST CONTROLLER] Stack trace: $stackTrace');
       errorMessage.value = 'Failed to delete post: ${e.toString()}';
       isLoading.value = false;
+      return false;
+    }
+  }
+
+  // Like post
+  Future<bool> likePostEntry(String postId) async {
+    try {
+      print('❤️ [POST CONTROLLER] Liking post...');
+      print('   - Post ID: $postId');
+      
+      await likePost.call(postId);
+      
+      print('✅ [POST CONTROLLER] Post liked successfully');
+      return true;
+    } on ServerException catch (e) {
+      print('❌ [POST CONTROLLER] ServerException: ${e.message}');
+      print('❌ [POST CONTROLLER] Status code: ${e.statusCode}');
+      errorMessage.value = e.message;
+      return false;
+    } on NetworkException catch (e) {
+      print('❌ [POST CONTROLLER] NetworkException: ${e.message}');
+      errorMessage.value = e.message;
+      return false;
+    } catch (e, stackTrace) {
+      print('❌ [POST CONTROLLER] Unexpected error: $e');
+      print('❌ [POST CONTROLLER] Stack trace: $stackTrace');
+      errorMessage.value = 'Failed to like post: ${e.toString()}';
+      return false;
+    }
+  }
+
+  // Unlike post
+  Future<bool> unlikePostEntry(String postId) async {
+    try {
+      print('💔 [POST CONTROLLER] Unliking post...');
+      print('   - Post ID: $postId');
+      
+      await unlikePost.call(postId);
+      
+      print('✅ [POST CONTROLLER] Post unliked successfully');
+      return true;
+    } on ServerException catch (e) {
+      print('❌ [POST CONTROLLER] ServerException: ${e.message}');
+      print('❌ [POST CONTROLLER] Status code: ${e.statusCode}');
+      errorMessage.value = e.message;
+      return false;
+    } on NetworkException catch (e) {
+      print('❌ [POST CONTROLLER] NetworkException: ${e.message}');
+      errorMessage.value = e.message;
+      return false;
+    } catch (e, stackTrace) {
+      print('❌ [POST CONTROLLER] Unexpected error: $e');
+      print('❌ [POST CONTROLLER] Stack trace: $stackTrace');
+      errorMessage.value = 'Failed to unlike post: ${e.toString()}';
       return false;
     }
   }

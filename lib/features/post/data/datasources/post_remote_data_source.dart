@@ -13,6 +13,8 @@ abstract class PostRemoteDataSource {
   Future<List<PostModel>> getPostsByTagId(int tagId);
   Future<List<PostModel>> getPostsByIds(List<String> postIds);
   Future<void> deletePost(String postId);
+  Future<void> likePost(String postId);
+  Future<void> unlikePost(String postId);
 }
 
 class PostRemoteDataSourceImpl implements PostRemoteDataSource {
@@ -527,6 +529,104 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
         final statusCode = e.response!.statusCode;
         final responseData = e.response!.data;
         String errorMessage = 'Failed to delete post';
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('msg')) {
+            final msg = responseData['msg'];
+            if (msg is Map && msg.containsKey('err: ')) {
+              errorMessage = msg['err: '] as String;
+            } else if (msg is String) {
+              errorMessage = msg;
+            }
+          }
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> likePost(String postId) async {
+    try {
+      print('❤️ [POST API] Liking post...');
+      print('   - Post ID: $postId');
+
+      final response = await client.post(
+        '/post/external/v1/$postId/like',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      print('📦 [POST API] Like Response Status: ${response.statusCode}');
+      print('📦 [POST API] Like Response Data: ${response.data}');
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+      print('✅ [POST API] Post liked successfully');
+    } on DioException catch (e) {
+      print('❌ [POST API] Like DioException: ${e.type}');
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        String errorMessage = 'Failed to like post';
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('msg')) {
+            final msg = responseData['msg'];
+            if (msg is Map && msg.containsKey('err: ')) {
+              errorMessage = msg['err: '] as String;
+            } else if (msg is String) {
+              errorMessage = msg;
+            }
+          }
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> unlikePost(String postId) async {
+    try {
+      print('💔 [POST API] Unliking post...');
+      print('   - Post ID: $postId');
+
+      final response = await client.delete(
+        '/post/external/v1/$postId/like',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      print('📦 [POST API] Unlike Response Status: ${response.statusCode}');
+      print('📦 [POST API] Unlike Response Data: ${response.data}');
+
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+      print('✅ [POST API] Post unliked successfully');
+    } on DioException catch (e) {
+      print('❌ [POST API] Unlike DioException: ${e.type}');
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        String errorMessage = 'Failed to unlike post';
         if (responseData is Map<String, dynamic>) {
           if (responseData.containsKey('msg')) {
             final msg = responseData['msg'];

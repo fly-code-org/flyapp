@@ -293,6 +293,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: SocialFeed(
                               posts: posts,
                               isSocialTab: activeTabIndex == 0,
+                              onPostUpdated: (updatedPost) {
+                                setState(() {
+                                  final index = posts.indexWhere((p) => p.id == updatedPost.id);
+                                  if (index != -1) {
+                                    posts[index] = updatedPost;
+                                  }
+                                });
+                              },
+                              onRefreshNeeded: () {
+                                // Refresh posts from server to get actual like counts
+                                _refreshPosts();
+                              },
                             ),
                           ),
                         );

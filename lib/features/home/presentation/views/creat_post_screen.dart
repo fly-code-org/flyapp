@@ -40,6 +40,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
 
     final newPost = Post(
+      id: '', // Will be set by backend when post is created
       profileUrl: "https://i.pravatar.cc/150?img=99", // mock
       username: "You",
       timestamp: "just now",
