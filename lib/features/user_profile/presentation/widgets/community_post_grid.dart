@@ -25,6 +25,7 @@ class _CommunityMediaSectionState extends State<CommunityMediaSection> {
   late PostController _postController;
   var isLoading = false.obs;
   var postsData = <Map<String, dynamic>>[].obs;
+  List<String>? _lastFetchedIds; // Track last fetched IDs to avoid duplicate fetches
 
   @override
   void initState() {
@@ -37,7 +38,33 @@ class _CommunityMediaSectionState extends State<CommunityMediaSection> {
       Get.put(_postController);
     }
     // Fetch posts when widget is created
-    _fetchPosts();
+    // Use addPostFrameCallback to ensure widget is fully built and data might be available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchPostsIfNeeded();
+    });
+  }
+
+  void _fetchPostsIfNeeded() {
+    // Get current post IDs
+    List<String> currentIds = [];
+    if (widget.type == "Activities" && widget.postIds != null && widget.postIds!.isNotEmpty) {
+      currentIds = widget.postIds!;
+    } else if (widget.type == "Bookmarks" && widget.bookmarkedPosts != null && widget.bookmarkedPosts!.isNotEmpty) {
+      currentIds = widget.bookmarkedPosts!
+          .map((bookmark) => bookmark['post_id'] as String? ?? '')
+          .where((id) => id.isNotEmpty)
+          .toList();
+    }
+    
+    // Only fetch if we have IDs and they're different from last fetch
+    if (currentIds.isNotEmpty) {
+      final idsString = currentIds.join(',');
+      final lastFetchedString = _lastFetchedIds?.join(',') ?? '';
+      if (idsString != lastFetchedString) {
+        _lastFetchedIds = List<String>.from(currentIds);
+        _fetchPosts();
+      }
+    }
   }
 
   @override
@@ -45,7 +72,7 @@ class _CommunityMediaSectionState extends State<CommunityMediaSection> {
     super.didUpdateWidget(oldWidget);
     // Refetch if post IDs or bookmarked posts changed
     if (_hasDataChanged(oldWidget)) {
-      _fetchPosts();
+      _fetchPostsIfNeeded();
     }
   }
 
@@ -55,14 +82,26 @@ class _CommunityMediaSectionState extends State<CommunityMediaSection> {
     if (widget.type == "Activities") {
       final oldIds = oldWidget.postIds ?? [];
       final newIds = widget.postIds ?? [];
+      // Trigger fetch if data went from empty to non-empty
+      if (oldIds.isEmpty && newIds.isNotEmpty) return true;
+      // Trigger fetch if data went from non-empty to empty (reset)
+      if (oldIds.isNotEmpty && newIds.isEmpty) return true;
+      // Trigger fetch if lengths differ
       if (oldIds.length != newIds.length) return true;
+      // Trigger fetch if any IDs differ
       for (var i = 0; i < oldIds.length; i++) {
         if (oldIds[i] != newIds[i]) return true;
       }
     } else if (widget.type == "Bookmarks") {
       final oldBookmarks = oldWidget.bookmarkedPosts ?? [];
       final newBookmarks = widget.bookmarkedPosts ?? [];
+      // Trigger fetch if data went from empty to non-empty
+      if (oldBookmarks.isEmpty && newBookmarks.isNotEmpty) return true;
+      // Trigger fetch if data went from non-empty to empty (reset)
+      if (oldBookmarks.isNotEmpty && newBookmarks.isEmpty) return true;
+      // Trigger fetch if lengths differ
       if (oldBookmarks.length != newBookmarks.length) return true;
+      // Trigger fetch if any bookmark IDs differ
       for (var i = 0; i < oldBookmarks.length; i++) {
         final oldId = oldBookmarks[i]['post_id'] as String? ?? '';
         final newId = newBookmarks[i]['post_id'] as String? ?? '';

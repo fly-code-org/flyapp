@@ -113,10 +113,15 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   Widget _buildBody() {
     switch (_selectedTab) {
       case 0:
-        return Obx(() => CommunityMediaSection(
-              type: "Activities",
-              postIds: _profileController.activities.toList(),
-            ));
+        return Obx(() {
+          final activities = _profileController.activities.toList();
+          // Use a key based on activities length to force widget recreation when data changes
+          return CommunityMediaSection(
+            key: ValueKey('activities_${activities.length}_${activities.join(',')}'),
+            type: "Activities",
+            postIds: activities,
+          );
+        });
       case 1:
         // Journal data should already be prefetched in initState
         // But if for some reason it's not loaded, fetch it now
@@ -138,10 +143,16 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         }
         return const JournalGridSection();
       case 2:
-        return Obx(() => CommunityMediaSection(
-              type: "Bookmarks",
-              bookmarkedPosts: _profileController.bookmarkedPosts.toList(),
-            ));
+        return Obx(() {
+          final bookmarkedPosts = _profileController.bookmarkedPosts.toList();
+          // Use a key based on bookmarks length to force widget recreation when data changes
+          final bookmarksKey = bookmarkedPosts.map((b) => b['post_id'] as String? ?? '').join(',');
+          return CommunityMediaSection(
+            key: ValueKey('bookmarks_${bookmarkedPosts.length}_$bookmarksKey'),
+            type: "Bookmarks",
+            bookmarkedPosts: bookmarkedPosts,
+          );
+        });
       default:
         return const SizedBox.shrink();
     }
