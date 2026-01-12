@@ -12,6 +12,7 @@ import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/utils/jwt_decoder.dart';
 import 'package:fly/core/network/api_client.dart';
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
+import 'package:fly/features/post/presentation/widgets/comment_bottom_sheet.dart';
 
 class SocialPost extends StatefulWidget {
   final Post post;
@@ -814,12 +815,24 @@ class _SocialPostState extends State<SocialPost> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Row(
-                    children: [
-                      const Icon(Icons.comment_outlined, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text("${widget.post.comments}"),
-                    ],
+                  GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => CommentBottomSheet(
+                          postId: widget.post.id,
+                        ),
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        const Icon(Icons.comment_outlined, color: Colors.grey),
+                        const SizedBox(width: 4),
+                        Text("${widget.post.comments}"),
+                      ],
+                    ),
                   ),
                   const SizedBox(width: 16),
                   const Icon(Icons.share_outlined, color: Colors.grey),

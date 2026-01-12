@@ -70,6 +70,13 @@ import '../../features/post/domain/usecases/unlike_post.dart';
 import '../../features/post/domain/usecases/bookmark_post.dart';
 import '../../features/post/domain/usecases/unbookmark_post.dart';
 import '../../features/post/presentation/controllers/post_controller.dart';
+import '../../features/post/data/datasources/comment_remote_data_source.dart';
+import '../../features/post/data/repositories/comment_repository_impl.dart';
+import '../../features/post/domain/repositories/comment_repository.dart';
+import '../../features/post/domain/usecases/get_comments_by_post_id.dart';
+import '../../features/post/domain/usecases/get_replies_by_comment_id.dart';
+import '../../features/post/domain/usecases/create_comment.dart';
+import '../../features/post/presentation/controllers/comment_controller.dart';
 import '../services/s3_upload_service.dart';
 
 final sl = GetIt.instance;
@@ -285,6 +292,31 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<PostRemoteDataSource>(
     () => PostRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  //! Features - Comments
+  // Controllers
+  sl.registerFactory(
+    () => CommentController(
+      getCommentsByPostId: sl(),
+      getRepliesByCommentId: sl(),
+      createComment: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetCommentsByPostId(sl()));
+  sl.registerLazySingleton(() => GetRepliesByCommentId(sl()));
+  sl.registerLazySingleton(() => CreateComment(sl()));
+
+  // Repository
+  sl.registerLazySingleton<CommentRepository>(
+    () => CommentRepositoryImpl(sl()),
+  );
+
+  // Data sources
+  sl.registerLazySingleton<CommentRemoteDataSource>(
+    () => CommentRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Core
