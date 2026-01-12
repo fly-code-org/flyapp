@@ -43,10 +43,14 @@ class _SocialPostState extends State<SocialPost> {
   bool _isBookmarking = false;
   late PostController _postController;
   UserProfileController? _userProfileController;
+  late int _commentCount; // Local comment count for optimistic updates
 
   @override
   void initState() {
     super.initState();
+
+    // Initialize local comment count from widget.post.comments
+    _commentCount = widget.post.comments;
 
     // Check if current user has already liked this post
     isLiked = _checkIfUserLikedPost();
@@ -100,10 +104,32 @@ class _SocialPostState extends State<SocialPost> {
   }
 
   @override
+  void didUpdateWidget(SocialPost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync local comment count with widget.post.comments when post is updated from server
+    if (oldWidget.post.comments != widget.post.comments) {
+      _commentCount = widget.post.comments;
+    }
+  }
+
+  @override
   void dispose() {
     _videoController?.dispose();
     _pageController?.dispose();
     super.dispose();
+  }
+
+  /// Handles optimistic comment count update when a comment is added
+  void _handleCommentAdded() {
+    if (mounted) {
+      setState(() {
+        _commentCount++; // Increment count optimistically
+      });
+      // Trigger refresh to sync with server (similar to like/bookmark)
+      if (widget.onRefreshNeeded != null) {
+        widget.onRefreshNeeded!();
+      }
+    }
   }
 
   /// Checks if the current user has already liked this post
@@ -823,6 +849,7 @@ class _SocialPostState extends State<SocialPost> {
                         backgroundColor: Colors.transparent,
                         builder: (context) => CommentBottomSheet(
                           postId: widget.post.id,
+                          onCommentAdded: _handleCommentAdded,
                         ),
                       );
                     },
@@ -830,7 +857,7 @@ class _SocialPostState extends State<SocialPost> {
                       children: [
                         const Icon(Icons.comment_outlined, color: Colors.grey),
                         const SizedBox(width: 4),
-                        Text("${widget.post.comments}"),
+                        Text("$_commentCount"),
                       ],
                     ),
                   ),

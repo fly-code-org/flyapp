@@ -10,8 +10,14 @@ import 'package:intl/intl.dart';
 
 class CommentBottomSheet extends StatefulWidget {
   final String postId;
+  final VoidCallback?
+  onCommentAdded; // Callback when a comment is successfully added
 
-  const CommentBottomSheet({super.key, required this.postId});
+  const CommentBottomSheet({
+    super.key,
+    required this.postId,
+    this.onCommentAdded,
+  });
 
   @override
   State<CommentBottomSheet> createState() => _CommentBottomSheetState();
@@ -86,6 +92,10 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       _textController.clear();
       _replyingToCommentId = null;
       _replyingToUserId = null;
+      // Notify parent widget that a comment was added (for optimistic count update)
+      if (widget.onCommentAdded != null) {
+        widget.onCommentAdded!();
+      }
       // Reload comments to show the new one
       await _loadComments();
     } else if (mounted) {
