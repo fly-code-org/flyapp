@@ -67,6 +67,8 @@ import '../../features/post/domain/usecases/get_posts_by_ids.dart';
 import '../../features/post/domain/usecases/delete_post.dart';
 import '../../features/post/domain/usecases/like_post.dart';
 import '../../features/post/domain/usecases/unlike_post.dart';
+import '../../features/post/domain/usecases/bookmark_post.dart';
+import '../../features/post/domain/usecases/unbookmark_post.dart';
 import '../../features/post/presentation/controllers/post_controller.dart';
 import '../services/s3_upload_service.dart';
 
@@ -258,6 +260,8 @@ Future<void> init() async {
       deletePost: sl(),
       likePost: sl(),
       unlikePost: sl(),
+      bookmarkPost: sl(),
+      unbookmarkPost: sl(),
     ),
   );
 
@@ -270,6 +274,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => DeletePost(sl()));
   sl.registerLazySingleton(() => LikePost(sl()));
   sl.registerLazySingleton(() => UnlikePost(sl()));
+  sl.registerLazySingleton(() => BookmarkPost(sl()));
+  sl.registerLazySingleton(() => UnbookmarkPost(sl()));
 
   // Repository
   sl.registerLazySingleton<PostRepository>(

@@ -15,6 +15,8 @@ abstract class PostRemoteDataSource {
   Future<void> deletePost(String postId);
   Future<void> likePost(String postId);
   Future<void> unlikePost(String postId);
+  Future<void> bookmarkPost(String postId);
+  Future<void> unbookmarkPost(String postId);
 }
 
 class PostRemoteDataSourceImpl implements PostRemoteDataSource {
@@ -627,6 +629,104 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
         final statusCode = e.response!.statusCode;
         final responseData = e.response!.data;
         String errorMessage = 'Failed to unlike post';
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('msg')) {
+            final msg = responseData['msg'];
+            if (msg is Map && msg.containsKey('err: ')) {
+              errorMessage = msg['err: '] as String;
+            } else if (msg is String) {
+              errorMessage = msg;
+            }
+          }
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> bookmarkPost(String postId) async {
+    try {
+      print('🔖 [POST API] Bookmarking post...');
+      print('   - Post ID: $postId');
+
+      final response = await client.post(
+        '/post/external/v1/$postId/bookmark',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      print('📦 [POST API] Bookmark Response Status: ${response.statusCode}');
+      print('📦 [POST API] Bookmark Response Data: ${response.data}');
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+      print('✅ [POST API] Post bookmarked successfully');
+    } on DioException catch (e) {
+      print('❌ [POST API] Bookmark DioException: ${e.type}');
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        String errorMessage = 'Failed to bookmark post';
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('msg')) {
+            final msg = responseData['msg'];
+            if (msg is Map && msg.containsKey('err: ')) {
+              errorMessage = msg['err: '] as String;
+            } else if (msg is String) {
+              errorMessage = msg;
+            }
+          }
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> unbookmarkPost(String postId) async {
+    try {
+      print('🔓 [POST API] Unbookmarking post...');
+      print('   - Post ID: $postId');
+
+      final response = await client.delete(
+        '/post/external/v1/$postId/bookmark',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      print('📦 [POST API] Unbookmark Response Status: ${response.statusCode}');
+      print('📦 [POST API] Unbookmark Response Data: ${response.data}');
+
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+      print('✅ [POST API] Post unbookmarked successfully');
+    } on DioException catch (e) {
+      print('❌ [POST API] Unbookmark DioException: ${e.type}');
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        String errorMessage = 'Failed to unbookmark post';
         if (responseData is Map<String, dynamic>) {
           if (responseData.containsKey('msg')) {
             final msg = responseData['msg'];

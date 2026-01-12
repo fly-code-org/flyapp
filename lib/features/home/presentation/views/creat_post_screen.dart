@@ -53,6 +53,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       likes: 0,
       comments: 0,
       views: 0,
+      bookmarks: 0,
       pollOptions: _pollOptions.where((e) => e.trim().isNotEmpty).toList(),
     );
 

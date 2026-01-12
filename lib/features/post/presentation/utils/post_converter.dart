@@ -87,8 +87,10 @@ class PostConverter {
       likes: apiPost.likeCount,
       comments: apiPost.commentCount,
       views: 0, // TODO: Add views to API
+      bookmarks: apiPost.bookmarkCount,
       pollOptions: pollOptions,
       likedBy: apiPost.likes, // Pass the list of user IDs who liked the post
+      bookmarkedBy: apiPost.bookmarkedBy, // Pass the list of user IDs who bookmarked the post
     );
   }
   

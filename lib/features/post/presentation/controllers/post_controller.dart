@@ -12,6 +12,8 @@ import '../../domain/usecases/get_posts_by_ids.dart';
 import '../../domain/usecases/delete_post.dart';
 import '../../domain/usecases/like_post.dart';
 import '../../domain/usecases/unlike_post.dart';
+import '../../domain/usecases/bookmark_post.dart';
+import '../../domain/usecases/unbookmark_post.dart';
 
 class PostController extends GetxController {
   final CreatePost createPost;
@@ -22,6 +24,8 @@ class PostController extends GetxController {
   final DeletePost deletePost;
   final LikePost likePost;
   final UnlikePost unlikePost;
+  final BookmarkPost bookmarkPost;
+  final UnbookmarkPost unbookmarkPost;
 
   PostController({
     CreatePost? createPost,
@@ -32,6 +36,8 @@ class PostController extends GetxController {
     DeletePost? deletePost,
     LikePost? likePost,
     UnlikePost? unlikePost,
+    BookmarkPost? bookmarkPost,
+    UnbookmarkPost? unbookmarkPost,
   })  : createPost = createPost ?? sl<CreatePost>(),
         getPostsByAuthor = getPostsByAuthor ?? sl<GetPostsByAuthor>(),
         getPostsByCommunity = getPostsByCommunity ?? sl<GetPostsByCommunity>(),
@@ -39,7 +45,9 @@ class PostController extends GetxController {
         getPostsByIds = getPostsByIds ?? sl<GetPostsByIds>(),
         deletePost = deletePost ?? sl<DeletePost>(),
         likePost = likePost ?? sl<LikePost>(),
-        unlikePost = unlikePost ?? sl<UnlikePost>();
+        unlikePost = unlikePost ?? sl<UnlikePost>(),
+        bookmarkPost = bookmarkPost ?? sl<BookmarkPost>(),
+        unbookmarkPost = unbookmarkPost ?? sl<UnbookmarkPost>();
 
   // State
   var isLoading = false.obs;
@@ -341,6 +349,60 @@ class PostController extends GetxController {
       print('❌ [POST CONTROLLER] Unexpected error: $e');
       print('❌ [POST CONTROLLER] Stack trace: $stackTrace');
       errorMessage.value = 'Failed to unlike post: ${e.toString()}';
+      return false;
+    }
+  }
+
+  // Bookmark post
+  Future<bool> bookmarkPostEntry(String postId) async {
+    try {
+      print('🔖 [POST CONTROLLER] Bookmarking post...');
+      print('   - Post ID: $postId');
+
+      await bookmarkPost.call(postId);
+
+      print('✅ [POST CONTROLLER] Post bookmarked successfully');
+      return true;
+    } on ServerException catch (e) {
+      print('❌ [POST CONTROLLER] ServerException: ${e.message}');
+      print('❌ [POST CONTROLLER] Status code: ${e.statusCode}');
+      errorMessage.value = e.message;
+      return false;
+    } on NetworkException catch (e) {
+      print('❌ [POST CONTROLLER] NetworkException: ${e.message}');
+      errorMessage.value = e.message;
+      return false;
+    } catch (e, stackTrace) {
+      print('❌ [POST CONTROLLER] Unexpected error: $e');
+      print('❌ [POST CONTROLLER] Stack trace: $stackTrace');
+      errorMessage.value = 'Failed to bookmark post: ${e.toString()}';
+      return false;
+    }
+  }
+
+  // Unbookmark post
+  Future<bool> unbookmarkPostEntry(String postId) async {
+    try {
+      print('🔓 [POST CONTROLLER] Unbookmarking post...');
+      print('   - Post ID: $postId');
+
+      await unbookmarkPost.call(postId);
+
+      print('✅ [POST CONTROLLER] Post unbookmarked successfully');
+      return true;
+    } on ServerException catch (e) {
+      print('❌ [POST CONTROLLER] ServerException: ${e.message}');
+      print('❌ [POST CONTROLLER] Status code: ${e.statusCode}');
+      errorMessage.value = e.message;
+      return false;
+    } on NetworkException catch (e) {
+      print('❌ [POST CONTROLLER] NetworkException: ${e.message}');
+      errorMessage.value = e.message;
+      return false;
+    } catch (e, stackTrace) {
+      print('❌ [POST CONTROLLER] Unexpected error: $e');
+      print('❌ [POST CONTROLLER] Stack trace: $stackTrace');
+      errorMessage.value = 'Failed to unbookmark post: ${e.toString()}';
       return false;
     }
   }

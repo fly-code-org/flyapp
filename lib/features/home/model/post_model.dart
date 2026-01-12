@@ -19,12 +19,16 @@ class Post {
   final int likes;
   final int comments;
   final int views;
+  final int bookmarks;
 
   /// Optional poll options (if this post is a poll)
   final List<String>? pollOptions;
   
   /// List of user IDs who have liked this post (for checking if current user has liked)
   final List<String>? likedBy;
+  
+  /// List of user IDs who have bookmarked this post (for checking if current user has bookmarked)
+  final List<String>? bookmarkedBy;
 
   const Post({
     required this.id,
@@ -39,8 +43,10 @@ class Post {
     required this.likes,
     required this.comments,
     required this.views,
+    required this.bookmarks,
     this.pollOptions,
     this.likedBy,
+    this.bookmarkedBy,
   });
 
   // Optional: convenience factory to build from map (if you need later)
@@ -57,8 +63,10 @@ class Post {
     likes: m['likes'] as int? ?? 0,
     comments: m['comments'] as int? ?? 0,
     views: m['views'] as int? ?? 0,
+    bookmarks: m['bookmarks'] as int? ?? 0,
     pollOptions: (m['pollOptions'] as List<dynamic>?)?.cast<String>(),
     likedBy: (m['likedBy'] as List<dynamic>?)?.cast<String>(),
+    bookmarkedBy: (m['bookmarkedBy'] as List<dynamic>?)?.cast<String>(),
   );
 
   Map<String, dynamic> toMap() => {
@@ -74,8 +82,10 @@ class Post {
     'likes': likes,
     'comments': comments,
     'views': views,
+    'bookmarks': bookmarks,
     'pollOptions': pollOptions,
     'likedBy': likedBy,
+    'bookmarkedBy': bookmarkedBy,
   };
   
   /// Creates a copy of this Post with updated likes count
@@ -92,8 +102,10 @@ class Post {
     int? likes,
     int? comments,
     int? views,
+    int? bookmarks,
     List<String>? pollOptions,
     List<String>? likedBy,
+    List<String>? bookmarkedBy,
   }) {
     return Post(
       id: id ?? this.id,
@@ -108,8 +120,10 @@ class Post {
       likes: likes ?? this.likes,
       comments: comments ?? this.comments,
       views: views ?? this.views,
+      bookmarks: bookmarks ?? this.bookmarks,
       pollOptions: pollOptions ?? this.pollOptions,
       likedBy: likedBy ?? this.likedBy,
+      bookmarkedBy: bookmarkedBy ?? this.bookmarkedBy,
     );
   }
 }
