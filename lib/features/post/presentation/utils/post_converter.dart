@@ -86,7 +86,7 @@ class PostConverter {
       isVideo: hasVideo,
       likes: apiPost.likeCount,
       comments: apiPost.commentCount,
-      views: 0, // TODO: Add views to API
+      views: apiPost.viewCount,
       bookmarks: apiPost.bookmarkCount,
       pollOptions: pollOptions,
       likedBy: apiPost.likes, // Pass the list of user IDs who liked the post

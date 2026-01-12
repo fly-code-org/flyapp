@@ -60,6 +60,7 @@ class PostModel extends Post {
     super.commentCount = 0,
     super.bookmarkedBy = const [],
     super.bookmarkCount = 0,
+    super.viewCount = 0,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -123,6 +124,7 @@ class PostModel extends Post {
       commentCount: json['comment_count'] as int? ?? 0,
       bookmarkedBy: bookmarkedByList,
       bookmarkCount: json['bookmark_count'] as int? ?? 0,
+      viewCount: json['view_count'] as int? ?? 0,
       createdAt: _parseDateTime(json['created_at']),
       updatedAt: _parseDateTime(json['updated_at']),
     );
@@ -142,6 +144,7 @@ class PostModel extends Post {
       'comment_count': commentCount,
       'bookmarked_by': bookmarkedBy,
       'bookmark_count': bookmarkCount,
+      'view_count': viewCount,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };

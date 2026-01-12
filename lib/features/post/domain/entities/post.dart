@@ -14,6 +14,7 @@ class Post extends Equatable {
   final int commentCount;
   final List<String> bookmarkedBy;
   final int bookmarkCount;
+  final int viewCount;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -30,6 +31,7 @@ class Post extends Equatable {
     this.commentCount = 0,
     this.bookmarkedBy = const [],
     this.bookmarkCount = 0,
+    this.viewCount = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -48,6 +50,7 @@ class Post extends Equatable {
         commentCount,
         bookmarkedBy,
         bookmarkCount,
+        viewCount,
         createdAt,
         updatedAt,
       ];
