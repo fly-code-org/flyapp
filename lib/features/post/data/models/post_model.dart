@@ -1,5 +1,64 @@
 // data/models/post_model.dart
+import 'dart:convert';
 import '../../domain/entities/post.dart';
+
+// Helper function to parse UUID from various formats (string, MongoDB binary, etc.)
+String _parseUuid(dynamic uuidValue) {
+  if (uuidValue == null) {
+    return '';
+  }
+  
+  // If it's already a string, return it (might be UUID string or base64)
+  if (uuidValue is String) {
+    // If it looks like a standard UUID format, return as-is
+    if (RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', caseSensitive: false).hasMatch(uuidValue)) {
+      return uuidValue;
+    }
+    // If it's base64, try to decode it
+    try {
+      final decoded = base64Decode(uuidValue);
+      if (decoded.length == 16) {
+        // Convert 16 bytes to UUID string format
+        final uuidString = _bytesToUuidString(decoded);
+        return uuidString;
+      }
+    } catch (e) {
+      // Not base64 or can't decode, return as-is
+    }
+    return uuidValue;
+  }
+  
+  // Handle MongoDB binary format: {"$binary": {"base64": "...", "subType": "00"}}
+  if (uuidValue is Map<String, dynamic>) {
+    if (uuidValue.containsKey('\$binary')) {
+      final binary = uuidValue['\$binary'];
+      if (binary is Map && binary.containsKey('base64')) {
+        final base64Str = binary['base64'] as String;
+        try {
+          final decoded = base64Decode(base64Str);
+          if (decoded.length == 16) {
+            return _bytesToUuidString(decoded);
+          }
+        } catch (e) {
+          print('⚠️ [POST MODEL] Failed to decode UUID from base64: $e');
+        }
+      }
+    }
+  }
+  
+  // Fallback: convert to string
+  return uuidValue.toString();
+}
+
+// Convert 16 bytes to UUID string format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+String _bytesToUuidString(List<int> bytes) {
+  if (bytes.length != 16) {
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
+  }
+  
+  final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join('');
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20, 32)}';
+}
 
 // Helper function to parse DateTime from various formats
 DateTime _parseDateTime(dynamic dateValue) {
@@ -103,12 +162,16 @@ class PostModel extends Post {
     }
 
     // Handle both 'id' and '_id' fields (MongoDB might return '_id')
-    final postId = json['id']?.toString() ?? json['_id']?.toString() ?? '';
+    final postId = _parseUuid(json['id'] ?? json['_id'] ?? '');
+    final authorId = _parseUuid(json['author_id'] ?? '');
+    
+    print('🔍 [POST MODEL] Parsing post - ID: $postId, AuthorID: $authorId');
+    print('🔍 [POST MODEL] Raw author_id from JSON: ${json['author_id']}');
     
     return PostModel(
       id: postId,
-      authorId: json['author_id']?.toString() ?? '',
-      communityId: json['community_id']?.toString(),
+      authorId: authorId,
+      communityId: json['community_id'] != null ? _parseUuid(json['community_id']) : null,
       tagId: (json['tag_id'] is int) 
           ? json['tag_id'] as int 
           : (json['tag_id'] is num) 

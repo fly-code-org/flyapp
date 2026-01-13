@@ -99,13 +99,29 @@ class PostConverter {
     Map<String, String>? authorProfileUrls,
     Map<String, String>? authorUsernames,
   }) {
+    print('🔄 [POST CONVERTER] Converting ${apiPosts.length} posts to UI posts');
+    print('🔄 [POST CONVERTER] Available authorUsernames: $authorUsernames');
+    print('🔄 [POST CONVERTER] Available authorProfileUrls: $authorProfileUrls');
+    
     return apiPosts.map((apiPost) {
       final authorId = apiPost.authorId;
-      return toUIPost(
+      final username = authorUsernames?[authorId];
+      final profileUrl = authorProfileUrls?[authorId];
+      
+      print('🔄 [POST CONVERTER] Converting post ${apiPost.id}');
+      print('   - Author ID: $authorId');
+      print('   - Username from map: $username');
+      print('   - Profile URL from map: $profileUrl');
+      
+      final uiPost = toUIPost(
         apiPost,
-        profileUrl: authorProfileUrls?[authorId],
-        username: authorUsernames?[authorId],
+        profileUrl: profileUrl,
+        username: username,
       );
+      
+      print('   - Final UI Post username: ${uiPost.username}');
+      
+      return uiPost;
     }).toList();
   }
 }

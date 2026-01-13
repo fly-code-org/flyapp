@@ -52,7 +52,7 @@ class TagMapping {
     }
     return null;
   }
-  
+
   /// Get tag name by tag ID
   static String? getTagNameById(int tagId) {
     // Search in social tags

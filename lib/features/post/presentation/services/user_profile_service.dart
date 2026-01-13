@@ -28,10 +28,15 @@ class UserProfileService {
 
     try {
       print('🔍 [USER PROFILE SERVICE] Fetching profile for user: $userId');
+      print('🔍 [USER PROFILE SERVICE] API endpoint: /users/external/v1/profile/$userId');
+      
       final response = await _client.get(
         '/users/external/v1/profile/$userId',
         options: Options(headers: {"Content-Type": "application/json"}),
       );
+      
+      print('📦 [USER PROFILE SERVICE] API Response Status: ${response.statusCode}');
+      print('📦 [USER PROFILE SERVICE] API Response Data: ${response.data}');
 
       if (response.statusCode == 200) {
         final responseData = response.data as Map<String, dynamic>;
@@ -43,11 +48,26 @@ class UserProfileService {
           profileData = responseData;
         }
 
+        // Verify that the user_id in the response matches the requested userId
+        final responseUserId = profileData['user_id'];
+        print('🔍 [USER PROFILE SERVICE] Response user_id: $responseUserId (type: ${responseUserId.runtimeType})');
+        print('🔍 [USER PROFILE SERVICE] Requested userId: $userId');
+        
         // Extract username and picture_path
-        var username = profileData['username'] as String?;
-        if (username != null) {
+        // Handle different possible types (String, null, or dynamic)
+        var username = profileData['username'];
+        if (username is String) {
           username = username.trim();
+        } else if (username != null) {
+          // Convert to string if it's not null but not a String
+          username = username.toString().trim();
+        } else {
+          username = null;
         }
+        
+        print('🔍 [USER PROFILE SERVICE] Extracted username for $userId: "$username" (type: ${username.runtimeType})');
+        print('🔍 [USER PROFILE SERVICE] Full profileData keys: ${profileData.keys.toList()}');
+        print('🔍 [USER PROFILE SERVICE] Full profileData: $profileData');
         
         // If username is empty or null, try to get it from JWT token as fallback (only for current user)
         if (username == null || username.isEmpty) {
@@ -90,8 +110,8 @@ class UserProfileService {
           }
         }
 
-        final profile = {
-          'username': (username != null && username.isNotEmpty) ? username : null,
+        final profile = <String, String?>{
+          'username': (username != null && username.toString().isNotEmpty) ? username.toString() : null,
           'picture_path': picturePathStr,
         };
         
@@ -111,18 +131,60 @@ class UserProfileService {
           statusCode: response.statusCode,
         );
       }
-    } on DioException catch (e) {
-      print('❌ [USER PROFILE SERVICE] Error fetching profile for $userId: ${e.message}');
-      if (e.response?.statusCode == 404) {
-        // User profile not found - return null values
-        return {'username': null, 'picture_path': null};
-      }
-      // For other errors, return null values (will use placeholders)
-      return {'username': null, 'picture_path': null};
-    } catch (e) {
-      print('❌ [USER PROFILE SERVICE] Unexpected error: $e');
-      return {'username': null, 'picture_path': null};
-    }
+            } on DioException catch (e) {
+              print('❌ [USER PROFILE SERVICE] Error fetching profile for $userId: ${e.message}');
+              if (e.response?.statusCode == 404) {
+                // User profile not found - return null values
+                return {'username': null, 'picture_path': null};
+              }
+              // For other errors (like 500), try JWT fallback if it's the current user
+              print('⚠️ [USER PROFILE SERVICE] API call failed, attempting JWT fallback for userId: $userId');
+              try {
+                final token = await TokenStorage.getToken();
+                if (token != null && token.isNotEmpty) {
+                  final jwtUserId = JwtDecoder.getUserId(token);
+                  print('🔍 [USER PROFILE SERVICE] JWT userId: $jwtUserId, requested userId: $userId');
+                  // Only use JWT username if the user ID matches (same user)
+                  if (jwtUserId == userId) {
+                    final jwtUsername = JwtDecoder.getUserName(token);
+                    print('🔍 [USER PROFILE SERVICE] JWT username: $jwtUsername');
+                    if (jwtUsername != null && jwtUsername.isNotEmpty) {
+                      print('✅ [USER PROFILE SERVICE] Using JWT username fallback for current user: $jwtUsername');
+                      return {'username': jwtUsername, 'picture_path': null};
+                    } else {
+                      print('⚠️ [USER PROFILE SERVICE] JWT username is null or empty');
+                    }
+                  } else {
+                    print('⚠️ [USER PROFILE SERVICE] JWT userId ($jwtUserId) does not match requested userId ($userId)');
+                  }
+                } else {
+                  print('⚠️ [USER PROFILE SERVICE] Token is null or empty');
+                }
+              } catch (jwtError) {
+                print('❌ [USER PROFILE SERVICE] Error getting username from JWT: $jwtError');
+              }
+              // If JWT fallback also fails, return null values (will use placeholders)
+              return {'username': null, 'picture_path': null};
+            } catch (e) {
+              print('❌ [USER PROFILE SERVICE] Unexpected error: $e');
+              // Try JWT fallback on unexpected errors too
+              try {
+                final token = await TokenStorage.getToken();
+                if (token != null && token.isNotEmpty) {
+                  final jwtUserId = JwtDecoder.getUserId(token);
+                  if (jwtUserId == userId) {
+                    final jwtUsername = JwtDecoder.getUserName(token);
+                    if (jwtUsername != null && jwtUsername.isNotEmpty) {
+                      print('✅ [USER PROFILE SERVICE] Using JWT username fallback (unexpected error): $jwtUsername');
+                      return {'username': jwtUsername, 'picture_path': null};
+                    }
+                  }
+                }
+              } catch (jwtError) {
+                print('❌ [USER PROFILE SERVICE] Error getting username from JWT: $jwtError');
+              }
+              return {'username': null, 'picture_path': null};
+            }
   }
 
   /// Fetches profiles for multiple user IDs in parallel

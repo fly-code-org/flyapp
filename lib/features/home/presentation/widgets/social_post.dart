@@ -51,13 +51,13 @@ class _SocialPostState extends State<SocialPost> {
 
     // Initialize local comment count from widget.post.comments
     _commentCount = widget.post.comments;
-
+    
     // Check if current user has already liked this post
     isLiked = _checkIfUserLikedPost();
 
     // Check if current user has already bookmarked this post
     isBookmarked = _checkIfUserBookmarkedPost();
-
+    
     // Get PostController
     if (Get.isRegistered<PostController>()) {
       _postController = Get.find<PostController>();
@@ -73,12 +73,12 @@ class _SocialPostState extends State<SocialPost> {
       _userProfileController = sl<UserProfileController>();
       Get.put(_userProfileController, permanent: true);
     }
-
+    
     // Only create PageController if there are multiple images
     if (widget.post.mediaUrls != null && widget.post.mediaUrls!.length > 1) {
       _pageController = PageController();
     }
-
+    
     if (widget.post.isVideo && !kIsWeb && widget.post.mediaUrl != null) {
       _videoController =
           VideoPlayerController.networkUrl(
@@ -87,19 +87,19 @@ class _SocialPostState extends State<SocialPost> {
             )
             ..initialize()
                 .then((_) {
-                  if (mounted) {
-                    setState(() {});
-                    _videoController?.setLooping(true);
-                    _videoController?.setVolume(0);
-                    _videoController?.play();
-                  }
+              if (mounted) {
+                setState(() {});
+                _videoController?.setLooping(true);
+                _videoController?.setVolume(0);
+                _videoController?.play();
+              }
                 })
                 .catchError((error) {
-                  print('❌ [SOCIAL POST] Error initializing video: $error');
-                  if (mounted) {
-                    setState(() {});
-                  }
-                });
+              print('❌ [SOCIAL POST] Error initializing video: $error');
+              if (mounted) {
+                setState(() {});
+              }
+            });
     }
   }
 
@@ -139,18 +139,18 @@ class _SocialPostState extends State<SocialPost> {
       if (token == null || token.isEmpty) {
         return false;
       }
-
+      
       final currentUserId = JwtDecoder.getUserId(token);
       if (currentUserId == null || currentUserId.isEmpty) {
         return false;
       }
-
+      
       // Check if current user ID is in the likedBy list
       final likedBy = widget.post.likedBy;
       if (likedBy == null || likedBy.isEmpty) {
         return false;
       }
-
+      
       return likedBy.contains(currentUserId);
     } catch (e) {
       print('⚠️ [SOCIAL POST] Error checking if user liked post: $e');
@@ -201,7 +201,7 @@ class _SocialPostState extends State<SocialPost> {
 
     // Store the current like state
     final wasLiked = isLiked;
-
+    
     // Get current user ID
     String? currentUserId;
     try {
@@ -214,7 +214,7 @@ class _SocialPostState extends State<SocialPost> {
       _isLiking = false;
       return;
     }
-
+    
     if (currentUserId == null || currentUserId.isEmpty) {
       print(
         '⚠️ [SOCIAL POST] Current user ID not available, cannot like/unlike',
@@ -222,7 +222,7 @@ class _SocialPostState extends State<SocialPost> {
       _isLiking = false;
       return;
     }
-
+    
     // Prevent duplicate likes - if trying to like and already in likedBy list, prevent it
     final likedBy = widget.post.likedBy ?? [];
     if (!wasLiked && likedBy.contains(currentUserId)) {
@@ -238,7 +238,7 @@ class _SocialPostState extends State<SocialPost> {
       }
       return;
     }
-
+    
     // Prevent unliking if user hasn't liked it
     if (wasLiked && !likedBy.contains(currentUserId)) {
       print('⚠️ [SOCIAL POST] User has not liked this post, preventing unlike');
@@ -433,17 +433,17 @@ class _SocialPostState extends State<SocialPost> {
 
   Widget _buildProfilePicture() {
     final profileUrl = widget.post.profileUrl;
-
+    
     // Check if this is a local asset path
     final isLocalAsset = ProfilePictureHelper.isLocalAsset(profileUrl);
-
+    
     Widget profileWidget;
-
+    
     if (isLocalAsset) {
       // Handle local asset profile pictures (e.g., /assets/profile_2.svg)
       final assetPath = ProfilePictureHelper.getAssetPath(profileUrl);
       final isSvg = assetPath.toLowerCase().endsWith('.svg');
-
+      
       if (isSvg) {
         profileWidget = SvgPicture.asset(
           assetPath,
@@ -492,7 +492,7 @@ class _SocialPostState extends State<SocialPost> {
     } else {
       // Handle network/CDN profile pictures
       final isSvg = profileUrl.toLowerCase().endsWith('.svg');
-
+      
       if (isSvg) {
         // Handle SVG profile pictures (from CDN) with error handling
         // Use errorBuilder to catch SVG parsing errors (async errors won't be caught by try-catch)
@@ -555,7 +555,7 @@ class _SocialPostState extends State<SocialPost> {
         );
       }
     }
-
+    
     if (widget.isSocialTab) {
       return ClipOval(child: profileWidget);
     } else {
@@ -565,13 +565,13 @@ class _SocialPostState extends State<SocialPost> {
       );
     }
   }
-
+  
   Widget _buildTagIcon(String iconPath) {
     // Tag icons are asset paths, use SafeSvgIcon for robust error handling
     if (iconPath.isEmpty) {
       return const SizedBox.shrink();
     }
-
+    
     // Use SafeSvgIcon which handles SVG parsing errors gracefully
     return SafeSvgIcon(
       assetPath: iconPath,
@@ -615,7 +615,7 @@ class _SocialPostState extends State<SocialPost> {
         ),
       );
     }
-
+    
     // Multiple images - use PageView
     return Column(
       children: [
@@ -699,127 +699,127 @@ class _SocialPostState extends State<SocialPost> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile Row
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  _buildProfilePicture(),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.post.username,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          widget.post.timestamp,
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Display tag icon if available (with safe async loading)
-                  if (widget.post.tagIconUrl.isNotEmpty)
-                    SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: _buildTagIcon(widget.post.tagIconUrl),
-                    ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.more_horiz),
-                ],
-              ),
-            ),
-
-            // Post Text
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: LayoutBuilder(
-                builder: (context, size) {
-                  final textSpan = TextSpan(
-                    text: widget.post.text,
-                    style: const TextStyle(color: Colors.black, fontSize: 14),
-                  );
-                  final textPainter = TextPainter(
-                    text: textSpan,
-                    maxLines: isTextExpanded ? null : 2,
-                    textDirection: TextDirection.ltr,
-                  )..layout(maxWidth: size.maxWidth);
-                  final isOverflow = textPainter.didExceedMaxLines;
-
-                  return Column(
+          // Profile Row
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                _buildProfilePicture(),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.post.text,
-                        maxLines: isTextExpanded ? null : 2,
-                        overflow: TextOverflow.ellipsis,
+                        widget.post.username,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
-                      if (isOverflow)
-                        GestureDetector(
-                          onTap: () =>
-                              setState(() => isTextExpanded = !isTextExpanded),
-                          child: Text(
-                            isTextExpanded ? "See less" : "See more",
-                            style: const TextStyle(
-                              color: Colors.blue,
-                              fontWeight: FontWeight.w600,
-                            ),
+                      Text(
+                        widget.post.timestamp,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Display tag icon if available (with safe async loading)
+                if (widget.post.tagIconUrl.isNotEmpty)
+                  SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: _buildTagIcon(widget.post.tagIconUrl),
+                  ),
+                const SizedBox(width: 8),
+                const Icon(Icons.more_horiz),
+              ],
+            ),
+          ),
+
+          // Post Text
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: LayoutBuilder(
+              builder: (context, size) {
+                final textSpan = TextSpan(
+                  text: widget.post.text,
+                  style: const TextStyle(color: Colors.black, fontSize: 14),
+                );
+                final textPainter = TextPainter(
+                  text: textSpan,
+                  maxLines: isTextExpanded ? null : 2,
+                  textDirection: TextDirection.ltr,
+                )..layout(maxWidth: size.maxWidth);
+                final isOverflow = textPainter.didExceedMaxLines;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.post.text,
+                      maxLines: isTextExpanded ? null : 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (isOverflow)
+                      GestureDetector(
+                        onTap: () =>
+                            setState(() => isTextExpanded = !isTextExpanded),
+                        child: Text(
+                          isTextExpanded ? "See less" : "See more",
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                    ],
-                  );
-                },
-              ),
-            ),
-
-            // Media
-            if (widget.post.isVideo && _videoController != null)
-              _videoController!.value.isInitialized
-                  ? GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          if (_videoController!.value.volume == 0) {
-                            _videoController!.setVolume(1);
-                          } else {
-                            _videoController!.setVolume(0);
-                          }
-                        });
-                      },
-                      child: AspectRatio(
-                        aspectRatio: _videoController!.value.aspectRatio,
-                        child: VideoPlayer(_videoController!),
                       ),
-                    )
-                  : Container(
-                      height: 200,
-                      color: Colors.black12,
-                      child: const Center(child: CircularProgressIndicator()),
-                    )
-            else if (widget.post.mediaUrls != null &&
-                widget.post.mediaUrls!.isNotEmpty)
-              _buildImageCarousel(widget.post.mediaUrls!)
-            else
-              const SizedBox.shrink(),
+                  ],
+                );
+              },
+            ),
+          ),
 
-            // Action Row
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: _isLiking ? null : _handleLikeToggle,
-                    child: Row(
-                      children: [
+          // Media
+          if (widget.post.isVideo && _videoController != null)
+            _videoController!.value.isInitialized
+                ? GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (_videoController!.value.volume == 0) {
+                          _videoController!.setVolume(1);
+                        } else {
+                          _videoController!.setVolume(0);
+                        }
+                      });
+                    },
+                    child: AspectRatio(
+                      aspectRatio: _videoController!.value.aspectRatio,
+                      child: VideoPlayer(_videoController!),
+                    ),
+                  )
+                : Container(
+                    height: 200,
+                    color: Colors.black12,
+                    child: const Center(child: CircularProgressIndicator()),
+                  )
+          else if (widget.post.mediaUrls != null &&
+              widget.post.mediaUrls!.isNotEmpty)
+            _buildImageCarousel(widget.post.mediaUrls!)
+          else
+            const SizedBox.shrink(),
+
+          // Action Row
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: _isLiking ? null : _handleLikeToggle,
+                  child: Row(
+                    children: [
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 200),
                           transitionBuilder: (child, animation) {
@@ -829,18 +829,18 @@ class _SocialPostState extends State<SocialPost> {
                             );
                           },
                           child: Icon(
-                            Icons.favorite,
+                        Icons.favorite,
                             key: ValueKey(isLiked),
-                            color: isLiked ? Colors.red : Colors.grey,
+                        color: isLiked ? Colors.red : Colors.grey,
                             size: 24,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text("${widget.post.likes}"),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text("${widget.post.likes}"),
+                    ],
                   ),
-                  const SizedBox(width: 16),
+                ),
+                const SizedBox(width: 16),
                   GestureDetector(
                     onTap: () {
                       showModalBottomSheet(
@@ -854,25 +854,25 @@ class _SocialPostState extends State<SocialPost> {
                       );
                     },
                     child: Row(
-                      children: [
-                        const Icon(Icons.comment_outlined, color: Colors.grey),
-                        const SizedBox(width: 4),
+                  children: [
+                    const Icon(Icons.comment_outlined, color: Colors.grey),
+                    const SizedBox(width: 4),
                         Text("$_commentCount"),
-                      ],
+                  ],
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Icon(Icons.share_outlined, color: Colors.grey),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      const Icon(Icons.remove_red_eye, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text("${widget.post.views}"),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  GestureDetector(
+                ),
+                const SizedBox(width: 16),
+                const Icon(Icons.share_outlined, color: Colors.grey),
+                const Spacer(),
+                Row(
+                  children: [
+                    const Icon(Icons.remove_red_eye, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text("${widget.post.views}"),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                GestureDetector(
                     onTap: _isBookmarking ? null : _handleBookmarkToggle,
                     child: Row(
                       children: [
@@ -884,10 +884,10 @@ class _SocialPostState extends State<SocialPost> {
                               child: child,
                             );
                           },
-                          child: Icon(
-                            isBookmarked
-                                ? Icons.bookmark
-                                : Icons.bookmark_border_outlined,
+                  child: Icon(
+                    isBookmarked
+                        ? Icons.bookmark
+                        : Icons.bookmark_border_outlined,
                             key: ValueKey(isBookmarked),
                             color: isBookmarked
                                 ? Colors.grey[800]
@@ -898,12 +898,12 @@ class _SocialPostState extends State<SocialPost> {
                         const SizedBox(width: 4),
                         Text("${widget.post.bookmarks}"),
                       ],
-                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
+        ],
         ),
       ),
     );

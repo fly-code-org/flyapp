@@ -101,9 +101,16 @@ class _HomeScreenState extends State<HomeScreen> {
         // Extract unique author IDs from posts
         final authorIds = apiPosts.map((post) => post.authorId).toSet().toList();
         
+        print('🔍 [HOME] Extracted ${authorIds.length} unique author IDs from posts:');
+        for (var authorId in authorIds) {
+          print('   - Author ID: $authorId (length: ${authorId.length})');
+        }
+        
         // Fetch user profiles for all authors
         final userProfileService = UserProfileService();
         final authorProfiles = await userProfileService.getUserProfiles(authorIds);
+        
+        print('📦 [HOME] Received ${authorProfiles.length} profiles from service');
         
         // Build maps of authorProfileUrls and authorUsernames
         final authorProfileUrls = <String, String>{};
@@ -113,15 +120,51 @@ class _HomeScreenState extends State<HomeScreen> {
           final userId = entry.key;
           final profile = entry.value;
           
-          final username = profile['username'];
-          final picturePath = profile['picture_path'];
+          print('🔍 [HOME] Processing profile entry - userId: $userId, profile keys: ${profile.keys.toList()}');
           
-          if (username != null && username.isNotEmpty) {
-            authorUsernames[userId] = username;
+          // Extract username - handle both String and dynamic types
+          final usernameValue = profile['username'];
+          String? username;
+          if (usernameValue != null) {
+            if (usernameValue is String) {
+              username = usernameValue.trim();
+            } else {
+              final usernameStr = usernameValue.toString().trim();
+              username = usernameStr.isNotEmpty ? usernameStr : null;
+            }
           }
           
-          if (picturePath != null && picturePath.isNotEmpty) {
-            authorProfileUrls[userId] = picturePath;
+          final picturePath = profile['picture_path'];
+          
+          // Debug logging
+          print('🔍 [HOME] Processing profile for userId: $userId');
+          print('   - Raw username value: $usernameValue (type: ${usernameValue.runtimeType})');
+          print('   - Processed username: "$username"');
+          print('   - Picture path: $picturePath');
+          
+          // Only add username if it's not null and not empty after trimming
+          if (username != null && username.isNotEmpty) {
+            authorUsernames[userId] = username;
+            print('✅ [HOME] Added username "$username" for userId: $userId');
+          } else {
+            print('⚠️ [HOME] Username is null or empty for userId: $userId');
+            print('⚠️ [HOME] Full profile data: $profile');
+          }
+          
+          if (picturePath != null && picturePath.toString().isNotEmpty) {
+            authorProfileUrls[userId] = picturePath.toString();
+          }
+        }
+        
+        print('📝 [HOME] Final authorUsernames map (${authorUsernames.length} entries): $authorUsernames');
+        print('📝 [HOME] Final authorProfileUrls map (${authorProfileUrls.length} entries): $authorProfileUrls');
+        
+        // Verify that we have usernames for all author IDs
+        for (var authorId in authorIds) {
+          if (!authorUsernames.containsKey(authorId)) {
+            print('❌ [HOME] WARNING: No username found for authorId: $authorId');
+          } else {
+            print('✅ [HOME] Username found for authorId $authorId: ${authorUsernames[authorId]}');
           }
         }
         
