@@ -1,10 +1,12 @@
 // presentation/views/create_post_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/services/s3_upload_service.dart';
+import '../../../../features/interests/data/models/tag_icon_mapping.dart';
 import '../../domain/entities/post.dart';
 import '../controllers/post_controller.dart';
 import '../widgets/tag_selection_bottom_sheet.dart';
@@ -298,57 +300,119 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           children: [
             // Tag Selection (Required) - Wrap in RepaintBoundary to prevent unnecessary repaints
             RepaintBoundary(
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Select Tag *',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
+              child: Row(
+                children: [
+                  // "Share to" label in grey
+                  const Text(
+                    'Share to',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: _showTagSelectionBottomSheet,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade400),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _selectedTagName ?? 'Tap to select a tag',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _selectedTagName != null
-                                      ? Colors.black
-                                      : Colors.grey,
-                                ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Tag selector - width fits content only
+                  InkWell(
+                    onTap: _showTagSelectionBottomSheet,
+                    child: _selectedTagName == null
+                        ? // Unselected state: Curved rectangular box with grey background and gradient purple border
+                        Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF8A56AC),
+                                  Color(0xFF6A3BA0),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.all(1.5), // Border width
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(10.5),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // PNG icon
+                                  Image.asset(
+                                    'assets/images/select_tag.png',
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // Light purple text "[add a tag]"
+                                  const Text(
+                                    '[add a tag]',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Color(0xFFC4A8F5), // Light purple
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const Icon(
-                              Icons.arrow_drop_down,
-                              color: Colors.grey,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                          )
+                        : // Selected state: Pill shape container with grey background
+                        Builder(
+                            builder: (context) {
+                              // Get tag icon path from selected tag name
+                              final tagIconPath = TagIconMapping.getTagIconPath(_selectedTagName!);
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade200,
+                                  borderRadius: BorderRadius.circular(50), // Pill shape
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Selected tag icon on left
+                                    if (tagIconPath.isNotEmpty)
+                                      SvgPicture.asset(
+                                        tagIconPath,
+                                        width: 20,
+                                        height: 20,
+                                        colorFilter: const ColorFilter.mode(
+                                          Color(0xFF855DFC),
+                                          BlendMode.srcIn,
+                                        ),
+                                      )
+                                    else
+                                      const Icon(
+                                        Icons.local_offer,
+                                        color: Color(0xFF855DFC),
+                                        size: 20,
+                                      ),
+                                    const SizedBox(width: 8),
+                                    // Selected tag text
+                                    Text(
+                                      _selectedTagName!,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
               ),
             ),
 
