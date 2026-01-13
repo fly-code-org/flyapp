@@ -7,6 +7,7 @@ import '../../domain/entities/create_comment_request.dart';
 import '../../domain/usecases/get_comments_by_post_id.dart';
 import '../../domain/usecases/get_replies_by_comment_id.dart';
 import '../../domain/usecases/create_comment.dart';
+import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 
 class CommentController extends GetxController {
   final GetCommentsByPostId getCommentsByPostId;
@@ -119,6 +120,9 @@ class CommentController extends GetxController {
       // Refresh comments for this post
       await fetchCommentsByPostId(postId, forceRefresh: true);
 
+      // Update streak (non-blocking, fire-and-forget)
+      _updateStreakSilently();
+
       return true;
     } on ServerException catch (e) {
       print('❌ [COMMENT] ServerException: ${e.message}');
@@ -153,5 +157,30 @@ class CommentController extends GetxController {
   // Get replies for a comment
   List<Comment> getRepliesForComment(String commentId) {
     return comments.where((c) => c.parentCommentId == commentId).toList();
+  }
+
+  // Helper method to update streak silently (non-blocking)
+  void _updateStreakSilently() {
+    try {
+      // Get UserProfileController from service locator or GetX
+      UserProfileController? profileController;
+      if (Get.isRegistered<UserProfileController>()) {
+        profileController = Get.find<UserProfileController>();
+      } else {
+        profileController = sl<UserProfileController>();
+        Get.put(profileController, permanent: true);
+      }
+
+      // Call updateStreak in a fire-and-forget manner
+      profileController.updateStreak().catchError((e) {
+        // Silently fail - don't block user activities if streak update fails
+        print(
+          '⚠️ [COMMENT CONTROLLER] Streak update failed (non-blocking): $e',
+        );
+      });
+    } catch (e) {
+      // Silently fail if we can't get the controller
+      print('⚠️ [COMMENT CONTROLLER] Could not update streak: $e');
+    }
   }
 }

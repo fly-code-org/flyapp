@@ -9,6 +9,7 @@ abstract class UserProfileRemoteDataSource {
     required Map<String, dynamic> profileData,
   });
   Future<Map<String, dynamic>> getUserProfile();
+  Future<void> updateStreak();
 }
 
 class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
@@ -161,6 +162,72 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
         final responseData = e.response!.data;
 
         String errorMessage = 'An error occurred';
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('msg')) {
+            if (responseData['msg'] is Map) {
+              final msgMap = responseData['msg'] as Map<String, dynamic>;
+              if (msgMap.containsKey('err: ')) {
+                errorMessage = msgMap['err: '] as String;
+              } else if (msgMap.containsKey('err')) {
+                errorMessage = msgMap['err'] as String;
+              }
+            } else if (responseData['msg'] is String) {
+              errorMessage = responseData['msg'] as String;
+            }
+          }
+        }
+
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> updateStreak() async {
+    try {
+      print('🔥 [STREAK] Updating user streak...');
+
+      final response = await client.patch(
+        '/users/external/v1/streaks',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      print('📦 [STREAK] Response Status: ${response.statusCode}');
+      print('📦 [STREAK] Response Data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        print('✅ [STREAK] Streak updated successfully');
+        return;
+      } else {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      print('❌ [STREAK] DioException: ${e.type}');
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw NetworkException(
+          'Connection timeout. Please check your internet connection.',
+        );
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException(
+          'No internet connection. Please check your network.',
+        );
+      } else if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+
+        String errorMessage = 'Failed to update streak';
         if (responseData is Map<String, dynamic>) {
           if (responseData.containsKey('msg')) {
             if (responseData['msg'] is Map) {

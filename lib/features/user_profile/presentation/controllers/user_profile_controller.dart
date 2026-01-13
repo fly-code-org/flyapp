@@ -8,6 +8,7 @@ import '../../../../core/storage/token_storage.dart';
 import '../../../profile_creation/domain/usecases/get_user_profile.dart';
 import '../../data/utils/default_profile_picture.dart';
 import '../../data/services/profile_update_service.dart';
+import '../../../profile_creation/data/datasources/user_profile_remote_data_source.dart';
 
 class UserProfileController extends GetxController {
   final GetUserProfile getUserProfile;
@@ -281,6 +282,23 @@ class UserProfileController extends GetxController {
     print('   - Streaks: ${streakCount.value}');
     print('   - Activities: ${activities.length}');
     print('   - Bookmarks: ${bookmarkedPosts.length}');
+  }
+
+  /// Update user streak (non-blocking, fire-and-forget)
+  /// Called automatically when user performs activities (like, comment, bookmark, create post)
+  Future<void> updateStreak() async {
+    try {
+      print('🔥 [STREAK] Updating user streak...');
+      // Get the remote data source from service locator
+      final remoteDataSource = sl<UserProfileRemoteDataSource>();
+      await remoteDataSource.updateStreak();
+      print('✅ [STREAK] Streak updated successfully');
+      // Refresh profile to get updated streak count
+      await fetchUserProfile(forceRefresh: true);
+    } catch (e) {
+      // Silently fail - don't block user activities if streak update fails
+      print('⚠️ [STREAK] Failed to update streak (non-blocking): $e');
+    }
   }
 
   // Save profile picture to backend (placeholder for when endpoint is available)

@@ -69,7 +69,11 @@ class BottomNavBar extends StatelessWidget {
           label: "Explore",
         ),
         BottomNavigationBarItem(
-          icon: Image.asset("assets/images/nira_icon.png"),
+          icon: SizedBox(
+            width: 24,
+            height: 24,
+            child: Image.asset("assets/images/nira_icon.png"),
+          ),
           label: "Nira",
         ),
         const BottomNavigationBarItem(

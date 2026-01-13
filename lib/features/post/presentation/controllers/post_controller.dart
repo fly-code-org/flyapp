@@ -14,6 +14,7 @@ import '../../domain/usecases/like_post.dart';
 import '../../domain/usecases/unlike_post.dart';
 import '../../domain/usecases/bookmark_post.dart';
 import '../../domain/usecases/unbookmark_post.dart';
+import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 
 class PostController extends GetxController {
   final CreatePost createPost;
@@ -82,6 +83,10 @@ class PostController extends GetxController {
 
       print('✅ [POST] Post created successfully');
       isLoading.value = false;
+      
+      // Update streak (non-blocking, fire-and-forget)
+      _updateStreakSilently();
+      
       return true;
     } on ServerException catch (e) {
       print('❌ [POST] ServerException: ${e.message}');
@@ -308,6 +313,10 @@ class PostController extends GetxController {
       await likePost.call(postId);
       
       print('✅ [POST CONTROLLER] Post liked successfully');
+      
+      // Update streak (non-blocking, fire-and-forget)
+      _updateStreakSilently();
+      
       return true;
     } on ServerException catch (e) {
       print('❌ [POST CONTROLLER] ServerException: ${e.message}');
@@ -362,6 +371,10 @@ class PostController extends GetxController {
       await bookmarkPost.call(postId);
 
       print('✅ [POST CONTROLLER] Post bookmarked successfully');
+      
+      // Update streak (non-blocking, fire-and-forget)
+      _updateStreakSilently();
+      
       return true;
     } on ServerException catch (e) {
       print('❌ [POST CONTROLLER] ServerException: ${e.message}');
@@ -410,6 +423,29 @@ class PostController extends GetxController {
   // Clear error
   void clearError() {
     errorMessage.value = '';
+  }
+
+  // Helper method to update streak silently (non-blocking)
+  void _updateStreakSilently() {
+    try {
+      // Get UserProfileController from service locator or GetX
+      UserProfileController? profileController;
+      if (Get.isRegistered<UserProfileController>()) {
+        profileController = Get.find<UserProfileController>();
+      } else {
+        profileController = sl<UserProfileController>();
+        Get.put(profileController, permanent: true);
+      }
+      
+      // Call updateStreak in a fire-and-forget manner
+      profileController.updateStreak().catchError((e) {
+        // Silently fail - don't block user activities if streak update fails
+        print('⚠️ [POST CONTROLLER] Streak update failed (non-blocking): $e');
+      });
+    } catch (e) {
+      // Silently fail if we can't get the controller
+      print('⚠️ [POST CONTROLLER] Could not update streak: $e');
+    }
   }
 }
 

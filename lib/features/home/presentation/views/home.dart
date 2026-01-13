@@ -11,6 +11,7 @@ import 'package:fly/features/post/presentation/utils/post_converter.dart';
 import 'package:fly/features/post/presentation/services/user_profile_service.dart';
 import 'package:fly/features/home/presentation/widgets/social_feed.dart';
 import 'package:fly/features/home/model/post_model.dart';
+import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,10 +21,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final int streakCount = 2;
   final int _currentIndex = 0;
   int activeTabIndex = 0;
   late final PostController _postController;
+  late final UserProfileController _profileController;
 
   // Keep posts in state so we can add new ones
   List<Post> posts = [];
@@ -39,6 +40,17 @@ class _HomeScreenState extends State<HomeScreen> {
       Get.put(_postController);
     }
 
+    // Get or create UserProfileController
+    if (Get.isRegistered<UserProfileController>()) {
+      _profileController = Get.find<UserProfileController>();
+    } else {
+      _profileController = sl<UserProfileController>();
+      Get.put(_profileController, permanent: true);
+    }
+
+    // Fetch user profile to get streak count
+    _profileController.fetchUserProfile(forceRefresh: false);
+
     // Fetch posts when screen initializes (defer to prevent blocking during navigation)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Use scheduleMicrotask to defer execution but not wait too long
@@ -50,8 +62,28 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh posts when screen becomes visible again (e.g., navigating back from explore)
+    // This ensures posts are fetched even if the widget was reused
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && posts.isEmpty && !_postController.isLoading.value) {
+        // Only refresh if we don't have posts and we're not already loading
+        Future.microtask(() {
+          if (mounted) {
+            _refreshPosts();
+          }
+        });
+      }
+    });
+  }
+
   Future<void> _refreshPosts() async {
     if (!mounted) return;
+
+    // Clear any previous error message before retrying
+    _postController.clearError();
 
     try {
       // For now, fetch my posts. In the future, this should fetch posts
@@ -169,13 +201,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(30),
                           ),
-                          child: Text(
-                            "🪽$streakCount Streaks",
+                          child: Obx(() => Text(
+                            "🪽${_profileController.streakCount.value} Streaks",
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
-                          ),
+                          )),
                         ),
                       ),
                       SvgPicture.asset(
@@ -268,17 +300,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: Colors.red,
                                 ),
                                 const SizedBox(height: 16),
-                                Text(
-                                  errorMessage,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.red[600],
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                                  child: Text(
+                                    errorMessage,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.red[600],
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
-                                  textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 16),
                                 ElevatedButton(
-                                  onPressed: _refreshPosts,
+                                  onPressed: () {
+                                    // Clear error and retry
+                                    _postController.clearError();
+                                    _refreshPosts();
+                                  },
                                   child: const Text('Retry'),
                                 ),
                               ],
