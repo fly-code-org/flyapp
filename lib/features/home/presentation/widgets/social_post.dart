@@ -369,7 +369,7 @@ class _SocialPostState extends State<SocialPost> {
       return;
     }
 
-    // Optimistic UI update
+    // Optimistic UI update - update bookmark state (icon only, count will update from server)
     if (mounted) {
       setState(() {
         isBookmarked = !isBookmarked;

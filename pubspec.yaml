@@ -55,6 +55,7 @@ dependencies:
   image: ^4.3.0  # For image resizing and processing
   flutter_svg: ^2.2.0
   video_player: ^2.6.1
+  uuid: ^4.5.1  # For generating UUIDs for poll options
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

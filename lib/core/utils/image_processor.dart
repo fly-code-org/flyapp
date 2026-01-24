@@ -158,6 +158,7 @@ class ImageProcessor {
         'pool_jd',
         'applicant_invoice',
         'post_image', // For social media post images
+        'post_video', // For social media post videos
       ];
 
       if (validTypes.contains(customFileType)) {
@@ -173,7 +174,7 @@ class ImageProcessor {
       'File type must be specified for non-profile pictures. '
       'Available types: company_logo, video_thumbnail, additional_images, ml_file, '
       'ml_jd, invoice, blog_media, masked_cv, smarthire_audio_file, cv_analysis, '
-      'degree, custom_jd, pool_jd, applicant_invoice, post_image',
+      'degree, custom_jd, pool_jd, applicant_invoice, post_image, post_video',
     );
   }
 }
