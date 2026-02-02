@@ -13,6 +13,7 @@ import 'package:fly/core/utils/jwt_decoder.dart';
 import 'package:fly/core/network/api_client.dart';
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
 import 'package:fly/features/post/presentation/widgets/comment_bottom_sheet.dart';
+import 'package:fly/core/services/share_service.dart';
 
 class SocialPost extends StatefulWidget {
   final Post post;
@@ -41,6 +42,7 @@ class _SocialPostState extends State<SocialPost> {
   int _currentPage = 0;
   bool _isLiking = false;
   bool _isBookmarking = false;
+  bool _isSharing = false;
   late PostController _postController;
   UserProfileController? _userProfileController;
   late int _commentCount; // Local comment count for optimistic updates
@@ -428,6 +430,74 @@ class _SocialPostState extends State<SocialPost> {
       }
     } finally {
       _isBookmarking = false;
+    }
+  }
+
+  Future<void> _handleShareWithContext(BuildContext shareIconContext) async {
+    // Prevent multiple simultaneous share operations
+    if (_isSharing) {
+      print('⚠️ [SOCIAL POST] Share operation already in progress, ignoring click');
+      return;
+    }
+
+    // Set flag immediately to prevent multiple clicks
+    _isSharing = true;
+
+    try {
+      print('📤 [SOCIAL POST] Attempting to share post: ${widget.post.id}');
+      
+      // Call share service to open native share dialog
+      // Pass context for iPad share position (use shareIconContext for accurate positioning)
+      final shareSuccess = await ShareService.sharePost(
+        postId: widget.post.id,
+        postText: widget.post.text,
+        username: widget.post.username,
+        context: shareIconContext,
+      );
+
+      if (shareSuccess) {
+        print('✅ [SOCIAL POST] Share dialog opened successfully');
+        
+        // Track share count on backend (fire and forget - don't block UI)
+        // Note: We don't wait for this to complete, as the user has already shared
+        _postController.sharePostEntry(widget.post.id).catchError((e) {
+          print('⚠️ [SOCIAL POST] Failed to track share count: $e');
+          // Don't show error to user - share was successful, just tracking failed
+          return false;
+        });
+        
+        // Refresh posts to get updated share count (non-blocking)
+        if (widget.onRefreshNeeded != null) {
+          // Delay refresh slightly to allow backend to update
+          Future.delayed(const Duration(milliseconds: 500), () {
+            widget.onRefreshNeeded!();
+          });
+        }
+      } else {
+        print('❌ [SOCIAL POST] Share dialog failed to open');
+        // Optionally show error message to user
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to open share dialog'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e, stackTrace) {
+      print('❌ [SOCIAL POST] Error sharing post: $e');
+      print('📚 [SOCIAL POST] Stack trace: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to share post'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      _isSharing = false;
     }
   }
 
@@ -862,7 +932,22 @@ class _SocialPostState extends State<SocialPost> {
                     ),
                 ),
                 const SizedBox(width: 16),
-                const Icon(Icons.share_outlined, color: Colors.grey),
+                Builder(
+                  builder: (shareIconContext) => GestureDetector(
+                    onTap: _isSharing ? null : () => _handleShareWithContext(shareIconContext),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.share_outlined,
+                          color: _isSharing ? Colors.grey[400] : Colors.grey,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 4),
+                        Text("${widget.post.shares}"),
+                      ],
+                    ),
+                  ),
+                ),
                 const Spacer(),
                 Row(
                   children: [

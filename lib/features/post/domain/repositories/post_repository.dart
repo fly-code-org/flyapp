@@ -14,6 +14,7 @@ abstract class PostRepository {
   Future<void> unlikePost(String postId);
   Future<void> bookmarkPost(String postId);
   Future<void> unbookmarkPost(String postId);
+  Future<void> sharePost(String postId);
 }
 
 

@@ -14,6 +14,7 @@ import '../../domain/usecases/like_post.dart';
 import '../../domain/usecases/unlike_post.dart';
 import '../../domain/usecases/bookmark_post.dart';
 import '../../domain/usecases/unbookmark_post.dart';
+import '../../domain/usecases/share_post.dart';
 import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 
 class PostController extends GetxController {
@@ -27,6 +28,7 @@ class PostController extends GetxController {
   final UnlikePost unlikePost;
   final BookmarkPost bookmarkPost;
   final UnbookmarkPost unbookmarkPost;
+  final SharePost sharePost;
 
   PostController({
     CreatePost? createPost,
@@ -39,6 +41,7 @@ class PostController extends GetxController {
     UnlikePost? unlikePost,
     BookmarkPost? bookmarkPost,
     UnbookmarkPost? unbookmarkPost,
+    SharePost? sharePost,
   })  : createPost = createPost ?? sl<CreatePost>(),
         getPostsByAuthor = getPostsByAuthor ?? sl<GetPostsByAuthor>(),
         getPostsByCommunity = getPostsByCommunity ?? sl<GetPostsByCommunity>(),
@@ -48,7 +51,8 @@ class PostController extends GetxController {
         likePost = likePost ?? sl<LikePost>(),
         unlikePost = unlikePost ?? sl<UnlikePost>(),
         bookmarkPost = bookmarkPost ?? sl<BookmarkPost>(),
-        unbookmarkPost = unbookmarkPost ?? sl<UnbookmarkPost>();
+        unbookmarkPost = unbookmarkPost ?? sl<UnbookmarkPost>(),
+        sharePost = sharePost ?? sl<SharePost>();
 
   // State
   var isLoading = false.obs;
@@ -416,6 +420,33 @@ class PostController extends GetxController {
       print('❌ [POST CONTROLLER] Unexpected error: $e');
       print('❌ [POST CONTROLLER] Stack trace: $stackTrace');
       errorMessage.value = 'Failed to unbookmark post: ${e.toString()}';
+      return false;
+    }
+  }
+
+  // Share post
+  Future<bool> sharePostEntry(String postId) async {
+    try {
+      print('📤 [POST CONTROLLER] Sharing post...');
+      print('   - Post ID: $postId');
+
+      await sharePost.call(postId);
+
+      print('✅ [POST CONTROLLER] Post shared successfully');
+      return true;
+    } on ServerException catch (e) {
+      print('❌ [POST CONTROLLER] ServerException: ${e.message}');
+      print('❌ [POST CONTROLLER] Status code: ${e.statusCode}');
+      errorMessage.value = e.message;
+      return false;
+    } on NetworkException catch (e) {
+      print('❌ [POST CONTROLLER] NetworkException: ${e.message}');
+      errorMessage.value = e.message;
+      return false;
+    } catch (e, stackTrace) {
+      print('❌ [POST CONTROLLER] Unexpected error: $e');
+      print('❌ [POST CONTROLLER] Stack trace: $stackTrace');
+      errorMessage.value = 'Failed to share post: ${e.toString()}';
       return false;
     }
   }

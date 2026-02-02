@@ -17,6 +17,7 @@ abstract class PostRemoteDataSource {
   Future<void> unlikePost(String postId);
   Future<void> bookmarkPost(String postId);
   Future<void> unbookmarkPost(String postId);
+  Future<void> sharePost(String postId);
 }
 
 class PostRemoteDataSourceImpl implements PostRemoteDataSource {
@@ -727,6 +728,55 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
         final statusCode = e.response!.statusCode;
         final responseData = e.response!.data;
         String errorMessage = 'Failed to unbookmark post';
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('msg')) {
+            final msg = responseData['msg'];
+            if (msg is Map && msg.containsKey('err: ')) {
+              errorMessage = msg['err: '] as String;
+            } else if (msg is String) {
+              errorMessage = msg;
+            }
+          }
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> sharePost(String postId) async {
+    try {
+      print('📤 [POST API] Sharing post...');
+      print('   - Post ID: $postId');
+
+      final response = await client.post(
+        '/post/external/v1/$postId/share',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      print('📦 [POST API] Share Response Status: ${response.statusCode}');
+      print('📦 [POST API] Share Response Data: ${response.data}');
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+      print('✅ [POST API] Post shared successfully');
+    } on DioException catch (e) {
+      print('❌ [POST API] Share DioException: ${e.type}');
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        String errorMessage = 'Failed to share post';
         if (responseData is Map<String, dynamic>) {
           if (responseData.containsKey('msg')) {
             final msg = responseData['msg'];

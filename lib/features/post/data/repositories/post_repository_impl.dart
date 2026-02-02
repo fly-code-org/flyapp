@@ -86,6 +86,11 @@ class PostRepositoryImpl implements PostRepository {
   Future<void> unbookmarkPost(String postId) async {
     await remoteDataSource.unbookmarkPost(postId);
   }
+
+  @override
+  Future<void> sharePost(String postId) async {
+    await remoteDataSource.sharePost(postId);
+  }
 }
 
 

@@ -20,6 +20,7 @@ class Post {
   final int comments;
   final int views;
   final int bookmarks;
+  final int shares;
 
   /// Optional poll options (if this post is a poll)
   final List<String>? pollOptions;
@@ -44,6 +45,7 @@ class Post {
     required this.comments,
     required this.views,
     required this.bookmarks,
+    this.shares = 0,
     this.pollOptions,
     this.likedBy,
     this.bookmarkedBy,
@@ -64,6 +66,7 @@ class Post {
     comments: m['comments'] as int? ?? 0,
     views: m['views'] as int? ?? 0,
     bookmarks: m['bookmarks'] as int? ?? 0,
+    shares: m['share_count'] as int? ?? m['shares'] as int? ?? 0,
     pollOptions: (m['pollOptions'] as List<dynamic>?)?.cast<String>(),
     likedBy: (m['likedBy'] as List<dynamic>?)?.cast<String>(),
     bookmarkedBy: (m['bookmarkedBy'] as List<dynamic>?)?.cast<String>(),
@@ -83,6 +86,7 @@ class Post {
     'comments': comments,
     'views': views,
     'bookmarks': bookmarks,
+    'shares': shares,
     'pollOptions': pollOptions,
     'likedBy': likedBy,
     'bookmarkedBy': bookmarkedBy,
@@ -103,6 +107,7 @@ class Post {
     int? comments,
     int? views,
     int? bookmarks,
+    int? shares,
     List<String>? pollOptions,
     List<String>? likedBy,
     List<String>? bookmarkedBy,
@@ -121,6 +126,7 @@ class Post {
       comments: comments ?? this.comments,
       views: views ?? this.views,
       bookmarks: bookmarks ?? this.bookmarks,
+      shares: shares ?? this.shares,
       pollOptions: pollOptions ?? this.pollOptions,
       likedBy: likedBy ?? this.likedBy,
       bookmarkedBy: bookmarkedBy ?? this.bookmarkedBy,

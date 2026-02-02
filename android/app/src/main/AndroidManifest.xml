@@ -33,6 +33,25 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="com.googleusercontent.apps.228834943626-qacs6kk86vdf78kmapmutabng538uvfa" />
             </intent-filter>
+
+            <!-- App Links (Universal Links for Android) - https://flyapp.in -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="flyapp.in"
+                    android:pathPrefix="/post" />
+            </intent-filter>
+
+            <!-- Custom URL scheme - flyapp:// -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="flyapp" android:host="post" />
+            </intent-filter>
         </activity>
 
         <!-- Firebase messaging notification icon -->

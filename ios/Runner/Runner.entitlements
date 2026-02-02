@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Associated Domains temporarily disabled for free Apple Developer account -->
+	<!-- Free accounts don't support Associated Domains capability -->
+	<!-- Re-enable when you have a paid Apple Developer account ($99/year) -->
+	<!--
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:flyapp.in</string>
+	</array>
+	-->
+</dict>
+</plist>
