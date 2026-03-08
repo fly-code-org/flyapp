@@ -16,5 +16,25 @@ class MhpProfileRepositoryImpl implements MhpProfileRepository {
     );
     return response;
   }
+
+  @override
+  Future<Map<String, dynamic>> getMhpProfile() async {
+    return remoteDataSource.getMhpProfile();
+  }
+
+  @override
+  Future<Map<String, dynamic>> getAboutMe() async {
+    return remoteDataSource.getAboutMe();
+  }
+
+  @override
+  Future<void> updateAboutMe(Map<String, dynamic> body) async {
+    return remoteDataSource.updateAboutMe(body);
+  }
+
+  @override
+  Future<void> updateConnect(Map<String, dynamic> body) async {
+    return remoteDataSource.updateConnect(body);
+  }
 }
 

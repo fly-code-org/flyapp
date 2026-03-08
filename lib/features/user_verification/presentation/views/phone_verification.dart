@@ -6,6 +6,7 @@ import 'package:fly/features/user_verification/presentation/widgets/gradient_but
 import 'package:fly/features/user_verification/presentation/widgets/gradient_text.dart';
 import 'package:fly/features/user_verification/presentation/widgets/not_recieved_otp.dart';
 import 'package:fly/features/user_verification/presentation/widgets/phone_number_input_field.dart';
+import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
 class PhoneVerification extends StatefulWidget {
@@ -65,7 +66,8 @@ class _PhoneVerificationState extends State<PhoneVerification> {
             'phone': phoneController.text.trim(),
           });
         } else {
-          Get.toNamed('/create-mhp-profile', arguments: {
+          // MHP: route to quiz intro (MHP flow)
+          Get.toNamed(AppRoutes.IntroScreen, arguments: {
             'role': role,
             'phone': phoneController.text.trim(),
           });
@@ -232,7 +234,8 @@ class _PhoneVerificationState extends State<PhoneVerification> {
                           if (role == 'user') {
                             Get.toNamed('/create-user-profile', arguments: {'role': role});
                           } else {
-                            Get.toNamed('/create-mhp-profile', arguments: {'role': role});
+                            // MHP: route to quiz intro (MHP flow)
+                            Get.toNamed(AppRoutes.IntroScreen, arguments: {'role': role});
                           }
                         },
                       ),

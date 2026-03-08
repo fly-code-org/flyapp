@@ -22,6 +22,10 @@ import '../../features/profile_creation/domain/repositories/mhp_profile_reposito
 import '../../features/profile_creation/domain/repositories/user_profile_repository.dart';
 import '../../features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import '../../features/profile_creation/domain/usecases/create_user_profile.dart';
+import '../../features/profile_creation/domain/usecases/get_about_me.dart';
+import '../../features/profile_creation/domain/usecases/get_mhp_profile.dart';
+import '../../features/profile_creation/domain/usecases/update_about_me.dart';
+import '../../features/profile_creation/domain/usecases/update_connect.dart';
 import '../../features/profile_creation/domain/usecases/get_user_profile.dart';
 import '../../features/user_profile/presentation/controllers/user_profile_controller.dart';
 import '../../features/journal/presentation/controllers/journal_controller.dart';
@@ -47,6 +51,10 @@ import '../../features/community/domain/repositories/community_repository.dart';
 import '../../features/community/domain/usecases/create_community.dart';
 import '../../features/community/domain/usecases/follow_community.dart';
 import '../../features/community/domain/usecases/get_communities_by_type.dart';
+import '../../features/community/domain/usecases/get_community_by_id.dart';
+import '../../features/community/domain/usecases/get_my_community.dart';
+import '../../features/community/domain/usecases/get_tags.dart';
+import '../../features/community/domain/usecases/update_community.dart';
 import '../../features/community/domain/usecases/unfollow_community.dart';
 import '../../features/journal/data/datasources/journal_remote_data_source.dart';
 import '../../features/journal/data/repositories/journal_repository_impl.dart';
@@ -131,6 +139,10 @@ Future<void> init() async {
   //! Features - Profile Creation (MHP)
   // Use cases
   sl.registerLazySingleton(() => CreateMhpProfile(sl()));
+  sl.registerLazySingleton(() => GetMhpProfile(sl()));
+  sl.registerLazySingleton(() => GetAboutMe(sl()));
+  sl.registerLazySingleton(() => UpdateAboutMe(sl()));
+  sl.registerLazySingleton(() => UpdateConnect(sl()));
 
   // Repository
   sl.registerLazySingleton<MhpProfileRepository>(
@@ -217,6 +229,10 @@ Future<void> init() async {
   // Use cases
   sl.registerLazySingleton(() => CreateCommunity(sl()));
   sl.registerLazySingleton(() => GetCommunitiesByType(sl()));
+  sl.registerLazySingleton(() => GetMyCommunity(sl()));
+  sl.registerLazySingleton(() => GetCommunityById(sl()));
+  sl.registerLazySingleton(() => UpdateCommunity(sl()));
+  sl.registerLazySingleton(() => GetTags(sl()));
   sl.registerLazySingleton(() => FollowCommunity(sl()));
   sl.registerLazySingleton(() => UnfollowCommunity(sl()));
 

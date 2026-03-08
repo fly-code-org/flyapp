@@ -33,6 +33,7 @@ class PostRepositoryImpl implements PostRepository {
               createdAt: request.poll!.createdAt,
             )
           : null,
+      communityId: request.communityId,
     );
     await remoteDataSource.createPost(requestModel);
   }

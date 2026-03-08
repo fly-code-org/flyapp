@@ -123,4 +123,40 @@ class ShareService {
   static String generatePostCustomSchemeLink(String postId) {
     return 'flyapp://post/$postId';
   }
+
+  /// Shares a community with the native share dialog (app URL).
+  static Future<bool> shareCommunity({
+    required String communityId,
+    String? communityName,
+    BuildContext? context,
+  }) async {
+    try {
+      final appLink = 'flyapp://community/$communityId';
+      String shareText = communityName != null && communityName.isNotEmpty
+          ? 'Join $communityName on Fly'
+          : 'Check out this community on Fly';
+      shareText += '\n\n$appLink';
+
+      Rect? sharePositionOrigin;
+      if (context != null) {
+        try {
+          final RenderBox? box = context.findRenderObject() as RenderBox?;
+          if (box != null) {
+            final Offset position = box.localToGlobal(Offset.zero);
+            final Size size = box.size;
+            sharePositionOrigin = Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
+          }
+        } catch (_) {}
+      }
+
+      final result = await Share.share(
+        shareText,
+        subject: 'Community on Fly',
+        sharePositionOrigin: sharePositionOrigin,
+      );
+      return result.status == ShareResultStatus.success || result.status == ShareResultStatus.dismissed;
+    } catch (e) {
+      return false;
+    }
+  }
 }

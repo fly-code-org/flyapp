@@ -55,39 +55,49 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
   
   Future<void> _loadFollowedTags() async {
     try {
-      print('🔍 [GET_INTEREST] Fetching user profile to get followed tags...');
+      print('🔍 [GET_INTEREST] Fetching user profile to get followed tags and communities...');
       final getUserProfile = sl<GetUserProfile>();
       final userProfile = await getUserProfile.call();
       
       print('📦 [GET_INTEREST] User profile data: $userProfile');
       
-      // Extract followed_interests from user profile
-      if (userProfile.containsKey('followed_interests') && 
-          userProfile['followed_interests'] is List) {
-        final followedInterests = userProfile['followed_interests'] as List;
-        
-        setState(() {
-          _selectedTags.clear();
+      setState(() {
+        // Extract followed_interests (tags) from user profile
+        _selectedTags.clear();
+        if (userProfile.containsKey('followed_interests') &&
+            userProfile['followed_interests'] is List) {
+          final followedInterests = userProfile['followed_interests'] as List;
           for (var interest in followedInterests) {
             if (interest is Map<String, dynamic> && interest.containsKey('name')) {
               final tagName = interest['name'] as String;
               _selectedTags.add(tagName);
             }
           }
-        });
-        
-        print('✅ [GET_INTEREST] Loaded ${_selectedTags.length} followed tags: $_selectedTags');
-      } else {
-        print('ℹ️ [GET_INTEREST] No followed_interests found in user profile');
-        setState(() {
-          _selectedTags.clear();
-        });
-      }
+          print('✅ [GET_INTEREST] Loaded ${_selectedTags.length} followed tags: $_selectedTags');
+        } else {
+          print('ℹ️ [GET_INTEREST] No followed_interests found in user profile');
+        }
+
+        // Extract followed_communities (community IDs from backend)
+        _selectedCommunities.clear();
+        if (userProfile.containsKey('followed_communities') &&
+            userProfile['followed_communities'] is List) {
+          final list = userProfile['followed_communities'] as List;
+          for (var item in list) {
+            if (item is String) {
+              _selectedCommunities.add(item);
+            }
+          }
+          print('✅ [GET_INTEREST] Loaded ${_selectedCommunities.length} followed communities: $_selectedCommunities');
+        } else {
+          print('ℹ️ [GET_INTEREST] No followed_communities in user profile');
+        }
+      });
     } catch (e) {
-      print('❌ [GET_INTEREST] Error loading followed tags: $e');
-      // Don't show error to user, just use empty set
+      print('❌ [GET_INTEREST] Error loading followed tags/communities: $e');
       setState(() {
         _selectedTags.clear();
+        _selectedCommunities.clear();
       });
     }
   }

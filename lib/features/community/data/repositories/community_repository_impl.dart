@@ -41,10 +41,67 @@ class CommunityRepositoryImpl implements CommunityRepository {
           createdByType: model.createdByType,
           logoPath: model.logoPath,
           tagId: model.tagId,
+          guidelinesEncourage: model.guidelinesEncourage,
+          guidelinesDiscourage: model.guidelinesDiscourage,
+          guidelinesDontTolerate: model.guidelinesDontTolerate,
           members: model.members,
           createdAt: model.createdAt,
           updatedAt: model.updatedAt,
         )).toList();
+  }
+
+  @override
+  Future<Community?> getCommunity(String createdByType) async {
+    final model = await remoteDataSource.getCommunity(createdByType);
+    if (model == null) return null;
+    return Community(
+      id: model.id,
+      name: model.name,
+      description: model.description,
+      type: model.type,
+      createdBy: model.createdBy,
+      createdByType: model.createdByType,
+      logoPath: model.logoPath,
+      tagId: model.tagId,
+      guidelinesEncourage: model.guidelinesEncourage,
+      guidelinesDiscourage: model.guidelinesDiscourage,
+      guidelinesDontTolerate: model.guidelinesDontTolerate,
+      members: model.members,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
+    );
+  }
+
+  @override
+  Future<Community?> getCommunityById(String communityId) async {
+    final model = await remoteDataSource.getCommunityById(communityId);
+    if (model == null) return null;
+    return Community(
+      id: model.id,
+      name: model.name,
+      description: model.description,
+      type: model.type,
+      createdBy: model.createdBy,
+      createdByType: model.createdByType,
+      logoPath: model.logoPath,
+      tagId: model.tagId,
+      guidelinesEncourage: model.guidelinesEncourage,
+      guidelinesDiscourage: model.guidelinesDiscourage,
+      guidelinesDontTolerate: model.guidelinesDontTolerate,
+      members: model.members,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
+    );
+  }
+
+  @override
+  Future<void> updateCommunity(String createdByType, Map<String, dynamic> body) async {
+    await remoteDataSource.updateCommunity(createdByType, body);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getTags() async {
+    return remoteDataSource.getTags();
   }
 
   @override

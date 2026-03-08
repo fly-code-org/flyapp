@@ -6,10 +6,14 @@ import 'package:fly/features/start_quiz/widgets/community_card.dart';
 
 class CommunityListHorizontal extends StatefulWidget {
   final List<Map<String, dynamic>> communities;
+  /// IDs of communities the user has already joined (from user profile API).
+  /// Used to show correct "joined" state on first load.
+  final List<String>? initialJoinedCommunityIds;
 
   const CommunityListHorizontal({
     super.key,
     required this.communities,
+    this.initialJoinedCommunityIds,
   });
 
   @override
@@ -29,6 +33,23 @@ class _CommunityListHorizontalState extends State<CommunityListHorizontal> {
       final id = community['communityId'] as String;
       final count = community['followerCount'] as int;
       _followerCounts[id] = count;
+    }
+    // Seed joined state from user profile (followed_communities from backend)
+    if (widget.initialJoinedCommunityIds != null) {
+      _joinedCommunities.addAll(widget.initialJoinedCommunityIds!);
+    }
+  }
+
+  @override
+  void didUpdateWidget(CommunityListHorizontal oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // When profile first loads and provides initial IDs, sync joined state (don't overwrite after user toggles)
+    if (widget.initialJoinedCommunityIds != null &&
+        oldWidget.initialJoinedCommunityIds == null) {
+      setState(() {
+        _joinedCommunities.clear();
+        _joinedCommunities.addAll(widget.initialJoinedCommunityIds!);
+      });
     }
   }
 

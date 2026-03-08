@@ -8,6 +8,10 @@ abstract class MhpProfileRemoteDataSource {
   Future<MhpProfileResponseModel> createProfile({
     required Map<String, dynamic> profileData,
   });
+  Future<Map<String, dynamic>> getMhpProfile();
+  Future<Map<String, dynamic>> getAboutMe();
+  Future<void> updateAboutMe(Map<String, dynamic> body);
+  Future<void> updateConnect(Map<String, dynamic> body);
 }
 
 class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
@@ -105,6 +109,114 @@ class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
         rethrow;
       }
       throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getMhpProfile() async {
+    try {
+      final response = await client.get(
+        '/mhp/external/v1/profile',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+          return data['data'] as Map<String, dynamic>;
+        }
+        return data;
+      }
+      throw ServerException(
+        'Unexpected status: ${response.statusCode}',
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException(
+          'Failed to get MHP profile',
+          statusCode: e.response!.statusCode,
+        );
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getAboutMe() async {
+    try {
+      final response = await client.get(
+        '/mhp/external/v1/aboutme',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        if (data.containsKey('data') && data['data'] is Map<String, dynamic>) {
+          return data['data'] as Map<String, dynamic>;
+        }
+        return data;
+      }
+      throw ServerException(
+        'Unexpected status: ${response.statusCode}',
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException(
+          'Failed to get about me',
+          statusCode: e.response!.statusCode,
+        );
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> updateAboutMe(Map<String, dynamic> body) async {
+    try {
+      final response = await client.patch(
+        '/mhp/external/v1/aboutme',
+        data: body,
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Failed to update about me',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException(
+          'Failed to update about me',
+          statusCode: e.response!.statusCode,
+        );
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> updateConnect(Map<String, dynamic> body) async {
+    try {
+      final response = await client.patch(
+        '/mhp/external/v1/connect',
+        data: body,
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Failed to update connect',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException(
+          'Failed to update connect',
+          statusCode: e.response!.statusCode,
+        );
+      }
+      throw NetworkException('Network error: ${e.message}');
     }
   }
 }

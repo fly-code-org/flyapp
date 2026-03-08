@@ -119,12 +119,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       print('   🔐 Is Login Mode: $_isLogin');
       print('   🆕 Is New User: ${_authController.isNewUser.value}');
 
-      // Use isNewUser from backend response to determine navigation
-      // This is more reliable than _isLogin because backend knows if user was created
-      if (_authController.isNewUser.value) {
-        // New user was created - navigate to profile creation
-        print('✅ [GOOGLE SIGNUP] New user created, navigating to profile creation...');
-        // Convert to lowercase for comparison (RoleSelector returns "User" or "MHP")
+      // Signup flow: user was on signup form (!_isLogin) OR backend says new user.
+      // When on signup form we always treat as signup so we don't depend on backend is_new_user.
+      final isSignupFlow = !_isLogin || _authController.isNewUser.value;
+      if (isSignupFlow) {
+        print('✅ [GOOGLE SIGNUP] Navigating to profile / intro flow...');
         final role = selectedRole.isNotEmpty
             ? selectedRole.toLowerCase()
             : 'user';
@@ -134,11 +133,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           print('   🚀 Navigating to: /create-user-profile');
           Get.toNamed(AppRoutes.createUserProfile, arguments: {'role': role});
         } else {
-          print('   🚀 Navigating to: /create-mhp-profile');
-          Get.toNamed(AppRoutes.createMhpProfile, arguments: {'role': role});
+          // MHP: route to quiz intro (MHP flow)
+          print('   🚀 Navigating to: /intro-quiz (MHP flow)');
+          Get.toNamed(AppRoutes.IntroScreen, arguments: {'role': role});
         }
       } else {
-        // Existing user logging in - navigate to home
+        // Existing user logging in via Google - navigate to home
         print('✅ [GOOGLE LOGIN] Existing user, navigating to home screen...');
         Get.offAllNamed(AppRoutes.Home);
         print('✅ [GOOGLE LOGIN] Navigation to home completed');

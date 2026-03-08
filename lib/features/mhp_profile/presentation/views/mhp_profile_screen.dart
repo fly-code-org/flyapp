@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:fly/features/create_community/presentation/widgets/edit_community_button.dart';
-import 'package:fly/features/create_community/presentation/widgets/invite_members.dart';
-import 'package:fly/core/widgets/bottom_navbar.dart';
-import 'package:fly/features/mhp_profile/presentation/widgets/community_post_grid.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/storage/token_storage.dart';
+import 'package:fly/core/utils/jwt_decoder.dart';
+import 'package:fly/core/utils/profile_picture_helper.dart';
+import 'package:fly/features/mhp_profile/data/models/mhp_profile_display.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/edit_profile_button.dart';
-import 'package:fly/features/mhp_profile/presentation/widgets/mhp_squares.dart';
-import 'package:fly/features/mhp_profile/presentation/widgets/share_profile.dart';
-import 'package:fly/features/mhp_profile/presentation/widgets/profile_card.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/mhp_info_card.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/mhp_squares.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/profile_card.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/share_profile.dart';
+import 'package:fly/features/community/domain/entities/community.dart';
+import 'package:fly/features/community/domain/usecases/get_my_community.dart';
+import 'package:fly/features/profile_creation/domain/usecases/get_mhp_profile.dart';
+import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/about_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/connect_tab_content.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/mhp_activities_section.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
@@ -21,8 +28,11 @@ class MhpProfileScreen extends StatefulWidget {
 
 class _MhpProfileScreenState extends State<MhpProfileScreen>
     with SingleTickerProviderStateMixin {
-  late final String role;
   int _selectedTab = 0;
+  MhpProfileDisplay? _profile;
+  Community? _community;
+  bool _loading = true;
+  String? _error;
 
   void _onTabSelected(int index) {
     setState(() => _selectedTab = index);
@@ -61,17 +71,67 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
     );
   }
 
+  Future<void> _loadProfile() async {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final token = await TokenStorage.getToken();
+      final userName = JwtDecoder.getUserName(token) ?? '';
+      final getMhpProfile = sl<GetMhpProfile>();
+      final getMyCommunity = sl<GetMyCommunity>();
+
+      final profileMap = await getMhpProfile.call();
+      Community? community;
+      try {
+        community = await getMyCommunity.call();
+      } catch (_) {
+        // MHP may not have created a community yet
+        community = null;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _profile = MhpProfileDisplay.fromMap(profileMap, userName: userName);
+        _community = community;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
   Widget _buildBody() {
     switch (_selectedTab) {
       case 0:
-        return const CommunityMediaSection(type: "Activities");
+        return MhpActivitiesSection(communityId: _community?.id ?? _profile?.communityId);
       case 1:
-        return const MHPProfileEditScreen();
+        return MHPProfileEditScreen(
+          initialWhoIAm: _profile?.whoIAm,
+          initialHowICanHelp: _profile?.howICanHelp,
+          initialWhatToExpect: _profile?.whatToExpect,
+        );
       case 2:
-        return const CommunityMediaSection(type: "Bookmarks");
+        return ConnectTabContent(
+          availableSlots: _profile?.availableSlots ?? [],
+          appointments: _profile?.appointments ?? [],
+          onSlotsUpdated: _loadProfile,
+        );
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
   }
 
   @override
@@ -122,7 +182,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    // White sheet
+                    // White sheet: fixed header above "MHP's Square", rest scrollable
                     Container(
                       decoration: const BoxDecoration(
                         color: Colors.white,
@@ -132,68 +192,93 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                         ),
                       ),
                       padding: const EdgeInsets.all(16),
-                      child: ListView(
-                        controller: scrollController,
-                        padding: EdgeInsets.zero,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const SizedBox(height: 60),
-                          const UserInfo(
-                            userName: "Shruti Jain",
-                            bio:
-                                "Helping you navigate anxiety, trauma, and self-growth with empathy & evidence-based therapy.",
-                            location: "Chandigarh, India",
-                            yearsOfExp: "March, 2025",
-                          ),
+                          if (_loading)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          else if (_error != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              child: Center(
+                                child: Text(
+                                  _error!,
+                                  style: const TextStyle(color: Colors.red),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            )
+                          else if (_profile != null) ...[
+                            UserInfo(
+                              userName: _profile!.userName,
+                              bio: _profile!.bio,
+                              location: _profile!.locationString,
+                              yearsOfExp: _profile!.memberSinceString,
+                            ),
+                          ],
+                          if (!_loading && _error == null && _profile != null)
+                            const SizedBox(height: 20),
+                          if (!_loading && _error == null && _profile != null)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                EditProfileButton(
+                                  onPressed: () {
+                                    Get.toNamed('/edit-community');
+                                  },
+                                ),
+                                const SizedBox(width: 20),
+                                ShareProfile(
+                                  onPressed: () {
+                                    Get.toNamed('/invite-members');
+                                  },
+                                ),
+                              ],
+                            ),
                           const SizedBox(height: 20),
-
-                          // Edit + Invite Members
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              EditProfileButton(
-                                onPressed: () {
-                                  Get.toNamed('/edit-community');
-                                },
-                              ),
-                              const SizedBox(width: 20),
-                              ShareProfile(
-                                onPressed: () {
-                                  Get.toNamed('/invite-members');
-                                },
-                              ),
-                            ],
+                          // Scrollable: from "MHP's Square" row downward
+                          Expanded(
+                            child: ListView(
+                              controller: scrollController,
+                              padding: EdgeInsets.zero,
+                              children: [
+                                MHPSquare(community: _community),
+                                const SizedBox(height: 40),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _buildTabItem(
+                                      "Activities",
+                                      Icons.dashboard_outlined,
+                                      0,
+                                    ),
+                                    Row(
+                                      children: [
+                                        _buildTabItem(
+                                          "About",
+                                          Icons.verified_user_outlined,
+                                          1,
+                                        ),
+                                        const SizedBox(width: 16),
+                                        _buildTabItem(
+                                          "Connect",
+                                          Icons.calendar_month_outlined,
+                                          2,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 600, child: _buildBody()),
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 20),
-                          MHPSquare(),
-                          const SizedBox(height: 40),
-                          // Tabs Row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _buildTabItem(
-                                "Activities",
-                                Icons.dashboard_outlined,
-                                0,
-                              ),
-                              Row(
-                                children: [
-                                  _buildTabItem(
-                                    "About",
-                                    Icons.verified_user_outlined,
-                                    1,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  _buildTabItem(
-                                    "Connect",
-                                    Icons.calendar_month_outlined,
-                                    2,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          // Tab content
-                          SizedBox(height: 600, child: _buildBody()),
                         ],
                       ),
                     ),
@@ -202,8 +287,12 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                     Positioned(
                       top: -60,
                       left: 16,
-                      child: const ProfileAvatar(
-                        imagePath: 'assets/images/communitydp.png',
+                      child: ProfileAvatar(
+                        imagePath: _profile != null &&
+                                _profile!.picturePath.isNotEmpty
+                            ? ProfilePictureHelper.getProfilePictureUrl(
+                                _profile!.picturePath)
+                            : 'assets/images/communitydp.png',
                         size: 120,
                         showEditIcon: false,
                       ),

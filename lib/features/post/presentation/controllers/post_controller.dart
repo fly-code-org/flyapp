@@ -60,11 +60,13 @@ class PostController extends GetxController {
   var posts = <Post>[].obs;
 
   // Create post
+  /// [communityId] When provided (e.g. MHP's community), the post is associated with that community so it appears in community feed and MHP Activities.
   Future<bool> createPostEntry({
     required int tagId,
     String? content,
     List<Attachment> attachments = const [],
     Poll? poll,
+    String? communityId,
   }) async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -75,12 +77,16 @@ class PostController extends GetxController {
       print('   - Content: ${content ?? "null"}');
       print('   - Attachments: ${attachments.length}');
       print('   - Has Poll: ${poll != null}');
+      if (communityId != null && communityId.isNotEmpty) {
+        print('   - Community ID: $communityId');
+      }
 
       final request = CreatePostRequest(
         tagId: tagId,
         content: content?.trim().isEmpty == true ? null : content?.trim(),
         attachments: attachments,
         poll: poll,
+        communityId: communityId,
       );
 
       await createPost.call(request);

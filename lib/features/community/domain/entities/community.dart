@@ -10,6 +10,9 @@ class Community extends Equatable {
   final String createdByType; // "user" or "mhp"
   final String logoPath;
   final int tagId;
+  final String guidelinesEncourage;
+  final String guidelinesDiscourage;
+  final String guidelinesDontTolerate;
   final List<String>? members;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -23,6 +26,9 @@ class Community extends Equatable {
     required this.createdByType,
     required this.logoPath,
     required this.tagId,
+    this.guidelinesEncourage = '',
+    this.guidelinesDiscourage = '',
+    this.guidelinesDontTolerate = '',
     this.members,
     required this.createdAt,
     required this.updatedAt,
@@ -38,6 +44,9 @@ class Community extends Equatable {
         createdByType,
         logoPath,
         tagId,
+        guidelinesEncourage,
+        guidelinesDiscourage,
+        guidelinesDontTolerate,
         members,
         createdAt,
         updatedAt,

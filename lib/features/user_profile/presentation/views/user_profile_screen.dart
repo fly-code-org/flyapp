@@ -33,12 +33,12 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       _profileController = sl<UserProfileController>();
       Get.put(_profileController, permanent: true);
     }
-    
+
     // Always fetch profile to ensure we have latest data
     // The controller will handle caching internally
     print('🔍 [PROFILE SCREEN] Initializing, fetching user profile...');
     _profileController.fetchUserProfile(forceRefresh: false);
-    
+
     // Initialize and prefetch journal data (color templates + journals)
     // This ensures data is ready when user clicks on "My Journal" tab
     _initializeJournalData();
@@ -53,24 +53,33 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       journalController = sl<JournalController>();
       Get.put(journalController, permanent: true);
     }
-    
+
     // IMPORTANT: Fetch color templates FIRST (needed for journal creation and color mapping)
     // This ensures templates are available when user creates a journal
-    journalController.fetchColorTemplates().then((_) {
-      print('✅ [PROFILE] Color templates loaded (${journalController.colorTemplates.length} templates), prefetching journals...');
-      // Prefetch journals so they're ready when user clicks the tab
-      if (journalController.journals.isEmpty && !journalController.isLoading.value) {
-        journalController.fetchJournals();
-      }
-    }).catchError((e) {
-      print('⚠️ [PROFILE] Error loading color templates: $e');
-      // Still try to fetch journals even if color templates fail
-      // But warn that journal creation might fail
-      print('⚠️ [PROFILE] Journal creation may fail without color templates');
-      if (journalController.journals.isEmpty && !journalController.isLoading.value) {
-        journalController.fetchJournals();
-      }
-    });
+    journalController
+        .fetchColorTemplates()
+        .then((_) {
+          print(
+            '[PROFILE] Color templates loaded (${journalController.colorTemplates.length} templates), prefetching journals...',
+          );
+          // Prefetch journals so they're ready when user clicks the tab
+          if (journalController.journals.isEmpty &&
+              !journalController.isLoading.value) {
+            journalController.fetchJournals();
+          }
+        })
+        .catchError((e) {
+          print('⚠️ [PROFILE] Error loading color templates: $e');
+          // Still try to fetch journals even if color templates fail
+          // But warn that journal creation might fail
+          print(
+            '⚠️ [PROFILE] Journal creation may fail without color templates',
+          );
+          if (journalController.journals.isEmpty &&
+              !journalController.isLoading.value) {
+            journalController.fetchJournals();
+          }
+        });
   }
 
   void _onTabSelected(int index) {
@@ -117,7 +126,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           final activities = _profileController.activities.toList();
           // Use a key based on activities length to force widget recreation when data changes
           return CommunityMediaSection(
-            key: ValueKey('activities_${activities.length}_${activities.join(',')}'),
+            key: ValueKey(
+              'activities_${activities.length}_${activities.join(',')}',
+            ),
             type: "Activities",
             postIds: activities,
           );
@@ -128,15 +139,15 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         if (Get.isRegistered<JournalController>()) {
           final journalController = Get.find<JournalController>();
           // Only fetch if not already loading and journals are empty
-          if (journalController.journals.isEmpty && 
+          if (journalController.journals.isEmpty &&
               !journalController.isLoading.value &&
               journalController.colorTemplates.isEmpty) {
             // If color templates are also empty, fetch both
             journalController.fetchColorTemplates().then((_) {
               journalController.fetchJournals();
             });
-          } else if (journalController.journals.isEmpty && 
-                     !journalController.isLoading.value) {
+          } else if (journalController.journals.isEmpty &&
+              !journalController.isLoading.value) {
             // Just fetch journals if color templates are already loaded
             journalController.fetchJournals();
           }
@@ -146,7 +157,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         return Obx(() {
           final bookmarkedPosts = _profileController.bookmarkedPosts.toList();
           // Use a key based on bookmarks length to force widget recreation when data changes
-          final bookmarksKey = bookmarkedPosts.map((b) => b['post_id'] as String? ?? '').join(',');
+          final bookmarksKey = bookmarkedPosts
+              .map((b) => b['post_id'] as String? ?? '')
+              .join(',');
           return CommunityMediaSection(
             key: ValueKey('bookmarks_${bookmarkedPosts.length}_$bookmarksKey'),
             type: "Bookmarks",
@@ -253,7 +266,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                                   ElevatedButton(
                                     onPressed: () {
                                       _profileController.fetchUserProfile(
-                                          forceRefresh: true);
+                                        forceRefresh: true,
+                                      );
                                     },
                                     child: Text('Retry'),
                                   ),
@@ -272,20 +286,28 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                               child: Column(
                                 children: [
                                   const SizedBox(height: 60),
-                                  Obx(() => UserInfo(
-                                    userId: _profileController.username.value.isEmpty
-                                        ? "Anonymous"
-                                        : _profileController.username.value,
-                                    bio: _profileController.bio.value.isEmpty
-                                        ? "No bio yet."
-                                        : _profileController.bio.value,
-                                    location: _profileController.location.value,
-                                    date: _profileController.createdAt.value,
-                                  )),
+                                  Obx(
+                                    () => UserInfo(
+                                      userId:
+                                          _profileController
+                                              .username
+                                              .value
+                                              .isEmpty
+                                          ? "Anonymous"
+                                          : _profileController.username.value,
+                                      bio: _profileController.bio.value.isEmpty
+                                          ? "No bio yet."
+                                          : _profileController.bio.value,
+                                      location:
+                                          _profileController.location.value,
+                                      date: _profileController.createdAt.value,
+                                    ),
+                                  ),
                                   const SizedBox(height: 40),
                                   // Tabs Row
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       _buildTabItem(
                                         "Activities",
@@ -316,7 +338,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                             Expanded(
                               child: SingleChildScrollView(
                                 controller: scrollController,
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
                                 child: _buildBody(),
                               ),
                             ),
@@ -331,16 +355,22 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       left: 16,
                       child: Obx(() {
                         // Extract user ID from profile data for avatar generation
-                        final userId = _profileController.profileData.value?['user_id'] as String?;
+                        final userId =
+                            _profileController.profileData.value?['user_id']
+                                as String?;
                         // Pass picturePath directly - ProfileAvatar will handle asset paths vs URLs
-                        final picturePath = _profileController.picturePath.value;
-                        print('🖼️ [PROFILE SCREEN] picturePath: "$picturePath", userId: "$userId"');
+                        final picturePath =
+                            _profileController.picturePath.value;
+                        print(
+                          '🖼️ [PROFILE SCREEN] picturePath: "$picturePath", userId: "$userId"',
+                        );
                         return ProfileAvatar(
-                            imagePath: picturePath, // ProfileAvatar handles both assets and URLs
-                            userId: userId,
-                            size: 120,
-                            showEditIcon: false,
-                          );
+                          imagePath:
+                              picturePath, // ProfileAvatar handles both assets and URLs
+                          userId: userId,
+                          size: 120,
+                          showEditIcon: false,
+                        );
                       }),
                     ),
                   ],
@@ -357,7 +387,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               child: FloatingActionButton(
                 backgroundColor: const Color(0xFF855DFC),
                 onPressed: () async {
-                  final result = await Get.to(() => const CreateJournalScreen());
+                  final result = await Get.to(
+                    () => const CreateJournalScreen(),
+                  );
                   // Refresh journals if journal was created
                   if (result == true) {
                     if (Get.isRegistered<JournalController>()) {

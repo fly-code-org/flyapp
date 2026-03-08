@@ -8,15 +8,10 @@ class CreatePostRequestModel extends CreatePostRequest {
     super.content,
     super.attachments = const [],
     super.poll,
+    super.communityId,
   });
 
   Map<String, dynamic> toJson() {
-    // Backend will set:
-    // - id (generated)
-    // - author_id (from JWT)
-    // - created_at, updated_at (generated)
-    // - like_count, comment_count, bookmark_count (defaults to 0)
-    // So we only send what's required/optional from frontend
     final json = <String, dynamic>{
       'tag_id': tagId,
     };
@@ -33,6 +28,10 @@ class CreatePostRequestModel extends CreatePostRequest {
 
     if (poll != null) {
       json['poll'] = (poll as PollModel).toJson();
+    }
+
+    if (communityId != null && communityId!.trim().isNotEmpty) {
+      json['community_id'] = communityId!.trim();
     }
 
     return json;

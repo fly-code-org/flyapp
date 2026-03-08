@@ -5,9 +5,10 @@ class CommunityProfileCard extends StatelessWidget {
   final String communityType; // "social" or "support"
   final String title;
   final int members;
-  final String description; // new field
-  final String tagIconPath; // SVG asset path
-  final String profileImagePath; // PNG/JPG asset path
+  final String description;
+  final String tagIconPath; // SVG asset path or empty for default
+  final String profileImagePath; // asset path for fallback
+  final String? profileImageUrl; // network URL (preferred if non-empty)
 
   const CommunityProfileCard({
     super.key,
@@ -17,6 +18,7 @@ class CommunityProfileCard extends StatelessWidget {
     required this.description,
     required this.tagIconPath,
     required this.profileImagePath,
+    this.profileImageUrl,
   });
 
   @override
@@ -26,25 +28,26 @@ class CommunityProfileCard extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Profile image
+        // Profile image (network URL or asset)
         ClipRRect(
           borderRadius: isSocial
-              ? BorderRadius.circular(50) // circular for social
-              : BorderRadius.circular(8), // square for support
-          child: Image.asset(
-            profileImagePath,
-            width: 50,
-            height: 50,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: 50,
-                height: 50,
-                color: Colors.grey.shade300,
-                child: const Icon(Icons.person, color: Colors.white),
-              );
-            },
-          ),
+              ? BorderRadius.circular(50)
+              : BorderRadius.circular(8),
+          child: profileImageUrl != null && profileImageUrl!.isNotEmpty && profileImageUrl!.startsWith('http')
+              ? Image.network(
+                  profileImageUrl!,
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                )
+              : Image.asset(
+                  profileImagePath,
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                ),
         ),
         const SizedBox(width: 12),
 
@@ -84,15 +87,34 @@ class CommunityProfileCard extends StatelessWidget {
           ),
         ),
 
-        // SVG Tag Icon
-        SvgPicture.asset(
-          tagIconPath,
-          width: 28,
-          height: 28,
-          placeholderBuilder: (context) =>
-              Container(width: 28, height: 28, color: Colors.grey.shade200),
-        ),
+        // SVG Tag Icon (asset or placeholder)
+        tagIconPath.isNotEmpty
+            ? SvgPicture.asset(
+                tagIconPath,
+                width: 28,
+                height: 28,
+                placeholderBuilder: (context) =>
+                    Container(width: 28, height: 28, color: Colors.grey.shade200),
+              )
+            : Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(Icons.label_outline, size: 20),
+              ),
       ],
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 50,
+      height: 50,
+      color: Colors.grey.shade300,
+      child: const Icon(Icons.people, color: Colors.white),
     );
   }
 }

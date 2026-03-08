@@ -5,5 +5,9 @@ abstract class MhpProfileRepository {
   Future<MhpProfileResponse> createProfile({
     required Map<String, dynamic> profileData,
   });
+  Future<Map<String, dynamic>> getMhpProfile();
+  Future<Map<String, dynamic>> getAboutMe();
+  Future<void> updateAboutMe(Map<String, dynamic> body);
+  Future<void> updateConnect(Map<String, dynamic> body);
 }
 

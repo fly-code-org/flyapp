@@ -8,6 +8,9 @@ import 'package:video_player/video_player.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/services/s3_upload_service.dart';
+import '../../../../core/storage/token_storage.dart';
+import '../../../../core/utils/jwt_decoder.dart';
+import '../../../../features/community/domain/usecases/get_my_community.dart';
 import '../../../../features/interests/data/models/tag_icon_mapping.dart';
 import '../../domain/entities/post.dart';
 import '../controllers/post_controller.dart';
@@ -563,6 +566,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       // Build poll
       final poll = _buildPoll();
 
+      // If current user is MHP, associate post with their community so it appears in Activities and community page
+      String? communityId;
+      try {
+        final token = await TokenStorage.getToken();
+        if (token != null && JwtDecoder.isMhp(token)) {
+          final community = await sl<GetMyCommunity>().call();
+          communityId = community?.id;
+        }
+      } catch (_) {}
+
       // Create post
       final success = await _postController.createPostEntry(
         tagId: _selectedTagId!,
@@ -571,6 +584,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             : _textController.text.trim(),
         attachments: attachments,
         poll: poll,
+        communityId: communityId,
       );
 
       if (success && mounted) {

@@ -9,6 +9,14 @@ abstract class CommunityRemoteDataSource {
     CreateCommunityRequestModel request,
   );
   Future<List<CommunityModel>> getCommunitiesByType(String type);
+  /// GET /community?created_by_type=mhp (or user). Returns current user's community or null if none.
+  Future<CommunityModel?> getCommunity(String createdByType);
+  /// GET /community/:id. Returns community by ID (for viewing any community).
+  Future<CommunityModel?> getCommunityById(String communityId);
+  /// PATCH /community?created_by_type=mhp. Body: name, description, logo_path, tag_id, guidelines_*.
+  Future<void> updateCommunity(String createdByType, Map<String, dynamic> body);
+  /// GET /tag. Returns list of tags (tag_id, name, icon_path, type).
+  Future<List<Map<String, dynamic>>> getTags();
   Future<void> followCommunity(String communityId);
   Future<void> unfollowCommunity(String communityId);
 }
@@ -130,6 +138,102 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
       }
     } catch (e) {
       throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<CommunityModel?> getCommunity(String createdByType) async {
+    try {
+      final response = await client.get(
+        '/community/external/v1/community',
+        queryParameters: {'created_by_type': createdByType},
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        final raw = data['data'];
+        if (raw is Map<String, dynamic>) {
+          return CommunityModel.fromJson(raw);
+        }
+        return null;
+      }
+      return null;
+    } on DioException catch (_) {
+      rethrow;
+    } catch (e) {
+      throw ServerException('Failed to get community: $e');
+    }
+  }
+
+  @override
+  Future<CommunityModel?> getCommunityById(String communityId) async {
+    try {
+      final response = await client.get(
+        '/community/external/v1/community/$communityId',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        final raw = data['data'];
+        if (raw is Map<String, dynamic>) {
+          return CommunityModel.fromJson(raw);
+        }
+        return null;
+      }
+      return null;
+    } on DioException catch (_) {
+      rethrow;
+    } catch (e) {
+      throw ServerException('Failed to get community by id: $e');
+    }
+  }
+
+  @override
+  Future<void> updateCommunity(String createdByType, Map<String, dynamic> body) async {
+    try {
+      final response = await client.patch(
+        '/community/external/v1/community',
+        queryParameters: {'created_by_type': createdByType},
+        data: body,
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode != 200) {
+        throw ServerException(
+          'Failed to update community',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException(
+          'Failed to update community',
+          statusCode: e.response!.statusCode,
+        );
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getTags() async {
+    try {
+      final response = await client.get(
+        '/community/external/v1/tag',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        final raw = data['data'];
+        if (raw is List) {
+          return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+        }
+        return [];
+      }
+      return [];
+    } on DioException catch (_) {
+      rethrow;
+    } catch (e) {
+      throw ServerException('Failed to get tags: $e');
     }
   }
 

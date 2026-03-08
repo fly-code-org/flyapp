@@ -36,6 +36,9 @@ abstract class AppRoutes {
   static const EditCommunity = '/edit-community';
   static const CommunityGuidelines = '/community-guidelines';
 
+  /// User books a session with an MHP (date, preference, duration, slot, "Let's connect").
+  static const bookSession = '/book-session';
+
   // bottom nav
   static const Home = '/home';
   static const Explore = '/explore';

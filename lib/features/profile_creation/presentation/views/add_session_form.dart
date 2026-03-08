@@ -8,6 +8,7 @@ import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_user_profile.dart';
+import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
 class AddSessionScreen extends StatefulWidget {
@@ -293,12 +294,11 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                                             if (success &&
                                                 ctrl.message.value.isNotEmpty) {
                                               print(
-                                                "✅ [BUTTON] Profile created successfully, navigating to quiz...",
+                                                "✅ [BUTTON] Profile created successfully, navigating to create support community...",
                                               );
-                                              // Navigate to quiz only on success
+                                              // MHP profile created: go to create support community
                                               Get.toNamed(
-                                                '/intro-quiz',
-                                                arguments: {'role': role},
+                                                AppRoutes.CreateSupportCommunity,
                                               );
                                               print(
                                                 "✅ [BUTTON] Navigation completed",

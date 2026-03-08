@@ -43,6 +43,12 @@ class _SupportCommunityPickerState extends State<SupportCommunityPicker> {
   SupportCommunity? _selectedTag;
 
   @override
+  void initState() {
+    super.initState();
+    _selectedTag = widget.defaultTag;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final borderColor = _selectedTag == null
         ? Colors.grey

@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/profile_creation/domain/usecases/get_about_me.dart';
+import 'package:fly/features/profile_creation/domain/usecases/update_about_me.dart';
+import 'package:get/get.dart';
 
 class MHPProfileEditScreen extends StatefulWidget {
-  const MHPProfileEditScreen({super.key});
+  final String? initialWhoIAm;
+  final String? initialHowICanHelp;
+  final String? initialWhatToExpect;
+
+  const MHPProfileEditScreen({
+    super.key,
+    this.initialWhoIAm,
+    this.initialHowICanHelp,
+    this.initialWhatToExpect,
+  });
 
   @override
   State<MHPProfileEditScreen> createState() => _MHPProfileEditScreenState();
@@ -12,9 +25,12 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
 
   final TextEditingController whoIAmController = TextEditingController();
   final TextEditingController howICanHelpController = TextEditingController();
+  final TextEditingController whatToExpectController = TextEditingController();
 
   bool showSaveWhoIAm = false;
   bool showSaveHowICanHelp = false;
+  bool showSaveWhatToExpect = false;
+  bool _saving = false;
 
   final List<String> helpTags = [
     "Anxiety",
@@ -22,6 +38,68 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
     "Job Aspirant",
     "Teenager",
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialWhoIAm != null && widget.initialWhoIAm!.isNotEmpty) {
+      whoIAmController.text = widget.initialWhoIAm!;
+    }
+    if (widget.initialHowICanHelp != null && widget.initialHowICanHelp!.isNotEmpty) {
+      howICanHelpController.text = widget.initialHowICanHelp!;
+    }
+    if (widget.initialWhatToExpect != null && widget.initialWhatToExpect!.isNotEmpty) {
+      whatToExpectController.text = widget.initialWhatToExpect!;
+    }
+    if (whoIAmController.text.isEmpty && howICanHelpController.text.isEmpty && whatToExpectController.text.isEmpty) {
+      _loadAboutMe();
+    }
+  }
+
+  Future<void> _loadAboutMe() async {
+    try {
+      final data = await sl<GetAboutMe>().call();
+      if (!mounted) return;
+      setState(() {
+        whoIAmController.text = data['who_i_am']?.toString() ?? '';
+        howICanHelpController.text = data['how_i_can_help']?.toString() ?? '';
+        whatToExpectController.text = data['what_to_expect']?.toString() ?? '';
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _saveAboutMe() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      await sl<UpdateAboutMe>().call({
+        'who_i_am': whoIAmController.text.trim(),
+        'how_i_can_help': howICanHelpController.text.trim(),
+        'what_to_expect': whatToExpectController.text.trim(),
+      });
+      if (!mounted) return;
+      Get.snackbar('Saved', 'About updated', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      setState(() {
+        showSaveWhoIAm = false;
+        showSaveHowICanHelp = false;
+        showSaveWhatToExpect = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    whoIAmController.dispose();
+    howICanHelpController.dispose();
+    whatToExpectController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +121,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                 onChanged: (value) {
                   setState(() => showSaveWhoIAm = value.isNotEmpty);
                 },
-                onSave: () {
-                  setState(() => showSaveWhoIAm = false);
-                },
+                onSave: () => _saveAboutMe(),
               ),
               const SizedBox(height: 16),
               _buildEditableCard(
@@ -57,9 +133,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                 onChanged: (value) {
                   setState(() => showSaveHowICanHelp = value.isNotEmpty);
                 },
-                onSave: () {
-                  setState(() => showSaveHowICanHelp = false);
-                },
+                onSave: () => _saveAboutMe(),
               ),
               const SizedBox(height: 16),
               _buildTagCard(
@@ -72,14 +146,12 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                 icon: Icons.flash_on_outlined,
                 title: "What to Expect?",
                 color: primaryColor,
-                controller: howICanHelpController,
-                showSaveButton: showSaveHowICanHelp,
+                controller: whatToExpectController,
+                showSaveButton: showSaveWhatToExpect,
                 onChanged: (value) {
-                  setState(() => showSaveHowICanHelp = value.isNotEmpty);
+                  setState(() => showSaveWhatToExpect = value.isNotEmpty);
                 },
-                onSave: () {
-                  setState(() => showSaveHowICanHelp = false);
-                },
+                onSave: () => _saveAboutMe(),
               ),
               const SizedBox(height: 20),
             ],
@@ -224,32 +296,4 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
     );
   }
 
-  Widget _buildExpectationCard({
-    required IconData icon,
-    required String title,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: 'Lexend',
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

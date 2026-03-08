@@ -4,6 +4,7 @@ import 'package:fly/features/create_community/presentation/views/create_support_
 import 'package:fly/features/create_community/presentation/views/edit_community_details.dart';
 import 'package:fly/features/explore/presentation/views/explore.dart';
 import 'package:fly/features/home/presentation/views/home.dart';
+import 'package:fly/features/mhp_profile/presentation/views/book_session_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/views/mhp_profile_screen.dart';
 import 'package:fly/features/nira/screens/nira_chat_screen.dart';
 import 'package:fly/features/notifications/presentation/view/notification_screen.dart';
@@ -126,6 +127,13 @@ class AppPages {
     ),
 
     GetPage(name: AppRoutes.mhpProfile, page: () => const MhpProfileScreen()),
+    GetPage(
+      name: AppRoutes.bookSession,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>?;
+        return BookSessionScreen(mhpId: args?['mhpId'] as String?);
+      },
+    ),
 
     // Bottom Nav
     GetPage(name: AppRoutes.Home, page: () => const HomeScreen()),

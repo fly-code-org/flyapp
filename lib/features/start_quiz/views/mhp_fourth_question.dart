@@ -201,9 +201,10 @@ class _MhpQuestionFourthScreenState extends State<MhpQuestionFourthScreen> {
                                             .submitCurrentAnswer()
                                             .then((success) {
                                               if (success) {
+                                                // After quiz: create MHP profile, then they can create community
                                                 Get.toNamed(
-                                                  AppRoutes
-                                                      .CreateSupportCommunity,
+                                                  AppRoutes.createMhpProfile,
+                                                  arguments: {'role': role},
                                                 );
                                               } else if (quizController
                                                   .submitError

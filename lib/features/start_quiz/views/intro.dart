@@ -110,9 +110,9 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                         onPressed: () {
                           if (_showSureLetsGo) {
                             if (role == 'mhp') {
-                              Get.toNamed(AppRoutes.MHPQuestion1);
+                              Get.toNamed(AppRoutes.MHPQuestion1, arguments: {'role': role});
                             } else if (role == 'user') {
-                              Get.toNamed(AppRoutes.UserQuestion1);
+                              Get.toNamed(AppRoutes.UserQuestion1, arguments: {'role': role});
                             }
                           }
                         },
@@ -123,7 +123,8 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                           onTap: () {
                             if (role == 'mhp') {
                               if (_showSureLetsGo) {
-                                Get.toNamed(AppRoutes.CreateSupportCommunity);
+                                // Skip quiz: go straight to MHP profile creation
+                                Get.toNamed(AppRoutes.createMhpProfile, arguments: {'role': role});
                               }
                             } else if (role == 'user') {
                               // For users, always go to Explore

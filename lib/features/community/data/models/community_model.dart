@@ -11,6 +11,9 @@ class CommunityModel extends Community {
     required super.createdByType,
     required super.logoPath,
     required super.tagId,
+    super.guidelinesEncourage,
+    super.guidelinesDiscourage,
+    super.guidelinesDontTolerate,
     super.members,
     required super.createdAt,
     required super.updatedAt,
@@ -90,6 +93,9 @@ class CommunityModel extends Community {
     final createdByType = json['created_by_type']?.toString() ?? '';
     final logoPath = json['logo_path']?.toString() ?? '';
     final tagId = parseTagId(json['tag_id']);
+    final guidelinesEncourage = json['guidelines_encourage']?.toString() ?? '';
+    final guidelinesDiscourage = json['guidelines_discourage']?.toString() ?? '';
+    final guidelinesDontTolerate = json['guidelines_dont_tolerate']?.toString() ?? '';
 
       return CommunityModel(
         id: id,
@@ -100,6 +106,9 @@ class CommunityModel extends Community {
         createdByType: createdByType,
         logoPath: logoPath,
         tagId: tagId,
+        guidelinesEncourage: guidelinesEncourage,
+        guidelinesDiscourage: guidelinesDiscourage,
+        guidelinesDontTolerate: guidelinesDontTolerate,
         members: parseMembers(json['members']),
         createdAt: parseDateTime(json['created_at']),
         updatedAt: parseDateTime(json['updated_at']),
@@ -117,6 +126,9 @@ class CommunityModel extends Community {
         createdByType: '',
         logoPath: json['logo_path']?.toString() ?? '',
         tagId: 0,
+        guidelinesEncourage: '',
+        guidelinesDiscourage: '',
+        guidelinesDontTolerate: '',
         members: null,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -134,6 +146,9 @@ class CommunityModel extends Community {
       'created_by_type': createdByType,
       'logo_path': logoPath,
       'tag_id': tagId,
+      'guidelines_encourage': guidelinesEncourage,
+      'guidelines_discourage': guidelinesDiscourage,
+      'guidelines_dont_tolerate': guidelinesDontTolerate,
       'members': members,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),

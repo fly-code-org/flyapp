@@ -8,8 +8,11 @@ import 'package:fly/features/explore/presentation/widgets/social_tag_h.dart';
 import 'package:fly/features/interests/data/models/tag_mapping.dart';
 import 'package:fly/features/interests/domain/usecases/follow_tag.dart';
 import 'package:fly/features/interests/domain/usecases/unfollow_tag.dart';
-import 'package:fly/features/profile_creation/domain/usecases/get_user_profile.dart';
+import 'package:fly/core/storage/token_storage.dart';
+import 'package:fly/core/utils/jwt_decoder.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
+import 'package:fly/features/profile_creation/domain/usecases/get_mhp_profile.dart';
+import 'package:fly/features/profile_creation/domain/usecases/get_user_profile.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -79,6 +82,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   
   // Track followed tags by tag name (more reliable than ID since IDs overlap between social/support)
   final Set<String> _followedTagNames = {};
+  // Track followed community IDs from user profile (so MHP/user sees correct "joined" state)
+  List<String> _followedCommunityIds = [];
 
   @override
   void initState() {
@@ -90,50 +95,56 @@ class _ExploreScreenState extends State<ExploreScreen> {
   
   Future<void> _loadFollowedTags() async {
     try {
-      print('🔍 [EXPLORE] Fetching user profile to get followed tags...');
-      final getUserProfile = sl<GetUserProfile>();
-      final userProfile = await getUserProfile.call();
-      
-      print('📦 [EXPLORE] User profile data: $userProfile');
-      print('📦 [EXPLORE] Full followed_interests: ${userProfile['followed_interests']}');
-      
-      // Extract followed_interests from user profile
-      if (userProfile.containsKey('followed_interests') && 
-          userProfile['followed_interests'] is List) {
-        final followedInterests = userProfile['followed_interests'] as List;
-        
-        setState(() {
-          _followedTagNames.clear();
-          for (var interest in followedInterests) {
-            if (interest is Map<String, dynamic>) {
-              // Use tag name for comparison (more reliable than ID)
-              if (interest.containsKey('name') && interest['name'] is String) {
-                final tagName = interest['name'] as String;
-                // Normalize tag name (trim whitespace)
-                final normalizedName = tagName.trim();
-                _followedTagNames.add(normalizedName);
-                print('   📌 Added followed tag: "$normalizedName" (original: "$tagName")');
-              } else {
-                print('   ⚠️ Interest missing name: $interest');
-              }
-            }
-          }
-        });
-        
-        print('✅ [EXPLORE] Loaded ${_followedTagNames.length} followed tags: $_followedTagNames');
+      final token = await TokenStorage.getToken();
+      final isMhp = JwtDecoder.isMhp(token);
+
+      if (isMhp) {
+        print('🔍 [EXPLORE] MHP: Fetching MHP profile for followed tags and communities...');
+        final getMhpProfile = sl<GetMhpProfile>();
+        final profile = await getMhpProfile.call();
+        _applyFollowedFromProfile(profile);
       } else {
-        print('ℹ️ [EXPLORE] No followed_interests found in user profile');
-        setState(() {
-          _followedTagNames.clear();
-        });
+        print('🔍 [EXPLORE] User: Fetching user profile to get followed tags and communities...');
+        final getUserProfile = sl<GetUserProfile>();
+        final profile = await getUserProfile.call();
+        _applyFollowedFromProfile(profile);
       }
     } catch (e) {
-      print('❌ [EXPLORE] Error loading followed tags: $e');
-      // Don't show error to user, just use empty set
+      print('❌ [EXPLORE] Error loading followed tags/communities: $e');
       setState(() {
         _followedTagNames.clear();
+        _followedCommunityIds = [];
       });
     }
+  }
+
+  void _applyFollowedFromProfile(Map<String, dynamic> profile) {
+    setState(() {
+      _followedTagNames.clear();
+      if (profile.containsKey('followed_interests') &&
+          profile['followed_interests'] is List) {
+        final list = profile['followed_interests'] as List;
+        for (var interest in list) {
+          if (interest is Map<String, dynamic> &&
+              interest.containsKey('name') &&
+              interest['name'] is String) {
+            final tagName = (interest['name'] as String).trim();
+            _followedTagNames.add(tagName);
+          }
+        }
+      }
+
+      _followedCommunityIds = [];
+      if (profile.containsKey('followed_communities') &&
+          profile['followed_communities'] is List) {
+        final list = profile['followed_communities'] as List;
+        for (var item in list) {
+          if (item is String) {
+            _followedCommunityIds.add(item);
+          }
+        }
+      }
+    });
   }
   
   bool _isTagFollowed(String tagName) {
@@ -485,6 +496,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   )
                                 : CommunityListHorizontal(
                                     communities: _socialCommunities,
+                                    initialJoinedCommunityIds: _followedCommunityIds,
                                   ),
                       ],
                     ),
@@ -617,6 +629,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   )
                                 : CommunityListHorizontal(
                                     communities: _supportCommunities,
+                                    initialJoinedCommunityIds: _followedCommunityIds,
                                   ),
                       ],
                     ),
