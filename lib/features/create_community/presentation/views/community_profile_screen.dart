@@ -166,9 +166,8 @@ class _CommunitySupportProfileState extends State<CommunitySupportProfile> {
                                 )
                               : DefaultTabController(
                                   length: 2,
-                                  child: ListView(
-                                    controller: scrollController,
-                                    padding: EdgeInsets.zero,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
                                       const SizedBox(height: 15),
                                       CommunityProfileCard(
@@ -212,7 +211,9 @@ class _CommunitySupportProfileState extends State<CommunitySupportProfile> {
                                         onMediaPressed: () {},
                                       ),
                                       const SizedBox(height: 20),
-                                      CommunityPostsTabs(communityId: _community!.id),
+                                      Expanded(
+                                        child: CommunityPostsTabs(communityId: _community!.id),
+                                      ),
                                     ],
                                   ),
                                 ),

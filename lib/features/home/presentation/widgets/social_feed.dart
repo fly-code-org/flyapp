@@ -21,15 +21,14 @@ class SocialFeed extends StatelessWidget {
     if (posts.isEmpty) {
       return const SizedBox.shrink();
     }
-    
-    return ListView.builder(
+
+    return ListView.separated(
       padding: EdgeInsets.zero,
-      // Optimize list rendering with cacheExtent
       cacheExtent: 500.0,
       itemCount: posts.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final post = posts[index];
-        // Use post ID as key if available, otherwise fallback to index
         final postKey = post.id.isNotEmpty ? post.id : '${post.timestamp}_$index';
         return SocialPost(
           key: ValueKey('post_${postKey}_$index'),

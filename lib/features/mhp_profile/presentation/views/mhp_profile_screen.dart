@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/services/share_service.dart';
 import 'package:fly/core/storage/token_storage.dart';
 import 'package:fly/core/utils/jwt_decoder.dart';
 import 'package:fly/core/utils/profile_picture_helper.dart';
@@ -234,8 +235,16 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                                 ),
                                 const SizedBox(width: 20),
                                 ShareProfile(
-                                  onPressed: () {
-                                    Get.toNamed('/invite-members');
+                                  onPressed: () async {
+                                    final token = await TokenStorage.getToken();
+                                    final userId = JwtDecoder.getUserId(token);
+                                    if (userId != null && userId.isNotEmpty) {
+                                      ShareService.shareProfile(
+                                        profileId: userId,
+                                        profileName: _profile?.userName,
+                                        context: context,
+                                      );
+                                    }
                                   },
                                 ),
                               ],

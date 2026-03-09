@@ -159,4 +159,40 @@ class ShareService {
       return false;
     }
   }
+
+  /// Shares an MHP profile with the native share dialog (app URL).
+  static Future<bool> shareProfile({
+    required String profileId,
+    String? profileName,
+    BuildContext? context,
+  }) async {
+    try {
+      final appLink = 'flyapp://profile/$profileId';
+      String shareText = profileName != null && profileName.isNotEmpty
+          ? 'Check out $profileName\'s profile on Fly'
+          : 'Check out this profile on Fly';
+      shareText += '\n\n$appLink';
+
+      Rect? sharePositionOrigin;
+      if (context != null) {
+        try {
+          final RenderBox? box = context.findRenderObject() as RenderBox?;
+          if (box != null) {
+            final Offset position = box.localToGlobal(Offset.zero);
+            final Size size = box.size;
+            sharePositionOrigin = Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
+          }
+        } catch (_) {}
+      }
+
+      final result = await Share.share(
+        shareText,
+        subject: 'Profile on Fly',
+        sharePositionOrigin: sharePositionOrigin,
+      );
+      return result.status == ShareResultStatus.success || result.status == ShareResultStatus.dismissed;
+    } catch (e) {
+      return false;
+    }
+  }
 }

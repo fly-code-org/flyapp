@@ -122,49 +122,41 @@ class _CommunityPostsTabsState extends State<CommunityPostsTabs> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const SizedBox(
-        height: 300,
-        child: Center(
-            child: CircularProgressIndicator(color: Color(0xFF855DFC))),
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF855DFC)),
       );
     }
     if (_error != null) {
-      return SizedBox(
-        height: 200,
-        child: Center(
-          child: Text(_error!,
-              style: const TextStyle(color: Colors.red, fontSize: 12)),
-        ),
+      return Center(
+        child: Text(_error!,
+            style: const TextStyle(color: Colors.red, fontSize: 12)),
       );
     }
     final uiNew = _toUIPosts(_newPosts);
     final uiPopular = _toUIPosts(_popularPosts);
-    return SizedBox(
-      height: 600,
-      child: TabBarView(
-        children: [
-          uiNew.isEmpty
-              ? const Center(
-                  child: Text('No posts yet',
-                      style: TextStyle(
-                          fontFamily: 'Lexend', color: Colors.grey)),
-                )
-              : SocialFeed(
-                  posts: uiNew,
-                  isSocialTab: false,
-                ),
-          uiPopular.isEmpty
-              ? const Center(
-                  child: Text('No posts yet',
-                      style: TextStyle(
-                          fontFamily: 'Lexend', color: Colors.grey)),
-                )
-              : SocialFeed(
-                  posts: uiPopular,
-                  isSocialTab: false,
-                ),
-        ],
-      ),
+    return TabBarView(
+      children: [
+        uiNew.isEmpty
+            ? const Center(
+                child: Text('No posts yet',
+                    style: TextStyle(
+                        fontFamily: 'Lexend', color: Colors.grey)),
+              )
+            : SocialFeed(
+                posts: uiNew,
+                isSocialTab: false,
+              ),
+        uiPopular.isEmpty
+            ? const Center(
+                child: Text('No posts yet',
+                    style: TextStyle(
+                        fontFamily: 'Lexend', color: Colors.grey)),
+              )
+            : SocialFeed(
+                posts: uiPopular,
+                isSocialTab: false,
+              ),
+      ],
     );
   }
 }
