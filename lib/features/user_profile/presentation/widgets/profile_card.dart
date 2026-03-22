@@ -11,12 +11,17 @@ class ProfileAvatar extends StatelessWidget {
   final bool showEditIcon;
   final String? userId; // Optional: for generating avatar if imagePath is empty
 
+  /// Inline avatars (e.g. feed): fixed size, no outer frame; avoids [Center]
+  /// expanding inside [Row] and matches compact list layout.
+  final bool dense;
+
   const ProfileAvatar({
     super.key,
     required this.imagePath,
     this.size = 120,
     this.showEditIcon = false,
     this.userId,
+    this.dense = false,
   });
 
   String _getAvatarUrl() {
@@ -64,10 +69,29 @@ class ProfileAvatar extends StatelessWidget {
     final isLocalAsset = ProfilePictureHelper.isLocalAsset(avatarUrl);
     final isNetworkImage = avatarUrl.startsWith("http");
     final isAssetImage = avatarUrl.startsWith("assets/") || isLocalAsset;
-    
+
     print('🖼️ [AVATAR] Building avatar with URL: $avatarUrl');
-    print('🖼️ [AVATAR] isLocalAsset: $isLocalAsset, isNetworkImage: $isNetworkImage, isAssetImage: $isAssetImage');
-    
+    print(
+      '🖼️ [AVATAR] isLocalAsset: $isLocalAsset, isNetworkImage: $isNetworkImage, isAssetImage: $isAssetImage',
+    );
+
+    final inner = ClipOval(
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: _buildAvatarWidget(
+          avatarUrl,
+          isLocalAsset,
+          isNetworkImage,
+          isAssetImage,
+        ),
+      ),
+    );
+
+    if (dense) {
+      return SizedBox(width: size, height: size, child: inner);
+    }
+
     return Center(
       child: Stack(
         clipBehavior: Clip.none,
@@ -88,9 +112,7 @@ class ProfileAvatar extends StatelessWidget {
                 ],
               ),
             ),
-            child: ClipOval(
-              child: _buildAvatarWidget(avatarUrl, isLocalAsset, isNetworkImage, isAssetImage),
-            ),
+            child: inner,
           ),
           if (showEditIcon)
             Positioned(

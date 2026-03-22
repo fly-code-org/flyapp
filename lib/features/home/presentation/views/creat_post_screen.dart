@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/network/api_client.dart';
+import 'package:fly/core/utils/jwt_decoder.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/features/home/model/post_model.dart';
 
@@ -40,8 +42,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return;
     }
 
+    final token = ApiClient.getAuthToken();
+    final uid =
+        token != null && token.isNotEmpty ? JwtDecoder.getUserId(token) : null;
+
     final newPost = Post(
       id: '', // Will be set by backend when post is created
+      authorId: uid ?? '',
       profileUrl: "https://i.pravatar.cc/150?img=99", // mock
       username: "You",
       timestamp: "just now",

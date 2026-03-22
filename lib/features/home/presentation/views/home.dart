@@ -205,7 +205,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final authorIds = apiPosts.map((p) => p.authorId).toSet().toList();
 
       final userProfileService = UserProfileService();
-      final authorProfiles = await userProfileService.getUserProfiles(authorIds);
+      final authorProfiles = await userProfileService.getUserProfiles(
+        authorIds,
+      );
 
       final authorProfileUrls = <String, String>{};
       final authorUsernames = <String, String>{};

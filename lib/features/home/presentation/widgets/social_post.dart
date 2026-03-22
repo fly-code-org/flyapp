@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:fly/core/utils/profile_picture_helper.dart';
 import 'package:fly/features/home/model/post_model.dart';
+import 'package:fly/features/user_profile/presentation/widgets/profile_card.dart';
 import 'package:fly/core/widgets/safe_svg_icon.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -502,139 +501,19 @@ class _SocialPostState extends State<SocialPost> {
   }
 
   Widget _buildProfilePicture() {
-    final profileUrl = widget.post.profileUrl;
-    
-    // Check if this is a local asset path
-    final isLocalAsset = ProfilePictureHelper.isLocalAsset(profileUrl);
-    
-    Widget profileWidget;
-    
-    if (isLocalAsset) {
-      // Handle local asset profile pictures (e.g., /assets/profile_2.svg)
-      final assetPath = ProfilePictureHelper.getAssetPath(profileUrl);
-      final isSvg = assetPath.toLowerCase().endsWith('.svg');
-      
-      if (isSvg) {
-        profileWidget = SvgPicture.asset(
-          assetPath,
-          width: 40,
-          height: 40,
-          fit: BoxFit.cover,
-          placeholderBuilder: (context) => Container(
-            width: 40,
-            height: 40,
-            color: Colors.grey[300],
-            child: const Icon(Icons.person, color: Colors.grey, size: 20),
-          ),
-          errorBuilder: (context, error, stackTrace) {
-            debugPrint(
-              '⚠️ [SOCIAL POST] Error loading SVG profile picture from assets: $assetPath - $error',
-            );
-            return Container(
-              width: 40,
-              height: 40,
-              color: Colors.grey[300],
-              child: const Icon(Icons.person, color: Colors.grey, size: 20),
-            );
-          },
-          semanticsLabel: 'Profile picture',
-        );
-      } else {
-        // Handle regular image from assets
-        profileWidget = Image.asset(
-          assetPath,
-          width: 40,
-          height: 40,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            print(
-              '⚠️ [SOCIAL POST] Error loading profile image from assets: $assetPath - $error',
-            );
-            return Container(
-              width: 40,
-              height: 40,
-              color: Colors.grey[300],
-              child: const Icon(Icons.person, color: Colors.grey, size: 20),
-            );
-          },
-        );
-      }
-    } else {
-      // Handle network/CDN profile pictures
-      final isSvg = profileUrl.toLowerCase().endsWith('.svg');
-      
-      if (isSvg) {
-        // Handle SVG profile pictures (from CDN) with error handling
-        // Use errorBuilder to catch SVG parsing errors (async errors won't be caught by try-catch)
-        profileWidget = SvgPicture.network(
-          profileUrl,
-          width: 40,
-          height: 40,
-          fit: BoxFit.cover,
-          placeholderBuilder: (context) => Container(
-            width: 40,
-            height: 40,
-            color: Colors.grey[300],
-            child: const Icon(Icons.person, color: Colors.grey, size: 20),
-          ),
-          // errorBuilder catches SVG parsing errors (like "unhandled element")
-          errorBuilder: (context, error, stackTrace) {
-            debugPrint(
-              '⚠️ [SOCIAL POST] Error loading SVG profile picture: $profileUrl - $error',
-            );
-            return Container(
-              width: 40,
-              height: 40,
-              color: Colors.grey[300],
-              child: const Icon(Icons.person, color: Colors.grey, size: 20),
-            );
-          },
-          semanticsLabel: 'Profile picture',
-        );
-      } else {
-        // Handle regular image profile pictures
-        profileWidget = CachedNetworkImage(
-          imageUrl: profileUrl,
-          width: 40,
-          height: 40,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
-            width: 40,
-            height: 40,
-            color: Colors.grey[300],
-            child: const Icon(Icons.person, color: Colors.grey, size: 20),
-          ),
-          errorWidget: (context, url, error) {
-            // Log error for debugging but don't block
-            print(
-              '⚠️ [SOCIAL POST] Error loading profile image: $url - $error',
-            );
-            return Container(
-              width: 40,
-              height: 40,
-              color: Colors.grey[300],
-              child: const Icon(Icons.person, color: Colors.grey, size: 20),
-            );
-          },
-          fadeInDuration: const Duration(milliseconds: 200),
-          fadeOutDuration: const Duration(milliseconds: 100),
-          memCacheWidth: 80,
-          memCacheHeight: 80,
-          // Add timeout to prevent hanging
-          httpHeaders: const {'Cache-Control': 'max-age=3600'},
-        );
-      }
-    }
-    
+    final avatar = ProfileAvatar(
+      imagePath: widget.post.profileUrl,
+      userId: widget.post.authorId.isNotEmpty ? widget.post.authorId : null,
+      size: 40,
+      dense: true,
+    );
     if (widget.isSocialTab) {
-      return ClipOval(child: profileWidget);
-    } else {
-      // Support tab: square avatar
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(2),
-        child: profileWidget,
-      );
+      return avatar;
     }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(2),
+      child: avatar,
+    );
   }
   
   Widget _buildTagIcon(String iconPath) {

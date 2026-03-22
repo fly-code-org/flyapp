@@ -1,6 +1,8 @@
 // post_model.dart
 class Post {
   final String id;
+  /// Post author id (for avatars / fallbacks; same as API `author_id`).
+  final String authorId;
   final String profileUrl;
   final String username;
   final String timestamp;
@@ -33,6 +35,7 @@ class Post {
 
   const Post({
     required this.id,
+    required this.authorId,
     required this.profileUrl,
     required this.username,
     required this.timestamp,
@@ -54,6 +57,7 @@ class Post {
   // Optional: convenience factory to build from map (if you need later)
   factory Post.fromMap(Map<String, dynamic> m) => Post(
     id: m['id'] as String? ?? '',
+    authorId: m['authorId'] as String? ?? '',
     profileUrl: m['profileUrl'] as String? ?? '',
     username: m['username'] as String? ?? '',
     timestamp: m['timestamp'] as String? ?? '',
@@ -74,6 +78,7 @@ class Post {
 
   Map<String, dynamic> toMap() => {
     'id': id,
+    'authorId': authorId,
     'profileUrl': profileUrl,
     'username': username,
     'timestamp': timestamp,
@@ -95,6 +100,7 @@ class Post {
   /// Creates a copy of this Post with updated likes count
   Post copyWith({
     String? id,
+    String? authorId,
     String? profileUrl,
     String? username,
     String? timestamp,
@@ -114,6 +120,7 @@ class Post {
   }) {
     return Post(
       id: id ?? this.id,
+      authorId: authorId ?? this.authorId,
       profileUrl: profileUrl ?? this.profileUrl,
       username: username ?? this.username,
       timestamp: timestamp ?? this.timestamp,
