@@ -1,9 +1,41 @@
 // data/datasources/post_remote_data_source.dart
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/post_model.dart';
 import '../models/create_post_request_model.dart';
+
+/// Parses error bodies from post APIs: `{"msg": ...}`, `{"msg":{"err":"..."}}`,
+/// post middleware `{"error":"..."}`, or raw strings / JSON strings.
+String _messageFromPostApiResponse(dynamic responseData) {
+  dynamic data = responseData;
+  if (data is String && data.trim().isNotEmpty) {
+    try {
+      final decoded = jsonDecode(data);
+      if (decoded != null) {
+        data = decoded;
+      }
+    } catch (_) {
+      return data.length > 300 ? '${data.substring(0, 300)}…' : data;
+    }
+  }
+  if (data is Map) {
+    final msg = data['msg'];
+    if (msg is String) return msg;
+    if (msg is Map) {
+      final err = msg['err'] ?? msg['err: '];
+      if (err != null) return err.toString();
+    }
+    final topErr = data['error'];
+    if (topErr is String && topErr.isNotEmpty) return topErr;
+    if (topErr != null) return topErr.toString();
+    final detail = data['detail'];
+    if (detail != null) return detail.toString();
+  }
+  return 'Request failed';
+}
 
 abstract class PostRemoteDataSource {
   Future<void> createPost(CreatePostRequestModel request);
@@ -20,6 +52,8 @@ abstract class PostRemoteDataSource {
   Future<void> bookmarkPost(String postId);
   Future<void> unbookmarkPost(String postId);
   Future<void> sharePost(String postId);
+
+  Future<void> votePoll(String postId, String optionId);
 }
 
 class PostRemoteDataSourceImpl implements PostRemoteDataSource {
@@ -73,17 +107,7 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
       } else if (e.response != null) {
         final statusCode = e.response!.statusCode;
         final responseData = e.response!.data;
-        String errorMessage = 'Failed to create post';
-        if (responseData is Map<String, dynamic>) {
-          if (responseData.containsKey('msg')) {
-            final msg = responseData['msg'];
-            if (msg is Map && msg.containsKey('err: ')) {
-              errorMessage = msg['err: '] as String;
-            } else if (msg is String) {
-              errorMessage = msg;
-            }
-          }
-        }
+        final errorMessage = _messageFromPostApiResponse(responseData);
         throw ServerException(errorMessage, statusCode: statusCode);
       } else {
         throw NetworkException('Network error: ${e.message}');
@@ -864,16 +888,57 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
       if (e.response != null) {
         final statusCode = e.response!.statusCode;
         final responseData = e.response!.data;
-        String errorMessage = 'Failed to share post';
-        if (responseData is Map<String, dynamic>) {
-          if (responseData.containsKey('msg')) {
-            final msg = responseData['msg'];
-            if (msg is Map && msg.containsKey('err: ')) {
-              errorMessage = msg['err: '] as String;
-            } else if (msg is String) {
-              errorMessage = msg;
-            }
-          }
+        final errorMessage = _messageFromPostApiResponse(responseData);
+        throw ServerException(
+          errorMessage == 'Request failed' ? 'Failed to share post' : errorMessage,
+          statusCode: statusCode,
+        );
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> votePoll(String postId, String optionId) async {
+    try {
+      final response = await client.post(
+        '/post/external/v1/$postId/poll/vote',
+        data: {'option_id': optionId},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+      final code = response.statusCode;
+      if (code != null && code >= 200 && code < 300) {
+        return;
+      }
+      // Dio 5 does not throw for 4xx by default — parse body (msg / error).
+      var errorMessage = _messageFromPostApiResponse(response.data);
+      if (errorMessage == 'Request failed') {
+        errorMessage = code != null ? 'Failed to vote (HTTP $code)' : 'Failed to vote';
+      }
+      throw ServerException(errorMessage, statusCode: code);
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw NetworkException(
+          'Connection timeout. Please check your internet connection.',
+        );
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException(
+          'No internet connection. Please check your network.',
+        );
+      } else if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        var errorMessage = _messageFromPostApiResponse(responseData);
+        if (errorMessage == 'Request failed' && statusCode != null) {
+          errorMessage = 'Failed to vote (HTTP $statusCode)';
         }
         throw ServerException(errorMessage, statusCode: statusCode);
       } else {

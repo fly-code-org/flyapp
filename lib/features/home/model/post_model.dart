@@ -1,4 +1,8 @@
 // post_model.dart
+import 'package:fly/features/home/model/ui_poll.dart';
+
+export 'ui_poll.dart';
+
 class Post {
   final String id;
   /// Post author id (for avatars / fallbacks; same as API `author_id`).
@@ -24,8 +28,11 @@ class Post {
   final int bookmarks;
   final int shares;
 
-  /// Optional poll options (if this post is a poll)
+  /// Optional poll options (legacy; prefer [poll])
   final List<String>? pollOptions;
+
+  /// Full poll when loaded from API (question, options, vote counts).
+  final UiPoll? poll;
   
   /// List of user IDs who have liked this post (for checking if current user has liked)
   final List<String>? likedBy;
@@ -50,6 +57,7 @@ class Post {
     required this.bookmarks,
     this.shares = 0,
     this.pollOptions,
+    this.poll,
     this.likedBy,
     this.bookmarkedBy,
   });
@@ -72,6 +80,7 @@ class Post {
     bookmarks: m['bookmarks'] as int? ?? 0,
     shares: m['share_count'] as int? ?? m['shares'] as int? ?? 0,
     pollOptions: (m['pollOptions'] as List<dynamic>?)?.cast<String>(),
+    poll: null,
     likedBy: (m['likedBy'] as List<dynamic>?)?.cast<String>(),
     bookmarkedBy: (m['bookmarkedBy'] as List<dynamic>?)?.cast<String>(),
   );
@@ -93,6 +102,7 @@ class Post {
     'bookmarks': bookmarks,
     'shares': shares,
     'pollOptions': pollOptions,
+    'poll': poll,
     'likedBy': likedBy,
     'bookmarkedBy': bookmarkedBy,
   };
@@ -115,6 +125,7 @@ class Post {
     int? bookmarks,
     int? shares,
     List<String>? pollOptions,
+    UiPoll? poll,
     List<String>? likedBy,
     List<String>? bookmarkedBy,
   }) {
@@ -135,6 +146,7 @@ class Post {
       bookmarks: bookmarks ?? this.bookmarks,
       shares: shares ?? this.shares,
       pollOptions: pollOptions ?? this.pollOptions,
+      poll: poll ?? this.poll,
       likedBy: likedBy ?? this.likedBy,
       bookmarkedBy: bookmarkedBy ?? this.bookmarkedBy,
     );

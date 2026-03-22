@@ -46,12 +46,17 @@ class _SocialPostState extends State<SocialPost> {
   UserProfileController? _userProfileController;
   late int _commentCount; // Local comment count for optimistic updates
 
+  /// Local poll state after voting (optimistic) until feed refresh.
+  UiPoll? _pollLocal;
+  bool _voteSubmitting = false;
+
   @override
   void initState() {
     super.initState();
 
     // Initialize local comment count from widget.post.comments
     _commentCount = widget.post.comments;
+    _pollLocal = widget.post.poll;
     
     // Check if current user has already liked this post
     isLiked = _checkIfUserLikedPost();
@@ -111,6 +116,205 @@ class _SocialPostState extends State<SocialPost> {
     if (oldWidget.post.comments != widget.post.comments) {
       _commentCount = widget.post.comments;
     }
+    if (oldWidget.post.id == widget.post.id &&
+        oldWidget.post.poll != widget.post.poll) {
+      _pollLocal = widget.post.poll;
+    }
+  }
+
+  UiPoll? get _effectivePoll => _pollLocal ?? widget.post.poll;
+
+  bool _pollExpired(UiPoll p) =>
+      DateTime.now().toUtc().isAfter(p.expiresAt.toUtc());
+
+  bool _userHasVotedOnPoll(UiPoll p, String? userId) {
+    if (userId == null || userId.isEmpty) return false;
+    for (final o in p.options) {
+      if (o.votes.contains(userId)) return true;
+    }
+    return false;
+  }
+
+  UiPoll _applyVote(UiPoll p, String userId, String optionId) {
+    return UiPoll(
+      question: p.question,
+      expiresAt: p.expiresAt,
+      options: p.options
+          .map(
+            (o) => o.optionId == optionId
+                ? o.copyWith(votes: [...o.votes, userId])
+                : o,
+          )
+          .toList(),
+    );
+  }
+
+  Future<void> _onPollOptionTap(String optionId) async {
+    if (_voteSubmitting) return;
+    final poll = _effectivePoll;
+    if (poll == null) return;
+
+    final token = ApiClient.getAuthToken();
+    final userId =
+        token != null && token.isNotEmpty ? JwtDecoder.getUserId(token) : null;
+    if (userId == null || userId.isEmpty) return;
+    if (_pollExpired(poll) || _userHasVotedOnPoll(poll, userId)) return;
+
+    setState(() => _voteSubmitting = true);
+    final ok = await _postController.votePollEntry(widget.post.id, optionId);
+    if (!mounted) return;
+    setState(() => _voteSubmitting = false);
+
+    if (ok) {
+      setState(() {
+        _pollLocal = _applyVote(poll, userId, optionId);
+      });
+      widget.onRefreshNeeded?.call();
+    } else {
+      final msg = _postController.errorMessage.value;
+      if (msg.isNotEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), duration: const Duration(seconds: 3)),
+        );
+      }
+    }
+  }
+
+  Widget _buildPollSection(UiPoll poll) {
+    final token = ApiClient.getAuthToken();
+    final userId =
+        token != null && token.isNotEmpty ? JwtDecoder.getUserId(token) : null;
+    final expired = _pollExpired(poll);
+    final voted = _userHasVotedOnPoll(poll, userId);
+    final canVote =
+        !expired && !voted && userId != null && userId.isNotEmpty;
+
+    var totalVotes = 0;
+    for (final o in poll.options) {
+      totalVotes += o.votes.length;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300),
+          color: Colors.grey.shade50,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.poll, size: 20, color: Colors.grey.shade700),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    poll.question,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (expired)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'Poll ended',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ),
+            if (!expired && voted)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'You voted',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ),
+            const SizedBox(height: 10),
+            ...poll.options.map((o) {
+              final n = o.votes.length;
+              final pct =
+                  totalVotes == 0 ? 0.0 : (100.0 * n / totalVotes);
+              final isMine =
+                  userId != null && o.votes.contains(userId);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: canVote && !_voteSubmitting
+                        ? () => _onPollOptionTap(o.optionId)
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 6,
+                        horizontal: 4,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  o.text,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: isMine
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${pct.toStringAsFixed(0)}%',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: totalVotes == 0 ? 0 : n / totalVotes,
+                              minHeight: 8,
+                              backgroundColor: Colors.grey.shade200,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                isMine
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Colors.grey.shade400,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+            if (totalVotes > 0)
+              Text(
+                '$totalVotes vote${totalVotes == 1 ? '' : 's'}',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -691,46 +895,49 @@ class _SocialPostState extends State<SocialPost> {
           ),
 
           // Post Text
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: LayoutBuilder(
-              builder: (context, size) {
-                final textSpan = TextSpan(
-                  text: widget.post.text,
-                  style: const TextStyle(color: Colors.black, fontSize: 14),
-                );
-                final textPainter = TextPainter(
-                  text: textSpan,
-                  maxLines: isTextExpanded ? null : 2,
-                  textDirection: TextDirection.ltr,
-                )..layout(maxWidth: size.maxWidth);
-                final isOverflow = textPainter.didExceedMaxLines;
+          if (widget.post.text.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: LayoutBuilder(
+                builder: (context, size) {
+                  final textSpan = TextSpan(
+                    text: widget.post.text,
+                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                  );
+                  final textPainter = TextPainter(
+                    text: textSpan,
+                    maxLines: isTextExpanded ? null : 2,
+                    textDirection: TextDirection.ltr,
+                  )..layout(maxWidth: size.maxWidth);
+                  final isOverflow = textPainter.didExceedMaxLines;
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.post.text,
-                      maxLines: isTextExpanded ? null : 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (isOverflow)
-                      GestureDetector(
-                        onTap: () =>
-                            setState(() => isTextExpanded = !isTextExpanded),
-                        child: Text(
-                          isTextExpanded ? "See less" : "See more",
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w600,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.post.text,
+                        maxLines: isTextExpanded ? null : 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (isOverflow)
+                        GestureDetector(
+                          onTap: () =>
+                              setState(() => isTextExpanded = !isTextExpanded),
+                          child: Text(
+                            isTextExpanded ? "See less" : "See more",
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                );
-              },
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
+
+          if (_effectivePoll != null) _buildPollSection(_effectivePoll!),
 
           // Media
           if (widget.post.isVideo && _videoController != null)

@@ -16,6 +16,7 @@ import '../../domain/usecases/unlike_post.dart';
 import '../../domain/usecases/bookmark_post.dart';
 import '../../domain/usecases/unbookmark_post.dart';
 import '../../domain/usecases/share_post.dart';
+import '../../domain/usecases/vote_poll.dart';
 import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 
 class PostController extends GetxController {
@@ -31,6 +32,7 @@ class PostController extends GetxController {
   final BookmarkPost bookmarkPost;
   final UnbookmarkPost unbookmarkPost;
   final SharePost sharePost;
+  final VotePoll votePoll;
 
   PostController({
     CreatePost? createPost,
@@ -45,6 +47,7 @@ class PostController extends GetxController {
     BookmarkPost? bookmarkPost,
     UnbookmarkPost? unbookmarkPost,
     SharePost? sharePost,
+    VotePoll? votePoll,
   })  : createPost = createPost ?? sl<CreatePost>(),
         getPostsByAuthor = getPostsByAuthor ?? sl<GetPostsByAuthor>(),
         getPostsByCommunity = getPostsByCommunity ?? sl<GetPostsByCommunity>(),
@@ -56,7 +59,8 @@ class PostController extends GetxController {
         unlikePost = unlikePost ?? sl<UnlikePost>(),
         bookmarkPost = bookmarkPost ?? sl<BookmarkPost>(),
         unbookmarkPost = unbookmarkPost ?? sl<UnbookmarkPost>(),
-        sharePost = sharePost ?? sl<SharePost>();
+        sharePost = sharePost ?? sl<SharePost>(),
+        votePoll = votePoll ?? sl<VotePoll>();
 
   // State
   var isLoading = false.obs;
@@ -457,6 +461,24 @@ class PostController extends GetxController {
       print('❌ [POST CONTROLLER] Unexpected error: $e');
       print('❌ [POST CONTROLLER] Stack trace: $stackTrace');
       errorMessage.value = 'Failed to unbookmark post: ${e.toString()}';
+      return false;
+    }
+  }
+
+  /// Vote on a poll option (server enforces one vote per user per post).
+  Future<bool> votePollEntry(String postId, String optionId) async {
+    try {
+      await votePoll.call(postId, optionId);
+      _updateStreakSilently();
+      return true;
+    } on ServerException catch (e) {
+      errorMessage.value = e.message;
+      return false;
+    } on NetworkException catch (e) {
+      errorMessage.value = e.message;
+      return false;
+    } catch (e) {
+      errorMessage.value = 'Failed to vote: ${e.toString()}';
       return false;
     }
   }

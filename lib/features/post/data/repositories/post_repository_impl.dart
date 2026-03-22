@@ -98,6 +98,11 @@ class PostRepositoryImpl implements PostRepository {
   Future<void> sharePost(String postId) async {
     await remoteDataSource.sharePost(postId);
   }
+
+  @override
+  Future<void> votePoll(String postId, String optionId) async {
+    await remoteDataSource.votePoll(postId, optionId);
+  }
 }
 
 

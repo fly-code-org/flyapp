@@ -17,6 +17,9 @@ abstract class PostRepository {
   Future<void> bookmarkPost(String postId);
   Future<void> unbookmarkPost(String postId);
   Future<void> sharePost(String postId);
+
+  /// Cast a single vote on a poll option (backend enforces one vote per user per post).
+  Future<void> votePoll(String postId, String optionId);
 }
 
 

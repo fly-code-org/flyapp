@@ -56,10 +56,24 @@ class PostConverter {
       timestamp = 'now';
     }
     
-    // Extract poll options if exists
-    final pollOptions = apiPost.poll?.options
-        .map((o) => o.text)
-        .toList();
+    // Poll (question + options + vote lists for UI)
+    final pollOptions = apiPost.poll?.options.map((o) => o.text).toList();
+    ui_model.UiPoll? uiPoll;
+    if (apiPost.poll != null) {
+      uiPoll = ui_model.UiPoll(
+        question: apiPost.poll!.question,
+        expiresAt: apiPost.poll!.expiresAt,
+        options: apiPost.poll!.options
+            .map(
+              (o) => ui_model.UiPollOption(
+                optionId: o.optionId,
+                text: o.text,
+                votes: List<String>.from(o.votes),
+              ),
+            )
+            .toList(),
+      );
+    }
     
     // Use fallbacks if profileUrl or username are null or empty
     // For profileUrl, process through ProfilePictureHelper to handle asset paths vs CDN URLs
@@ -90,6 +104,7 @@ class PostConverter {
       views: apiPost.viewCount,
       bookmarks: apiPost.bookmarkCount,
       pollOptions: pollOptions,
+      poll: uiPoll,
       likedBy: apiPost.likes, // Pass the list of user IDs who liked the post
       bookmarkedBy: apiPost.bookmarkedBy, // Pass the list of user IDs who bookmarked the post
     );

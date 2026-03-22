@@ -82,6 +82,7 @@ import '../../features/post/domain/usecases/unlike_post.dart';
 import '../../features/post/domain/usecases/bookmark_post.dart';
 import '../../features/post/domain/usecases/unbookmark_post.dart';
 import '../../features/post/domain/usecases/share_post.dart';
+import '../../features/post/domain/usecases/vote_poll.dart';
 import '../../features/post/presentation/controllers/post_controller.dart';
 import '../../features/post/data/datasources/comment_remote_data_source.dart';
 import '../../features/post/data/repositories/comment_repository_impl.dart';
@@ -297,6 +298,7 @@ Future<void> init() async {
       bookmarkPost: sl(),
       unbookmarkPost: sl(),
       sharePost: sl(),
+      votePoll: sl(),
     ),
   );
 
@@ -313,6 +315,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => BookmarkPost(sl()));
   sl.registerLazySingleton(() => UnbookmarkPost(sl()));
   sl.registerLazySingleton(() => SharePost(sl()));
+  sl.registerLazySingleton(() => VotePoll(sl()));
 
   // Repository
   sl.registerLazySingleton<PostRepository>(() => PostRepositoryImpl(sl()));

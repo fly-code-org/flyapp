@@ -262,11 +262,13 @@ class PollModel extends Poll {
   }
 
   Map<String, dynamic> toJson() {
+    // RFC3339 with timezone — Go's json.Unmarshal into time.Time rejects
+    // local ISO strings without offset (e.g. ...T15:30:00.000).
     return {
       'question': question,
       'options': options.map((o) => (o as PollOptionModel).toJson()).toList(),
-      'expires_at': expiresAt.toIso8601String(),
-      'created_at': createdAt.toIso8601String(),
+      'expires_at': expiresAt.toUtc().toIso8601String(),
+      'created_at': createdAt.toUtc().toIso8601String(),
     };
   }
 }
