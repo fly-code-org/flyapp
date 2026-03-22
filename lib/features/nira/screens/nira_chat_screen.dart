@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/nira/widgets/intro_section.dart';
 import 'package:fly/features/nira/widgets/nira_chat_ui.dart';
@@ -22,7 +23,11 @@ class NiraChatScreen extends StatelessWidget {
             controller.clearChat(); // reset to intro instead of leaving
             return false; // don't exit yet
           }
-          return true; // allow normal pop when intro screen is shown
+          if (Navigator.of(context).canPop()) {
+            return true;
+          }
+          popOrGoHome(context);
+          return false;
         },
         child: Scaffold(
           backgroundColor: Colors.white,
@@ -40,7 +45,7 @@ class NiraChatScreen extends StatelessWidget {
                   if (controller.isChatStarted.value) {
                     controller.clearChat(); // go back to intro
                   } else {
-                    Navigator.pop(context); // exit screen
+                    popOrGoHome(context);
                   }
                 },
               ),

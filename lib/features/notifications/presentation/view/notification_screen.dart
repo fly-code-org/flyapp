@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:get/get.dart';
 import '../../controller/notification_controller.dart';
@@ -14,7 +15,8 @@ class NotificationScreen extends StatelessWidget {
     // Fetch mock data (simulate API)
     controller.fetchNotifications();
 
-    return Scaffold(
+    return SafePopScope(
+      child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
@@ -25,7 +27,7 @@ class NotificationScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Get.back(),
+          onPressed: () => popOrGoHome(context),
         ),
         actions: [
           PopupMenuButton<String>(
@@ -79,6 +81,7 @@ class NotificationScreen extends StatelessWidget {
           ),
         );
       }),
+    ),
     );
   }
 }

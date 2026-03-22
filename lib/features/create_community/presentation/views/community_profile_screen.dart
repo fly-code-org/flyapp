@@ -8,6 +8,7 @@ import 'package:fly/features/community/domain/entities/community.dart';
 import 'package:fly/features/community/domain/usecases/get_community_by_id.dart';
 import 'package:fly/features/community/domain/usecases/get_my_community.dart';
 import 'package:fly/features/interests/data/models/tag_icon_mapping.dart';
+import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/create_community/presentation/widgets/community_menu.dart';
 import 'package:fly/features/create_community/presentation/widgets/community_posts_tabs.dart';
@@ -87,7 +88,8 @@ class _CommunitySupportProfileState extends State<CommunitySupportProfile> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafePopScope(
+      child: Scaffold(
       backgroundColor: Colors.black,
       bottomNavigationBar: const BottomNavBar(currentIndex: 3),
       body: Stack(
@@ -100,7 +102,7 @@ class _CommunitySupportProfileState extends State<CommunitySupportProfile> {
             left: 16,
             child: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-              onPressed: () => Get.back(),
+              onPressed: () => popOrGoHome(context),
             ),
           ),
           Positioned(
@@ -223,6 +225,7 @@ class _CommunitySupportProfileState extends State<CommunitySupportProfile> {
           ),
         ],
       ),
+    ),
     );
   }
 }

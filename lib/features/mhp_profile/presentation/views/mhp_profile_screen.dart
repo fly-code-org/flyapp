@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/core/services/share_service.dart';
 import 'package:fly/core/storage/token_storage.dart';
 import 'package:fly/core/utils/jwt_decoder.dart';
@@ -245,7 +246,8 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafePopScope(
+      child: Scaffold(
       backgroundColor: Colors.black,
 
       // Bottom nav bar
@@ -270,7 +272,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                   color: Colors.white,
                   size: 28,
                 ),
-                onPressed: () => Get.back(),
+                onPressed: () => popOrGoHome(context),
               ),
             ),
 
@@ -445,6 +447,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
           ),
         ],
       ),
+    ),
     );
   }
 }

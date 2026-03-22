@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/features/create_community/controller/user_profile_controller.dart';
 import 'package:fly/features/create_community/presentation/views/create_support_community.dart';
 import 'package:fly/features/create_community/presentation/widgets/profile_picture_picker.dart';
@@ -11,7 +12,8 @@ class CommunityGuidelineScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final CommunityController controller = Get.put(CommunityController());
 
-    return Scaffold(
+    return SafePopScope(
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
@@ -26,7 +28,7 @@ class CommunityGuidelineScreen extends StatelessWidget {
                     color: Colors.black,
                     size: 28,
                   ),
-                  onPressed: () => Get.back(),
+                  onPressed: () => popOrGoHome(context),
                 ),
                 const SizedBox(width: 8),
                 const Text(
@@ -223,7 +225,7 @@ class CommunityGuidelineScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: () {
                           // TODO: Handle save
-                          Get.back(); // for now, just go back
+                          popOrGoHome(context); // for now, just go back
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.black,
@@ -245,6 +247,7 @@ class CommunityGuidelineScreen extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

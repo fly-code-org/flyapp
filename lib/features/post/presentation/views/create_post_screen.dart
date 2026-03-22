@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/utils/safe_navigation.dart';
 import '../../../../core/services/s3_upload_service.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/utils/jwt_decoder.dart';
@@ -598,7 +599,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         );
 
         // Navigate back
-        Navigator.pop(context, true); // Return true to indicate success
+        popOrGoHome(context, result: true); // Return true to indicate success when possible
       } else if (mounted) {
         // Show error message
         final errorMsg = _postController.errorMessage.value.isNotEmpty
@@ -634,9 +635,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafePopScope(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text("Create Post"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => popOrGoHome(context),
+        ),
         actions: [
           // Only observe loading state, not rebuild on every keystroke
           Obx(() {
@@ -1082,6 +1088,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

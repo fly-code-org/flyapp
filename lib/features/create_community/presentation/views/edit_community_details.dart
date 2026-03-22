@@ -7,6 +7,7 @@ import 'package:fly/features/create_community/presentation/views/create_support_
 import 'package:fly/features/create_community/presentation/widgets/profile_picture_picker.dart';
 import 'package:fly/features/interests/data/server_tag_catalog.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
+import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:get/get.dart';
 
 class EditCommunityScreen extends StatefulWidget {
@@ -119,7 +120,7 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
       });
       if (!mounted) return;
       Get.snackbar('Saved', 'Community updated', backgroundColor: Colors.green, colorText: Colors.white);
-      Get.back();
+      popOrGoHome(context);
     } catch (e) {
       if (mounted) {
         Get.snackbar('Error', e.toString(), backgroundColor: Colors.red, colorText: Colors.white);
@@ -131,7 +132,8 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafePopScope(
+      child: Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
@@ -139,7 +141,7 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
           children: [
             Row(
               children: [
-                IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black, size: 28), onPressed: () => Get.back()),
+                IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black, size: 28), onPressed: () => popOrGoHome(context)),
                 const SizedBox(width: 8),
                 const Text("Manage Community", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.black)),
               ],
@@ -236,6 +238,7 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

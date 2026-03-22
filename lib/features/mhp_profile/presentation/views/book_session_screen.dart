@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:get/get.dart';
 
 const _purple = Color(0xFF855DFC);
@@ -28,12 +29,13 @@ class _BookSessionScreenState extends State<BookSessionScreen> {
     final monthYear = '${_selectedDate.day} ${_monthName(_selectedDate.month)}, ${_selectedDate.year}';
     final weekDates = _weekDates(_selectedDate);
 
-    return Scaffold(
+    return SafePopScope(
+      child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => popOrGoHome(context)),
         title: const Text('Connect', style: TextStyle(fontFamily: 'Lexend', color: Colors.black, fontWeight: FontWeight.w600)),
       ),
       body: SingleChildScrollView(
@@ -144,6 +146,7 @@ class _BookSessionScreenState extends State<BookSessionScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

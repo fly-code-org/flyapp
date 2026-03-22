@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/features/home/model/post_model.dart';
 
 class CreatePostScreen extends StatefulWidget {
@@ -35,7 +36,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         _selectedImages.isEmpty &&
         _selectedVideo == null &&
         _pollOptions.isEmpty) {
-      Navigator.pop(context);
+      popOrGoHome(context);
       return;
     }
 
@@ -57,14 +58,19 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       pollOptions: _pollOptions.where((e) => e.trim().isNotEmpty).toList(),
     );
 
-    Navigator.pop(context, newPost); // return new Post to caller
+    popOrGoHome(context, result: newPost); // return new Post to caller when possible
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafePopScope(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text("Create Post"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => popOrGoHome(context),
+        ),
         actions: [
           TextButton(
             onPressed: _submitPost,
@@ -263,6 +269,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

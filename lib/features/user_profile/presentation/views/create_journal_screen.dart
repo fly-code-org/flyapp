@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../journal/presentation/controllers/journal_controller.dart';
 import '../../../journal/domain/entities/journal.dart';
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/utils/safe_navigation.dart';
 
 class CreateJournalScreen extends StatefulWidget {
   final Journal? journal; // Optional journal for editing
@@ -182,10 +183,14 @@ class _CreateJournalScreenState extends State<CreateJournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafePopScope(
+      child: Scaffold(
       backgroundColor: selectedColor,
       appBar: AppBar(
-        leading: const BackButton(),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => popOrGoHome(context),
+        ),
         backgroundColor: selectedColor,
         title: Row(
           children: [
@@ -283,6 +288,7 @@ class _CreateJournalScreenState extends State<CreateJournalScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fly/core/utils/safe_navigation.dart';
 
 class UserSettingsScreen extends StatelessWidget {
   const UserSettingsScreen({super.key});
@@ -19,7 +20,8 @@ class UserSettingsScreen extends StatelessWidget {
       'Logout',
     ];
 
-    return Scaffold(
+    return SafePopScope(
+      child: Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -28,7 +30,7 @@ class UserSettingsScreen extends StatelessWidget {
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: InkWell(
-            onTap: () => Navigator.pop(context),
+            onTap: () => popOrGoHome(context),
             borderRadius: BorderRadius.circular(30),
             child: Container(
               decoration: const BoxDecoration(
@@ -94,6 +96,7 @@ class UserSettingsScreen extends StatelessWidget {
           );
         },
       ),
+    ),
     );
   }
 }
