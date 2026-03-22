@@ -82,5 +82,18 @@ class JwtDecoder {
 
     return payload['user_name'] as String?;
   }
+
+  /// Returns true if JWT [exp] is in the past. Missing [exp] is treated as not expired.
+  static bool isExpired(String? token) {
+    if (token == null || token.isEmpty) return true;
+    final payload = decodePayload(token);
+    if (payload == null) return true;
+    final exp = payload['exp'];
+    if (exp == null) return false;
+    final sec = exp is int ? exp : int.tryParse(exp.toString());
+    if (sec == null) return false;
+    final expiry = DateTime.fromMillisecondsSinceEpoch(sec * 1000, isUtc: true);
+    return DateTime.now().toUtc().isAfter(expiry);
+  }
 }
 

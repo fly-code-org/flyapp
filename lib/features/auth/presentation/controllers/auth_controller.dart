@@ -14,6 +14,7 @@ import '../../../profile_creation/domain/usecases/create_user_profile.dart';
 import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 import '../../../../core/di/service_locator.dart' as sl;
 import '../../../../features/interests/data/server_tag_catalog.dart';
+import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 
 class AuthController extends GetxController {
   final SignupUser signupUser;
@@ -316,6 +317,11 @@ class AuthController extends GetxController {
     ApiClient.clearAuthToken();
     try {
       sl.sl<ServerTagCatalog>().invalidate();
+    } catch (_) {}
+    try {
+      if (Get.isRegistered<UserProfileController>()) {
+        Get.find<UserProfileController>().clearCache();
+      }
     } catch (_) {}
     token.value = '';
     message.value = '';

@@ -11,23 +11,58 @@ class Onboarding extends StatefulWidget {
 
 class _OnboardingState extends State<Onboarding> {
   double dragPosition = 0.0;
-  bool showTitle = false;  
+  bool showTitle = false;
   bool showSheet = false;
-  bool showLoginScreen = false; 
+  bool showLoginScreen = false;
+
+  late final DraggableScrollableController _sheetController;
 
   @override
   void initState() {
     super.initState();
+    _sheetController = DraggableScrollableController();
     Future.delayed(const Duration(seconds: 3), () {
+      if (!mounted) return;
       setState(() {
         showTitle = true;
       });
       Future.delayed(const Duration(seconds: 3), () {
+        if (!mounted) return;
         setState(() {
           showSheet = true;
         });
+        _scheduleSheetOpenAnimation();
       });
     });
+  }
+
+  /// After the sheet is in the tree, animate it up so the user does not need
+  /// to drag the handle manually.
+  void _scheduleSheetOpenAnimation() {
+    var attempts = 0;
+    void tryAnimate() {
+      if (!mounted) return;
+      if (_sheetController.isAttached) {
+        _sheetController.animateTo(
+          0.8,
+          duration: const Duration(milliseconds: 550),
+          curve: Curves.easeOutCubic,
+        );
+        return;
+      }
+      attempts++;
+      if (attempts < 40) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => tryAnimate());
+      }
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => tryAnimate());
+  }
+
+  @override
+  void dispose() {
+    _sheetController.dispose();
+    super.dispose();
   }
 
   @override
@@ -78,6 +113,7 @@ class _OnboardingState extends State<Onboarding> {
             ),
           if (showSheet)
             DraggableScrollableSheet(
+              controller: _sheetController,
               initialChildSize: 0.1,
               minChildSize: 0.1,
               maxChildSize: 0.8,

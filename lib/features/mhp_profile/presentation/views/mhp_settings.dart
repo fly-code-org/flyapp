@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fly/core/utils/app_logout.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 
 class MhpSettingsScreen extends StatelessWidget {
@@ -89,9 +90,11 @@ class MhpSettingsScreen extends StatelessWidget {
               color: Colors.black54,
             ),
             onTap: () {
+              if (option == 'Logout') {
+                confirmAndLogout(context);
+                return;
+              }
               // TODO: Navigate to respective screen
-              // Example:
-              // Navigator.push(context, MaterialPageRoute(builder: (_) => EditProfileScreen()));
             },
           );
         },
