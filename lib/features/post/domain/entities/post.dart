@@ -6,6 +6,7 @@ class Post extends Equatable {
   final String authorId;
   final String? communityId; // Optional, can be derived from tag
   final int tagId; // Required: tag ID for the post
+  final String? tagType; // "social" or "support" (from feed API only)
   final String? content;
   final List<Attachment> attachments;
   final Poll? poll;
@@ -23,6 +24,7 @@ class Post extends Equatable {
     required this.authorId,
     this.communityId,
     required this.tagId,
+    this.tagType,
     this.content,
     this.attachments = const [],
     this.poll,
@@ -42,6 +44,7 @@ class Post extends Equatable {
         authorId,
         communityId,
         tagId,
+        tagType,
         content,
         attachments,
         poll,

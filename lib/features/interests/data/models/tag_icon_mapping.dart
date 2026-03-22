@@ -1,5 +1,8 @@
 // data/models/tag_icon_mapping.dart
 // Mapping of tag names to SVG asset paths
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/interests/data/server_tag_catalog.dart';
+
 import 'tag_mapping.dart';
 
 class TagIconMapping {
@@ -46,9 +49,12 @@ class TagIconMapping {
   /// Get SVG asset path by tag ID
   /// Returns the asset path if found, or empty string if not found
   static String getTagIconPathById(int tagId) {
-    // Import tag_mapping to get tag name by ID
-    final tagName = TagMapping.getTagNameById(tagId);
-    if (tagName != null) {
+    String? tagName;
+    if (sl.isRegistered<ServerTagCatalog>()) {
+      tagName = sl<ServerTagCatalog>().displayNameForTagId(tagId);
+    }
+    tagName ??= TagMapping.getTagNameById(tagId);
+    if (tagName != null && tagName.isNotEmpty) {
       return getTagIconPath(tagName);
     }
     return '';

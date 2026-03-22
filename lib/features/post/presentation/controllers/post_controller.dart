@@ -9,6 +9,7 @@ import '../../domain/usecases/get_posts_by_author.dart';
 import '../../domain/usecases/get_posts_by_community.dart';
 import '../../domain/usecases/get_posts_by_tag.dart';
 import '../../domain/usecases/get_posts_by_ids.dart';
+import '../../domain/usecases/get_feed_posts.dart';
 import '../../domain/usecases/delete_post.dart';
 import '../../domain/usecases/like_post.dart';
 import '../../domain/usecases/unlike_post.dart';
@@ -23,6 +24,7 @@ class PostController extends GetxController {
   final GetPostsByCommunity getPostsByCommunity;
   final GetPostsByTag getPostsByTag;
   final GetPostsByIds getPostsByIds;
+  final GetFeedPosts getFeedPosts;
   final DeletePost deletePost;
   final LikePost likePost;
   final UnlikePost unlikePost;
@@ -36,6 +38,7 @@ class PostController extends GetxController {
     GetPostsByCommunity? getPostsByCommunity,
     GetPostsByTag? getPostsByTag,
     GetPostsByIds? getPostsByIds,
+    GetFeedPosts? getFeedPosts,
     DeletePost? deletePost,
     LikePost? likePost,
     UnlikePost? unlikePost,
@@ -47,6 +50,7 @@ class PostController extends GetxController {
         getPostsByCommunity = getPostsByCommunity ?? sl<GetPostsByCommunity>(),
         getPostsByTag = getPostsByTag ?? sl<GetPostsByTag>(),
         getPostsByIds = getPostsByIds ?? sl<GetPostsByIds>(),
+        getFeedPosts = getFeedPosts ?? sl<GetFeedPosts>(),
         deletePost = deletePost ?? sl<DeletePost>(),
         likePost = likePost ?? sl<LikePost>(),
         unlikePost = unlikePost ?? sl<UnlikePost>(),
@@ -113,6 +117,33 @@ class PostController extends GetxController {
       errorMessage.value = 'Failed to create post: ${e.toString()}';
       isLoading.value = false;
       return false;
+    }
+  }
+
+  // Get feed posts (for home). typeFilter: "social" | "support" | null (all).
+  Future<void> fetchFeed({int limit = 20, int offset = 0, String? typeFilter, bool forceRefresh = false}) async {
+    if (isLoading.value && !forceRefresh) return;
+
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      final fetchedPosts = await getFeedPosts.call(limit: limit, offset: offset, typeFilter: typeFilter);
+
+      posts.value = fetchedPosts;
+      isLoading.value = false;
+    } on ServerException catch (e) {
+      errorMessage.value = e.message;
+      isLoading.value = false;
+      rethrow;
+    } on NetworkException catch (e) {
+      errorMessage.value = e.message;
+      isLoading.value = false;
+      rethrow;
+    } catch (e) {
+      errorMessage.value = 'Failed to fetch feed: ${e.toString()}';
+      isLoading.value = false;
+      rethrow;
     }
   }
 

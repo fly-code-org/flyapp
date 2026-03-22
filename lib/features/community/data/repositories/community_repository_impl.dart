@@ -1,5 +1,6 @@
 // data/repositories/community_repository_impl.dart
 import '../../domain/entities/community.dart';
+import '../../domain/entities/explore_search_result.dart';
 import '../../domain/repositories/community_repository.dart';
 import '../datasources/community_remote_data_source.dart';
 import '../models/community_model.dart';
@@ -112,6 +113,11 @@ class CommunityRepositoryImpl implements CommunityRepository {
   @override
   Future<void> unfollowCommunity(String communityId) async {
     await remoteDataSource.unfollowCommunity(communityId);
+  }
+
+  @override
+  Future<ExploreSearchResult> exploreSearch(String q) async {
+    return remoteDataSource.exploreSearch(q);
   }
 }
 

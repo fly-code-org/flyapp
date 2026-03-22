@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/nira/widgets/intro_section.dart';
 import 'package:fly/features/nira/widgets/nira_chat_ui.dart';
@@ -6,7 +7,7 @@ import 'package:get/get.dart';
 import '../controller/nira_chat_controller.dart';
 
 class NiraChatScreen extends StatelessWidget {
-  final NiraChatController controller = Get.put(NiraChatController());
+  final NiraChatController controller = Get.put(sl<NiraChatController>());
   final TextEditingController inputController = TextEditingController();
   final int _currentIndex = 2; // NIRA tab index
 

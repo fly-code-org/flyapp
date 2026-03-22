@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class ChatInputBar extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
+  final bool isSending;
 
   const ChatInputBar({
     super.key,
     required this.controller,
     required this.onSend,
+    this.isSending = false,
   });
 
   @override
@@ -38,11 +40,20 @@ class ChatInputBar extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: 8),
-          IconButton(
-            icon: Icon(Icons.send, color: Colors.blue),
-            onPressed: onSend,
-          ),
+          const SizedBox(width: 8),
+          isSending
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.send, color: Colors.blue),
+                  onPressed: onSend,
+                ),
         ],
       ),
     );

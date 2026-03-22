@@ -3,7 +3,7 @@ import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/features/community/domain/usecases/follow_community.dart';
 import 'package:fly/features/community/domain/usecases/get_communities_by_type.dart';
 import 'package:fly/features/community/domain/usecases/unfollow_community.dart';
-import 'package:fly/features/interests/data/models/tag_mapping.dart';
+import 'package:fly/features/interests/data/server_tag_catalog.dart';
 import 'package:fly/features/interests/domain/entities/interests.dart';
 import 'package:fly/features/interests/domain/usecases/follow_tag.dart';
 import 'package:fly/features/interests/domain/usecases/save_interests.dart';
@@ -49,6 +49,16 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
     final args = Get.arguments ?? {};
     role = (args['role'] ?? 'user').toLowerCase();
     print("GetInterestScreen role: $role");
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    try {
+      await sl<ServerTagCatalog>().ensureLoaded();
+    } catch (e) {
+      print('⚠️ [GET_INTEREST] Tag catalog: $e');
+    }
+    if (!mounted) return;
     _loadCommunities();
     _loadFollowedTags();
   }
@@ -167,7 +177,8 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
 
   Future<void> _toggleTag(String tagName) async {
     final wasSelected = _selectedTags.contains(tagName);
-    final tagId = TagMapping.getTagId(tagName);
+    await sl<ServerTagCatalog>().ensureLoaded();
+    final tagId = sl<ServerTagCatalog>().tagIdForName(tagName);
     
     if (tagId == null) {
       print('⚠️ Tag ID not found for: $tagName');
@@ -351,10 +362,11 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
     });
 
     try {
+      await sl<ServerTagCatalog>().ensureLoaded();
       // Convert selected tags to Tag entities with IDs
       final tags = _selectedTags
           .map((tagName) {
-            final tagId = TagMapping.getTagId(tagName);
+            final tagId = sl<ServerTagCatalog>().tagIdForName(tagName);
             if (tagId == null) {
               print('Warning: Tag ID not found for "$tagName"');
               return null;

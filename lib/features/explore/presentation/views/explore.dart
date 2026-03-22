@@ -1,16 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/utils/profile_picture_helper.dart';
+import 'package:fly/features/community/domain/entities/explore_search_result.dart';
+import 'package:fly/features/community/domain/usecases/search_explore.dart';
+import 'package:fly/routes/app_routes.dart';
+import 'package:get/get.dart';
 import 'package:fly/features/community/domain/usecases/get_communities_by_type.dart';
 import 'package:fly/features/explore/presentation/widgets/community_list_horizontal.dart';
 import 'package:fly/features/explore/presentation/widgets/conversation_card.dart';
 import 'package:fly/features/explore/presentation/widgets/search_bar.dart';
 import 'package:fly/features/explore/presentation/widgets/social_tag_h.dart';
-import 'package:fly/features/interests/data/models/tag_mapping.dart';
+import 'package:fly/features/interests/data/server_tag_catalog.dart';
 import 'package:fly/features/interests/domain/usecases/follow_tag.dart';
 import 'package:fly/features/interests/domain/usecases/unfollow_tag.dart';
 import 'package:fly/core/storage/token_storage.dart';
 import 'package:fly/core/utils/jwt_decoder.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
+import 'package:fly/features/community/domain/entities/community.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_mhp_profile.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_user_profile.dart';
 
@@ -22,6 +30,10 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
+  late final TextEditingController _searchController;
+  Timer? _searchDebounce;
+  bool _searchLoading = false;
+  ExploreSearchResult? _searchResults;
 
   // ✅ Use asset paths instead of network URLs
   final List<Map<String, String>> socialTags = [
@@ -80,7 +92,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<Map<String, dynamic>> _socialCommunities = [];
   List<Map<String, dynamic>> _supportCommunities = [];
   
-  // Track followed tags by tag name (more reliable than ID since IDs overlap between social/support)
+  // Track followed tags by tag name (more reliable than ID for display)
   final Set<String> _followedTagNames = {};
   // Track followed community IDs from user profile (so MHP/user sees correct "joined" state)
   List<String> _followedCommunityIds = [];
@@ -88,10 +100,256 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
+    _startExploreLoads();
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {});
+    _searchDebounce?.cancel();
+    final q = value.trim();
+    if (q.isEmpty) {
+      setState(() {
+        _searchResults = null;
+        _searchLoading = false;
+      });
+      return;
+    }
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      _runExploreSearch(q);
+    });
+  }
+
+  Future<void> _runExploreSearch(String q) async {
+    if (!mounted) return;
+    setState(() => _searchLoading = true);
+    try {
+      final r = await sl<SearchExplore>().call(q);
+      if (!mounted) return;
+      setState(() {
+        _searchResults = r;
+        _searchLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _searchLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Search failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  String _cdnLogoUrl(String logoPath) {
+    if (logoPath.isEmpty) {
+      return 'https://cdn.flyapp.in/assets/community-demo.png';
+    }
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
+      return logoPath;
+    }
+    final path =
+        logoPath.startsWith('/') ? logoPath.substring(1) : logoPath;
+    return 'https://cdn.flyapp.in/$path';
+  }
+
+  Widget _buildSearchResultsPanel() {
+    if (_searchController.text.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+    if (_searchLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Center(
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    final r = _searchResults;
+    if (r == null) return const SizedBox.shrink();
+
+    final social = r.communities
+        .where((c) => c.type.toLowerCase() == 'social')
+        .toList();
+    final support = r.communities
+        .where((c) => c.type.toLowerCase() == 'support')
+        .toList();
+
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 360),
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (r.mhps.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  'MHPs',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              ...r.mhps.map((m) {
+                final pic = m.picturePath.isNotEmpty
+                    ? ProfilePictureHelper.getProfilePictureUrl(m.picturePath)
+                    : '';
+                return ListTile(
+                  dense: true,
+                  leading: CircleAvatar(
+                    radius: 22,
+                    backgroundImage: pic.isNotEmpty
+                        ? NetworkImage(pic)
+                        : null,
+                    child: pic.isEmpty
+                        ? const Icon(Icons.person, color: Colors.white)
+                        : null,
+                  ),
+                  title: Text(
+                    m.displayName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  subtitle: Text(
+                    m.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  onTap: () {
+                    Get.toNamed(
+                      AppRoutes.mhpProfile,
+                      arguments: {'userId': m.userId},
+                    );
+                  },
+                );
+              }),
+            ],
+            if (social.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: Text(
+                  'Social communities',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              ...social.map((c) {
+                return ListTile(
+                  dense: true,
+                  leading: CircleAvatar(
+                    radius: 20,
+                    backgroundImage:
+                        NetworkImage(_cdnLogoUrl(c.logoPath)),
+                  ),
+                  title: Text(
+                    c.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                  onTap: () {
+                    Get.toNamed(
+                      AppRoutes.CommunitySupportProfile,
+                      arguments: {'communityId': c.id},
+                    );
+                  },
+                );
+              }),
+            ],
+            if (support.isNotEmpty) ...[
+              const Padding(
+                padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: Text(
+                  'Support communities',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              ...support.map((c) {
+                return ListTile(
+                  dense: true,
+                  leading: CircleAvatar(
+                    radius: 20,
+                    backgroundImage:
+                        NetworkImage(_cdnLogoUrl(c.logoPath)),
+                  ),
+                  title: Text(
+                    c.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                  onTap: () {
+                    Get.toNamed(
+                      AppRoutes.CommunitySupportProfile,
+                      arguments: {'communityId': c.id},
+                    );
+                  },
+                );
+              }),
+            ],
+            if (r.mhps.isEmpty && r.communities.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'No matches yet',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  Future<void> _startExploreLoads() async {
+    try {
+      await sl<ServerTagCatalog>().ensureLoaded();
+    } catch (e) {
+      print('⚠️ [EXPLORE] Could not load tag catalog: $e');
+    }
+    if (!mounted) return;
     _loadSocialCommunities();
     _loadSupportCommunities();
     _loadFollowedTags();
   }
+
+  int? _resolveTagId(String tagName) =>
+      sl<ServerTagCatalog>().tagIdForName(tagName.trim());
   
   Future<void> _loadFollowedTags() async {
     try {
@@ -172,7 +430,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
   
   Future<void> _toggleTag(String tagName) async {
-    final tagId = TagMapping.getTagId(tagName);
+    final tagId = _resolveTagId(tagName);
     if (tagId == null) {
       print('⚠️ Tag ID not found for: $tagName');
       return;
@@ -304,6 +562,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  /// "Top Support Square by MHP's" must list only MHP-created support communities.
+  /// Also dedupes by id in case the API returns the same community more than once.
+  List<Community> _uniqueMhpSupportCommunities(List<Community> raw) {
+    final seen = <String>{};
+    final out = <Community>[];
+    for (final c in raw) {
+      if (c.createdByType.toLowerCase() != 'mhp') continue;
+      final key = c.id.isNotEmpty ? c.id : '${c.createdBy}_${c.tagId}';
+      if (seen.add(key)) out.add(c);
+    }
+    return out;
+  }
+
   Future<void> _loadSupportCommunities() async {
     setState(() {
       _isLoadingSupportCommunities = true;
@@ -312,9 +583,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
     try {
       final getCommunitiesByType = sl<GetCommunitiesByType>();
       final communities = await getCommunitiesByType.call('support');
+      final mhpSupport = _uniqueMhpSupportCommunities(communities);
 
       setState(() {
-        _supportCommunities = communities.map((community) {
+        _supportCommunities = mhpSupport.map((community) {
           // Convert relative path to full CDN URL
           String profilePicUrl;
           if (community.logoPath.isEmpty) {
@@ -405,17 +677,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 const SizedBox(width: 20),
                 Expanded(
                   child: CustomSearchBar(
-                    controller: TextEditingController(),
-                    onChanged: (value) {
-                      print("Searching: $value");
-                    },
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
                   ),
                 ),
                 const SizedBox(width: 20),
               ],
             ),
 
-            const SizedBox(height: 20),
+            _buildSearchResultsPanel(),
+
+            const SizedBox(height: 12),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),

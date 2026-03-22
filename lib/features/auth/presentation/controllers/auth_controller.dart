@@ -13,6 +13,7 @@ import '../../domain/usecases/signup_user.dart';
 import '../../../profile_creation/domain/usecases/create_user_profile.dart';
 import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 import '../../../../core/di/service_locator.dart' as sl;
+import '../../../../features/interests/data/server_tag_catalog.dart';
 
 class AuthController extends GetxController {
   final SignupUser signupUser;
@@ -65,6 +66,7 @@ class AuthController extends GetxController {
 
       token.value = response.token;
       message.value = response.message;
+      _prefetchTagCatalog();
     } on ServerException catch (e) {
       errorMessage.value = e.message;
     } on NetworkException catch (e) {
@@ -73,6 +75,14 @@ class AuthController extends GetxController {
       errorMessage.value = e.toString();
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> _prefetchTagCatalog() async {
+    try {
+      await sl.sl<ServerTagCatalog>().refresh();
+    } catch (e) {
+      print('⚠️ [AUTH] Tag catalog prefetch: $e');
     }
   }
 
@@ -115,8 +125,9 @@ class AuthController extends GetxController {
       token.value = response.token;
       message.value = response.message;
 
-      // Prefetch user profile after successful login
+      // Prefetch user profile and canonical tag ids after successful login
       _prefetchUserProfile();
+      _prefetchTagCatalog();
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
       errorMessage.value = e.message;
@@ -282,6 +293,7 @@ class AuthController extends GetxController {
         // Prefetch user profile after successful login (only if not a new user)
         _prefetchUserProfile();
       }
+      _prefetchTagCatalog();
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
       errorMessage.value = e.message;
@@ -302,6 +314,9 @@ class AuthController extends GetxController {
     await TokenStorage.deleteToken();
     await UserVerificationStorage.clearVerificationStatus();
     ApiClient.clearAuthToken();
+    try {
+      sl.sl<ServerTagCatalog>().invalidate();
+    } catch (_) {}
     token.value = '';
     message.value = '';
     errorMessage.value = '';

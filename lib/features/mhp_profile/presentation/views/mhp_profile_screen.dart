@@ -11,8 +11,10 @@ import 'package:fly/features/mhp_profile/presentation/widgets/mhp_squares.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/profile_card.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/share_profile.dart';
 import 'package:fly/features/community/domain/entities/community.dart';
+import 'package:fly/features/community/domain/usecases/get_community_by_id.dart';
 import 'package:fly/features/community/domain/usecases/get_my_community.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_mhp_profile.dart';
+import 'package:fly/features/profile_creation/domain/usecases/get_mhp_profile_by_user_id.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/about_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/connect_tab_content.dart';
@@ -34,6 +36,11 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
   Community? _community;
   bool _loading = true;
   String? _error;
+  /// When non-null, we are viewing another MHP (Explore / deep link).
+  String? _viewedUserId;
+
+  bool get _viewingOther =>
+      _viewedUserId != null && _viewedUserId!.trim().isNotEmpty;
 
   void _onTabSelected(int index) {
     setState(() => _selectedTab = index);
@@ -80,6 +87,43 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
     });
     try {
       final token = await TokenStorage.getToken();
+      final selfId = JwtDecoder.getUserId(token);
+      if (_viewedUserId != null &&
+          selfId != null &&
+          _viewedUserId == selfId) {
+        if (mounted) {
+          setState(() => _viewedUserId = null);
+        }
+      }
+      final viewed = _viewedUserId;
+      if (viewed != null && viewed.trim().isNotEmpty) {
+        final getById = sl<GetMhpProfileByUserId>();
+        final profileMap = await getById.call(viewed.trim());
+        Community? community;
+        final cidRaw = profileMap['community_id'];
+        String? cidStr;
+        if (cidRaw is String && cidRaw.isNotEmpty) {
+          cidStr = cidRaw;
+        }
+        if (cidStr != null && cidStr.isNotEmpty) {
+          try {
+            community = await sl<GetCommunityById>().call(cidStr);
+          } catch (_) {
+            community = null;
+          }
+        }
+        final dn = (profileMap['display_name'] as String?)?.trim();
+        final fallbackName = dn != null && dn.isNotEmpty ? dn : 'MHP';
+        if (!mounted) return;
+        setState(() {
+          _profile =
+              MhpProfileDisplay.fromMap(profileMap, userName: fallbackName);
+          _community = community;
+          _loading = false;
+        });
+        return;
+      }
+
       final userName = JwtDecoder.getUserName(token) ?? '';
       final getMhpProfile = sl<GetMhpProfile>();
       final getMyCommunity = sl<GetMyCommunity>();
@@ -113,12 +157,74 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
       case 0:
         return MhpActivitiesSection(communityId: _community?.id ?? _profile?.communityId);
       case 1:
+        if (_viewingOther) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: ListView(
+              children: [
+                Text(
+                  'Who I am',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _profile?.whoIAm ?? '',
+                  style: const TextStyle(fontFamily: 'Lexend'),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'How I can help',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _profile?.howICanHelp ?? '',
+                  style: const TextStyle(fontFamily: 'Lexend'),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'What to expect',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _profile?.whatToExpect ?? '',
+                  style: const TextStyle(fontFamily: 'Lexend'),
+                ),
+              ],
+            ),
+          );
+        }
         return MHPProfileEditScreen(
           initialWhoIAm: _profile?.whoIAm,
           initialHowICanHelp: _profile?.howICanHelp,
           initialWhatToExpect: _profile?.whatToExpect,
         );
       case 2:
+        if (_viewingOther) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                'Availability is managed on this professional’s account.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontFamily: 'Lexend'),
+              ),
+            ),
+          );
+        }
         return ConnectTabContent(
           availableSlots: _profile?.availableSlots ?? [],
           appointments: _profile?.appointments ?? [],
@@ -132,6 +238,8 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
   @override
   void initState() {
     super.initState();
+    final args = Get.arguments as Map<String, dynamic>?;
+    _viewedUserId = args?['userId'] as String?;
     _loadProfile();
   }
 
@@ -141,7 +249,8 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
       backgroundColor: Colors.black,
 
       // Bottom nav bar
-      bottomNavigationBar: BottomNavBar(currentIndex: 4),
+      bottomNavigationBar:
+          _viewingOther ? null : BottomNavBar(currentIndex: 4),
 
       body: Stack(
         clipBehavior: Clip.none,
@@ -151,21 +260,36 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
             child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
           ),
 
-          // Settings (hamburger menu)
-          Positioned(
-            top: 50,
-            right: 16,
-            child: IconButton(
-              icon: const Icon(
-                Icons.settings_suggest_outlined,
-                color: Colors.white,
-                size: 30,
+          if (_viewingOther)
+            Positioned(
+              top: 50,
+              left: 8,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                onPressed: () => Get.back(),
               ),
-              onPressed: () {
-                Get.toNamed(AppRoutes.UserSettingsScreen);
-              },
             ),
-          ),
+
+          // Settings (hamburger menu)
+          if (!_viewingOther)
+            Positioned(
+              top: 50,
+              right: 16,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.settings_suggest_outlined,
+                  color: Colors.white,
+                  size: 30,
+                ),
+                onPressed: () {
+                  Get.toNamed(AppRoutes.UserSettingsScreen);
+                },
+              ),
+            ),
 
           // Draggable white sheet
           DraggableScrollableSheet(
@@ -228,19 +352,27 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                EditProfileButton(
-                                  onPressed: () {
-                                    Get.toNamed('/edit-community');
-                                  },
-                                ),
-                                const SizedBox(width: 20),
+                                if (!_viewingOther) ...[
+                                  EditProfileButton(
+                                    onPressed: () {
+                                      Get.toNamed('/edit-community');
+                                    },
+                                  ),
+                                  const SizedBox(width: 20),
+                                ],
                                 ShareProfile(
                                   onPressed: () async {
-                                    final token = await TokenStorage.getToken();
-                                    final userId = JwtDecoder.getUserId(token);
-                                    if (userId != null && userId.isNotEmpty) {
+                                    String? shareId;
+                                    if (_viewingOther) {
+                                      shareId = _viewedUserId;
+                                    } else {
+                                      final token = await TokenStorage.getToken();
+                                      shareId = JwtDecoder.getUserId(token);
+                                    }
+                                    if (!mounted) return;
+                                    if (shareId != null && shareId.isNotEmpty) {
                                       ShareService.shareProfile(
-                                        profileId: userId,
+                                        profileId: shareId,
                                         profileName: _profile?.userName,
                                         context: context,
                                       );

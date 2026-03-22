@@ -75,14 +75,16 @@ class _NiraChatUIState extends State<NiraChatUI> {
             );
           }),
         ),
-        ChatInputBar(
+        Obx(() => ChatInputBar(
           controller: widget.inputController,
           onSend: () {
             final text = widget.inputController.text;
+            if (text.trim().isEmpty) return;
             widget.controller.sendMessage(text);
             widget.inputController.clear();
           },
-        ),
+          isSending: widget.controller.isSending.value,
+        )),
       ],
     );
   }

@@ -23,6 +23,11 @@ class MhpProfileRepositoryImpl implements MhpProfileRepository {
   }
 
   @override
+  Future<Map<String, dynamic>> getMhpProfileByUserId(String userId) async {
+    return remoteDataSource.getMhpProfileByUserId(userId);
+  }
+
+  @override
   Future<Map<String, dynamic>> getAboutMe() async {
     return remoteDataSource.getAboutMe();
   }

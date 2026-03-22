@@ -2,6 +2,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
+import '../../domain/entities/explore_search_result.dart';
 import '../models/community_model.dart';
 
 abstract class CommunityRemoteDataSource {
@@ -19,6 +20,8 @@ abstract class CommunityRemoteDataSource {
   Future<List<Map<String, dynamic>>> getTags();
   Future<void> followCommunity(String communityId);
   Future<void> unfollowCommunity(String communityId);
+  /// GET /community/external/v1/explore/search?q=
+  Future<ExploreSearchResult> exploreSearch(String q);
 }
 
 class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
@@ -325,6 +328,75 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
     } catch (e) {
       throw ServerException('Unexpected error: ${e.toString()}');
     }
+  }
+
+  @override
+  Future<ExploreSearchResult> exploreSearch(String q) async {
+    try {
+      final response = await client.get(
+        '/community/external/v1/explore/search',
+        queryParameters: {'q': q},
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode != 200 || response.data is! Map<String, dynamic>) {
+        throw ServerException(
+          'Unexpected status: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+      final root = response.data as Map<String, dynamic>;
+      final data = root['data'];
+      if (data is! Map<String, dynamic>) {
+        return const ExploreSearchResult(mhps: [], communities: []);
+      }
+      final mhpsRaw = data['mhps'];
+      final commRaw = data['communities'];
+      final mhps = <ExploreSearchMhp>[];
+      if (mhpsRaw is List) {
+        for (final e in mhpsRaw) {
+          if (e is! Map) continue;
+          final m = Map<String, dynamic>.from(e);
+          final uid = _stringField(m['user_id']);
+          if (uid.isEmpty) continue;
+          mhps.add(ExploreSearchMhp(
+            userId: uid,
+            displayName: _stringField(m['display_name']),
+            subtitle: _stringField(m['subtitle']),
+            picturePath: _stringField(m['picture_path']),
+          ));
+        }
+      }
+      final communities = <ExploreSearchCommunity>[];
+      if (commRaw is List) {
+        for (final e in commRaw) {
+          if (e is! Map) continue;
+          final m = Map<String, dynamic>.from(e);
+          final id = _stringField(m['id']);
+          if (id.isEmpty) continue;
+          communities.add(ExploreSearchCommunity(
+            id: id,
+            name: _stringField(m['name']),
+            type: _stringField(m['type']),
+            logoPath: _stringField(m['logo_path']),
+          ));
+        }
+      }
+      return ExploreSearchResult(mhps: mhps, communities: communities);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException(
+          'Explore search failed',
+          statusCode: e.response!.statusCode,
+        );
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  static String _stringField(dynamic v) {
+    if (v == null) return '';
+    if (v is String) return v;
+    return v.toString();
   }
 }
 

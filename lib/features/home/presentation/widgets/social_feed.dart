@@ -7,6 +7,8 @@ class SocialFeed extends StatelessWidget {
   final List<Post> posts;
   final Function(Post)? onPostUpdated;
   final VoidCallback? onRefreshNeeded;
+  final ScrollController? scrollController;
+  final bool isLoadingMore;
 
   const SocialFeed({
     super.key,
@@ -14,6 +16,8 @@ class SocialFeed extends StatelessWidget {
     this.isSocialTab = true,
     this.onPostUpdated,
     this.onRefreshNeeded,
+    this.scrollController,
+    this.isLoadingMore = false,
   });
 
   @override
@@ -23,11 +27,18 @@ class SocialFeed extends StatelessWidget {
     }
 
     return ListView.separated(
+      controller: scrollController,
       padding: EdgeInsets.zero,
       cacheExtent: 500.0,
-      itemCount: posts.length,
+      itemCount: posts.length + (isLoadingMore ? 1 : 0),
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
+        if (isLoadingMore && index == posts.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
         final post = posts[index];
         final postKey = post.id.isNotEmpty ? post.id : '${post.timestamp}_$index';
         return SocialPost(

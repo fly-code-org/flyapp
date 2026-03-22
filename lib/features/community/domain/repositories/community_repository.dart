@@ -1,5 +1,6 @@
 // domain/repositories/community_repository.dart
 import '../entities/community.dart';
+import '../entities/explore_search_result.dart';
 
 abstract class CommunityRepository {
   Future<void> createCommunity({
@@ -21,4 +22,5 @@ abstract class CommunityRepository {
   Future<List<Map<String, dynamic>>> getTags();
   Future<void> followCommunity(String communityId);
   Future<void> unfollowCommunity(String communityId);
+  Future<ExploreSearchResult> exploreSearch(String q);
 }

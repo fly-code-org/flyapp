@@ -629,8 +629,9 @@ class _SocialPostState extends State<SocialPost> {
     if (widget.isSocialTab) {
       return ClipOval(child: profileWidget);
     } else {
+      // Support tab: square avatar
       return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(2),
         child: profileWidget,
       );
     }

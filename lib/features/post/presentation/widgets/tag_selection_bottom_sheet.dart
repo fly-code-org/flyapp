@@ -1,9 +1,10 @@
 // presentation/widgets/tag_selection_bottom_sheet.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../../../features/interests/data/models/tag_mapping.dart';
+import 'package:fly/core/di/service_locator.dart';
+import '../../../../features/interests/data/server_tag_catalog.dart';
 
-class TagSelectionBottomSheet extends StatelessWidget {
+class TagSelectionBottomSheet extends StatefulWidget {
   final Function(String tagName, int tagId) onTagSelected;
 
   const TagSelectionBottomSheet({
@@ -84,12 +85,42 @@ class TagSelectionBottomSheet extends StatelessWidget {
   ];
 
   @override
+  State<TagSelectionBottomSheet> createState() =>
+      _TagSelectionBottomSheetState();
+}
+
+class _TagSelectionBottomSheetState extends State<TagSelectionBottomSheet> {
+  bool _catalogReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCatalog();
+  }
+
+  Future<void> _loadCatalog() async {
+    try {
+      await sl<ServerTagCatalog>().ensureLoaded();
+    } catch (_) {}
+    if (mounted) setState(() => _catalogReady = true);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
+        if (!_catalogReady) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
         return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -97,7 +128,6 @@ class TagSelectionBottomSheet extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Handle bar
               Container(
                 margin: const EdgeInsets.only(top: 12, bottom: 8),
                 width: 40,
@@ -107,8 +137,6 @@ class TagSelectionBottomSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-
-              // Title
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Text(
@@ -119,10 +147,7 @@ class TagSelectionBottomSheet extends StatelessWidget {
                   ),
                 ),
               ),
-
               const Divider(),
-
-              // Scrollable content
               Expanded(
                 child: SingleChildScrollView(
                   controller: scrollController,
@@ -130,7 +155,6 @@ class TagSelectionBottomSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Social Tags Section
                       const Text(
                         'Social Tags',
                         style: TextStyle(
@@ -140,9 +164,10 @@ class TagSelectionBottomSheet extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ...socialTags.map((tag) {
+                      ...TagSelectionBottomSheet.socialTags.map((tag) {
                         final tagName = tag['name'] as String;
-                        final tagId = TagMapping.getTagId(tagName);
+                        final tagId =
+                            sl<ServerTagCatalog>().tagIdForName(tagName);
                         if (tagId == null) return const SizedBox.shrink();
 
                         return _buildTagTile(
@@ -153,10 +178,7 @@ class TagSelectionBottomSheet extends StatelessWidget {
                           isSvg: true,
                         );
                       }),
-
                       const SizedBox(height: 24),
-
-                      // Support Tags Section
                       const Text(
                         'Support Tags',
                         style: TextStyle(
@@ -166,9 +188,10 @@ class TagSelectionBottomSheet extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ...supportTags.map((tag) {
+                      ...TagSelectionBottomSheet.supportTags.map((tag) {
                         final tagName = tag['name'] as String;
-                        final tagId = TagMapping.getTagId(tagName);
+                        final tagId =
+                            sl<ServerTagCatalog>().tagIdForName(tagName);
                         if (tagId == null) return const SizedBox.shrink();
 
                         return _buildTagTile(
@@ -199,7 +222,7 @@ class TagSelectionBottomSheet extends StatelessWidget {
   }) {
     return InkWell(
       onTap: () {
-        onTagSelected(tagName, tagId);
+        widget.onTagSelected(tagName, tagId);
         Navigator.pop(context);
       },
       child: Container(
@@ -211,7 +234,6 @@ class TagSelectionBottomSheet extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Icon
             Container(
               width: 40,
               height: 40,
@@ -233,7 +255,6 @@ class TagSelectionBottomSheet extends StatelessWidget {
                     ),
             ),
             const SizedBox(width: 16),
-            // Tag name
             Expanded(
               child: Text(
                 tagName,
@@ -243,7 +264,6 @@ class TagSelectionBottomSheet extends StatelessWidget {
                 ),
               ),
             ),
-            // Arrow
             const Icon(
               Icons.chevron_right,
               color: Colors.grey,
@@ -254,4 +274,3 @@ class TagSelectionBottomSheet extends StatelessWidget {
     );
   }
 }
-

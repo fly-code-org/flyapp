@@ -1,4 +1,6 @@
 // core/network/api_client.dart
+// All backend API calls (auth, post, nira, community, journal, etc.) use this client.
+// Base URL comes from AppConfig.backendApiBaseUrl (API_BASE_URL in .env or default).
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import '../config/config.dart';
@@ -16,9 +18,7 @@ class ApiClient {
 
     _dio = Dio(
       BaseOptions(
-        baseUrl: AppConfig.apiBaseUrl.isNotEmpty
-            ? AppConfig.apiBaseUrl
-            : 'https://api.flyapp.in',
+        baseUrl: AppConfig.backendApiBaseUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
         sendTimeout: const Duration(seconds: 30),
@@ -85,9 +85,7 @@ class ApiClient {
       // Fallback initialization if initialize() wasn't called
       _dio = Dio(
         BaseOptions(
-          baseUrl: AppConfig.apiBaseUrl.isNotEmpty
-              ? AppConfig.apiBaseUrl
-              : 'https://api.flyapp.in',
+          baseUrl: AppConfig.backendApiBaseUrl,
           connectTimeout: const Duration(seconds: 30),
           receiveTimeout: const Duration(seconds: 30),
           sendTimeout: const Duration(seconds: 30),

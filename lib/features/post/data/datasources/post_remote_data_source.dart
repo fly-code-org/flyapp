@@ -12,6 +12,8 @@ abstract class PostRemoteDataSource {
   Future<List<PostModel>> getPostsByCommunityId(String communityId);
   Future<List<PostModel>> getPostsByTagId(int tagId);
   Future<List<PostModel>> getPostsByIds(List<String> postIds);
+  /// Feed: posts for home. typeFilter: "social" | "support" | null (all).
+  Future<List<PostModel>> getFeed({int limit = 20, int offset = 0, String? typeFilter});
   Future<void> deletePost(String postId);
   Future<void> likePost(String postId);
   Future<void> unlikePost(String postId);
@@ -175,6 +177,92 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
         final statusCode = e.response!.statusCode;
         final responseData = e.response!.data;
         String errorMessage = 'Failed to fetch posts';
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('msg')) {
+            final msg = responseData['msg'];
+            if (msg is Map && msg.containsKey('err: ')) {
+              errorMessage = msg['err: '] as String;
+            } else if (msg is String) {
+              errorMessage = msg;
+            }
+          }
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
+      } else {
+        throw NetworkException('Network error: ${e.message}');
+      }
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<List<PostModel>> getFeed({int limit = 20, int offset = 0, String? typeFilter}) async {
+    try {
+      final queryParams = <String, dynamic>{'limit': limit, 'offset': offset};
+      if (typeFilter != null && typeFilter.isNotEmpty) {
+        queryParams['type'] = typeFilter;
+      }
+
+      final response = await client.get(
+        '/post/external/v1/feed',
+        queryParameters: queryParams,
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data is! Map<String, dynamic>) {
+          throw ServerException(
+            'Invalid response format: Expected Map but got ${response.data.runtimeType}',
+          );
+        }
+
+        final responseData = response.data as Map<String, dynamic>;
+        final postsList = <PostModel>[];
+
+        if (responseData.containsKey('data')) {
+          final data = responseData['data'];
+
+          if (data == null) {
+            return [];
+          } else if (data is List) {
+            for (var item in data) {
+              if (item is Map<String, dynamic>) {
+                try {
+                  postsList.add(PostModel.fromJson(item));
+                } catch (_) {
+                  continue;
+                }
+              }
+            }
+          }
+        }
+
+        return postsList;
+      } else {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw NetworkException(
+          'Connection timeout. Please check your internet connection.',
+        );
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw NetworkException(
+          'No internet connection. Please check your network.',
+        );
+      } else if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        String errorMessage = 'Failed to fetch feed';
         if (responseData is Map<String, dynamic>) {
           if (responseData.containsKey('msg')) {
             final msg = responseData['msg'];

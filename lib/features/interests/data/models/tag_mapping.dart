@@ -1,6 +1,8 @@
 // data/models/tag_mapping.dart
-// Mapping of tag names to tag IDs
-// TODO: Update with actual tag IDs from database
+// Fallback tag name → tag_id when the app has not loaded GET /community/external/v1/tag yet.
+// Authoritative IDs live in MongoDB `tags` (e.g. support "Grief & Heartbreak" uses tag_id 3).
+// Social vs support used overlapping small integers here; follow/unfollow must use the real
+// tag_id from the server (see Explore `_serverTagIdByName` / `_resolveTagId`).
 class TagMapping {
   // Social tags mapping
   // Note: "Art & Creatives" in TagMapping matches "Art & Creativity" in explore.dart
@@ -18,11 +20,11 @@ class TagMapping {
     'Movies & Shows': 9,
   };
 
-  // Support tags mapping
+  // Support tags mapping (must match MongoDB `tags.tag_id` per name)
   static const Map<String, int> supportTags = {
     'Emotional Healing': 1, // This should match the DB - Emotional Healing has tag_id: 1
     'Anxiety & Stress': 2,
-    'Grief & Heartbreak': 3,
+    'Grief & Heartbreak': 3, // MongoDB: type support, tag_id 3
     'Work & Career': 4,
     'Trauma': 5,
     'Family & Relations': 6,

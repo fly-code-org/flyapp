@@ -24,6 +24,7 @@ import '../../features/profile_creation/domain/usecases/create_mhp_profile.dart'
 import '../../features/profile_creation/domain/usecases/create_user_profile.dart';
 import '../../features/profile_creation/domain/usecases/get_about_me.dart';
 import '../../features/profile_creation/domain/usecases/get_mhp_profile.dart';
+import '../../features/profile_creation/domain/usecases/get_mhp_profile_by_user_id.dart';
 import '../../features/profile_creation/domain/usecases/update_about_me.dart';
 import '../../features/profile_creation/domain/usecases/update_connect.dart';
 import '../../features/profile_creation/domain/usecases/get_user_profile.dart';
@@ -45,6 +46,7 @@ import '../../features/interests/domain/repositories/interests_repository.dart';
 import '../../features/interests/domain/usecases/follow_tag.dart';
 import '../../features/interests/domain/usecases/save_interests.dart';
 import '../../features/interests/domain/usecases/unfollow_tag.dart';
+import '../../features/interests/data/server_tag_catalog.dart';
 import '../../features/community/data/datasources/community_remote_data_source.dart';
 import '../../features/community/data/repositories/community_repository_impl.dart';
 import '../../features/community/domain/repositories/community_repository.dart';
@@ -53,6 +55,7 @@ import '../../features/community/domain/usecases/follow_community.dart';
 import '../../features/community/domain/usecases/get_communities_by_type.dart';
 import '../../features/community/domain/usecases/get_community_by_id.dart';
 import '../../features/community/domain/usecases/get_my_community.dart';
+import '../../features/community/domain/usecases/search_explore.dart';
 import '../../features/community/domain/usecases/get_tags.dart';
 import '../../features/community/domain/usecases/update_community.dart';
 import '../../features/community/domain/usecases/unfollow_community.dart';
@@ -69,6 +72,7 @@ import '../../features/post/data/repositories/post_repository_impl.dart';
 import '../../features/post/domain/repositories/post_repository.dart';
 import '../../features/post/domain/usecases/create_post.dart';
 import '../../features/post/domain/usecases/get_posts_by_author.dart';
+import '../../features/post/domain/usecases/get_feed_posts.dart';
 import '../../features/post/domain/usecases/get_posts_by_community.dart';
 import '../../features/post/domain/usecases/get_posts_by_tag.dart';
 import '../../features/post/domain/usecases/get_posts_by_ids.dart';
@@ -86,6 +90,14 @@ import '../../features/post/domain/usecases/get_comments_by_post_id.dart';
 import '../../features/post/domain/usecases/get_replies_by_comment_id.dart';
 import '../../features/post/domain/usecases/create_comment.dart';
 import '../../features/post/presentation/controllers/comment_controller.dart';
+import '../../features/nira/controller/nira_chat_controller.dart';
+import '../../features/nira/data/datasources/nira_remote_data_source.dart';
+import '../../features/nira/data/repositories/nira_repository_impl.dart';
+import '../../features/nira/domain/repositories/nira_repository.dart';
+import '../../features/nira/domain/usecases/send_nira_message.dart';
+import '../../features/nira/domain/usecases/get_nira_messages.dart';
+import '../../features/nira/domain/usecases/get_active_nira_session.dart';
+import '../../features/nira/domain/usecases/end_nira_session.dart';
 import '../services/s3_upload_service.dart';
 
 final sl = GetIt.instance;
@@ -99,7 +111,8 @@ Future<void> init() async {
       signupUser: sl(),
       loginUser: sl(),
       googleLoginUser: sl(),
-      createUserProfile: sl(), // Optional: for auto-saving profile on Google signup
+      createUserProfile:
+          sl(), // Optional: for auto-saving profile on Google signup
     ),
   );
 
@@ -140,6 +153,7 @@ Future<void> init() async {
   // Use cases
   sl.registerLazySingleton(() => CreateMhpProfile(sl()));
   sl.registerLazySingleton(() => GetMhpProfile(sl()));
+  sl.registerLazySingleton(() => GetMhpProfileByUserId(sl()));
   sl.registerLazySingleton(() => GetAboutMe(sl()));
   sl.registerLazySingleton(() => UpdateAboutMe(sl()));
   sl.registerLazySingleton(() => UpdateConnect(sl()));
@@ -177,9 +191,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetPresignedUrl(sl()));
 
   // Repository
-  sl.registerLazySingleton<UploadRepository>(
-    () => UploadRepositoryImpl(sl()),
-  );
+  sl.registerLazySingleton<UploadRepository>(() => UploadRepositoryImpl(sl()));
 
   // Data sources
   sl.registerLazySingleton<UploadRemoteDataSource>(
@@ -189,10 +201,7 @@ Future<void> init() async {
   //! Features - Quiz
   // Controllers
   sl.registerFactory(
-    () => QuizController(
-      getQuizQuestions: sl(),
-      submitAnswer: sl(),
-    ),
+    () => QuizController(getQuizQuestions: sl(), submitAnswer: sl()),
   );
 
   // Use cases
@@ -200,9 +209,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SubmitAnswer(sl()));
 
   // Repository
-  sl.registerLazySingleton<QuizRepository>(
-    () => QuizRepositoryImpl(sl()),
-  );
+  sl.registerLazySingleton<QuizRepository>(() => QuizRepositoryImpl(sl()));
 
   // Data sources
   sl.registerLazySingleton<QuizRemoteDataSource>(
@@ -231,8 +238,10 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetCommunitiesByType(sl()));
   sl.registerLazySingleton(() => GetMyCommunity(sl()));
   sl.registerLazySingleton(() => GetCommunityById(sl()));
+  sl.registerLazySingleton(() => SearchExplore(sl()));
   sl.registerLazySingleton(() => UpdateCommunity(sl()));
   sl.registerLazySingleton(() => GetTags(sl()));
+  sl.registerLazySingleton<ServerTagCatalog>(() => ServerTagCatalog());
   sl.registerLazySingleton(() => FollowCommunity(sl()));
   sl.registerLazySingleton(() => UnfollowCommunity(sl()));
 
@@ -281,6 +290,7 @@ Future<void> init() async {
       getPostsByCommunity: sl(),
       getPostsByTag: sl(),
       getPostsByIds: sl(),
+      getFeedPosts: sl(),
       deletePost: sl(),
       likePost: sl(),
       unlikePost: sl(),
@@ -296,6 +306,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetPostsByCommunity(sl()));
   sl.registerLazySingleton(() => GetPostsByTag(sl()));
   sl.registerLazySingleton(() => GetPostsByIds(sl()));
+  sl.registerLazySingleton(() => GetFeedPosts(sl()));
   sl.registerLazySingleton(() => DeletePost(sl()));
   sl.registerLazySingleton(() => LikePost(sl()));
   sl.registerLazySingleton(() => UnlikePost(sl()));
@@ -304,9 +315,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SharePost(sl()));
 
   // Repository
-  sl.registerLazySingleton<PostRepository>(
-    () => PostRepositoryImpl(sl()),
-  );
+  sl.registerLazySingleton<PostRepository>(() => PostRepositoryImpl(sl()));
 
   // Data sources
   sl.registerLazySingleton<PostRemoteDataSource>(
@@ -336,6 +345,31 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<CommentRemoteDataSource>(
     () => CommentRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  //! Features - NIRA
+  // Controllers
+  sl.registerFactory(
+    () => NiraChatController(
+      sendNiraMessage: sl(),
+      getNiraMessages: sl(),
+      getActiveNiraSession: sl(),
+      endNiraSession: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => SendNiraMessage(sl()));
+  sl.registerLazySingleton(() => GetNiraMessages(sl()));
+  sl.registerLazySingleton(() => GetActiveNiraSession(sl()));
+  sl.registerLazySingleton(() => EndNiraSession(sl()));
+
+  // Repository
+  sl.registerLazySingleton<NiraRepository>(() => NiraRepositoryImpl(sl()));
+
+  // Data sources
+  sl.registerLazySingleton<NiraRemoteDataSource>(
+    () => NiraRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Core

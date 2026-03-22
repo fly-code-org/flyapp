@@ -111,6 +111,7 @@ class PostModel extends Post {
     required super.authorId,
     super.communityId,
     required super.tagId,
+    super.tagType,
     super.content,
     super.attachments = const [],
     super.poll,
@@ -164,21 +165,20 @@ class PostModel extends Post {
     // Handle both 'id' and '_id' fields (MongoDB might return '_id')
     final postId = _parseUuid(json['id'] ?? json['_id'] ?? '');
     final authorId = _parseUuid(json['author_id'] ?? '');
-    
-    print('🔍 [POST MODEL] Parsing post - ID: $postId, AuthorID: $authorId');
-    print('🔍 [POST MODEL] Raw author_id from JSON: ${json['author_id']}');
-    
+    final tagType = json['tag_type'] as String?;
+
     return PostModel(
       id: postId,
       authorId: authorId,
       communityId: json['community_id'] != null ? _parseUuid(json['community_id']) : null,
-      tagId: (json['tag_id'] is int) 
-          ? json['tag_id'] as int 
-          : (json['tag_id'] is num) 
+      tagId: (json['tag_id'] is int)
+          ? json['tag_id'] as int
+          : (json['tag_id'] is num)
               ? (json['tag_id'] as num).toInt()
-              : (json['tag_id'] is String) 
-                  ? int.tryParse(json['tag_id'] as String) ?? 0 
+              : (json['tag_id'] is String)
+                  ? int.tryParse(json['tag_id'] as String) ?? 0
                   : 0,
+      tagType: (tagType != null && tagType.isNotEmpty) ? tagType : null,
       content: json['content'] as String?,
       attachments: attachmentsList,
       poll: pollModel,

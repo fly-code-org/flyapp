@@ -6,7 +6,7 @@ import 'package:fly/features/create_community/controller/user_profile_controller
 import 'package:fly/features/create_community/presentation/widgets/bio_input_field.dart';
 import 'package:fly/features/create_community/presentation/widgets/profile_picture_picker.dart';
 import 'package:fly/features/create_community/presentation/widgets/user_name_input_field.dart';
-import 'package:fly/features/interests/data/models/tag_mapping.dart';
+import 'package:fly/features/interests/data/server_tag_catalog.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
@@ -223,8 +223,8 @@ class _CreateSupportCommunityScreenState
       return;
     }
 
-    // Get tag ID
-    final tagId = TagMapping.getTagId(_selectedTag!.name);
+    await sl<ServerTagCatalog>().ensureLoaded();
+    final tagId = sl<ServerTagCatalog>().tagIdForName(_selectedTag!.name);
     if (tagId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

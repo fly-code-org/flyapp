@@ -5,7 +5,7 @@ import 'package:fly/features/community/domain/entities/community.dart';
 import 'package:fly/features/community/domain/usecases/update_community.dart';
 import 'package:fly/features/create_community/presentation/views/create_support_community.dart';
 import 'package:fly/features/create_community/presentation/widgets/profile_picture_picker.dart';
-import 'package:fly/features/interests/data/models/tag_mapping.dart';
+import 'package:fly/features/interests/data/server_tag_catalog.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:get/get.dart';
 
@@ -48,14 +48,19 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
       _encourageController.text = _community!.guidelinesEncourage;
       _discourageController.text = _community!.guidelinesDiscourage;
       _dontTolerateController.text = _community!.guidelinesDontTolerate;
-      final tagName = TagMapping.getTagNameById(_community!.tagId);
-      if (tagName != null) {
-        for (final t in supportedTags) {
-          if (t.name == tagName) {
-            _selectedTag = t;
-            break;
-          }
-        }
+      _syncSelectedTagFromCommunity();
+    }
+  }
+
+  Future<void> _syncSelectedTagFromCommunity() async {
+    await sl<ServerTagCatalog>().ensureLoaded();
+    if (!mounted || _community == null) return;
+    final tagName = sl<ServerTagCatalog>().displayNameForTagId(_community!.tagId);
+    if (tagName == null) return;
+    for (final t in supportedTags) {
+      if (t.name == tagName) {
+        setState(() => _selectedTag = t);
+        break;
       }
     }
   }
@@ -73,7 +78,7 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
   SupportCommunity _getDefaultTag() {
     if (_selectedTag != null) return _selectedTag!;
     if (_community != null) {
-      final tagName = TagMapping.getTagNameById(_community!.tagId);
+      final tagName = sl<ServerTagCatalog>().displayNameForTagId(_community!.tagId);
       if (tagName != null) {
         try {
           return supportedTags.firstWhere((t) => t.name == tagName);
@@ -88,7 +93,10 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
       Get.snackbar('Error', 'No community to update', backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
-    final tagId = _selectedTag != null ? TagMapping.getTagId(_selectedTag!.name) : _community!.tagId;
+    await sl<ServerTagCatalog>().ensureLoaded();
+    final tagId = _selectedTag != null
+        ? sl<ServerTagCatalog>().tagIdForName(_selectedTag!.name)
+        : _community!.tagId;
     if (tagId == null) {
       Get.snackbar('Error', 'Please select a tag', backgroundColor: Colors.red, colorText: Colors.white);
       return;

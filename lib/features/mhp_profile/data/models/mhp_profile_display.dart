@@ -102,8 +102,13 @@ class MhpProfileDisplay {
     final cid = map['community_id'];
     if (cid != null && cid is String) communityId = cid;
 
+    final displayFromApi = _string(map['display_name']);
+    final resolvedName = displayFromApi.isNotEmpty
+        ? displayFromApi
+        : (userName.isNotEmpty ? userName : 'MHP');
+
     return MhpProfileDisplay(
-      userName: userName.isNotEmpty ? userName : 'MHP',
+      userName: resolvedName,
       bio: bio,
       picturePath: picturePath,
       locationString: locationString,

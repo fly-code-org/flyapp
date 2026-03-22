@@ -9,6 +9,8 @@ abstract class PostRepository {
   Future<List<Post>> getPostsByCommunityId(String communityId);
   Future<List<Post>> getPostsByTagId(int tagId);
   Future<List<Post>> getPostsByIds(List<String> postIds);
+  /// Feed: posts for home. typeFilter: "social" | "support" | null (all).
+  Future<List<Post>> getFeed({int limit = 20, int offset = 0, String? typeFilter});
   Future<void> deletePost(String postId);
   Future<void> likePost(String postId);
   Future<void> unlikePost(String postId);
