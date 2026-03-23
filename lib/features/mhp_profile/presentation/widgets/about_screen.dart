@@ -8,12 +8,15 @@ class MHPProfileEditScreen extends StatefulWidget {
   final String? initialWhoIAm;
   final String? initialHowICanHelp;
   final String? initialWhatToExpect;
+  /// When true (viewer on another MHP's profile): same layout as edit mode but no edits or API load of *viewer's* about me.
+  final bool readOnly;
 
   const MHPProfileEditScreen({
     super.key,
     this.initialWhoIAm,
     this.initialHowICanHelp,
     this.initialWhatToExpect,
+    this.readOnly = false,
   });
 
   @override
@@ -51,8 +54,28 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
     if (widget.initialWhatToExpect != null && widget.initialWhatToExpect!.isNotEmpty) {
       whatToExpectController.text = widget.initialWhatToExpect!;
     }
+    if (widget.readOnly) {
+      return;
+    }
     if (whoIAmController.text.isEmpty && howICanHelpController.text.isEmpty && whatToExpectController.text.isEmpty) {
       _loadAboutMe();
+    }
+  }
+
+  @override
+  void didUpdateWidget(MHPProfileEditScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.readOnly) {
+      return;
+    }
+    if (widget.initialWhoIAm != oldWidget.initialWhoIAm) {
+      whoIAmController.text = widget.initialWhoIAm ?? '';
+    }
+    if (widget.initialHowICanHelp != oldWidget.initialHowICanHelp) {
+      howICanHelpController.text = widget.initialHowICanHelp ?? '';
+    }
+    if (widget.initialWhatToExpect != oldWidget.initialWhatToExpect) {
+      whatToExpectController.text = widget.initialWhatToExpect ?? '';
     }
   }
 
@@ -122,6 +145,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                   setState(() => showSaveWhoIAm = value.isNotEmpty);
                 },
                 onSave: () => _saveAboutMe(),
+                readOnly: widget.readOnly,
               ),
               const SizedBox(height: 16),
               _buildEditableCard(
@@ -134,6 +158,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                   setState(() => showSaveHowICanHelp = value.isNotEmpty);
                 },
                 onSave: () => _saveAboutMe(),
+                readOnly: widget.readOnly,
               ),
               const SizedBox(height: 16),
               _buildTagCard(
@@ -152,6 +177,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                   setState(() => showSaveWhatToExpect = value.isNotEmpty);
                 },
                 onSave: () => _saveAboutMe(),
+                readOnly: widget.readOnly,
               ),
               const SizedBox(height: 20),
             ],
@@ -169,6 +195,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
     required bool showSaveButton,
     required Function(String) onChanged,
     required VoidCallback onSave,
+    bool readOnly = false,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -198,20 +225,23 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                   ),
                 ],
               ),
-              const Icon(Icons.edit, color: Colors.black54),
+              if (!readOnly) const Icon(Icons.edit, color: Colors.black54),
             ],
           ),
           const SizedBox(height: 12),
           TextField(
             controller: controller,
-            onChanged: onChanged,
+            readOnly: readOnly,
+            onChanged: readOnly ? null : onChanged,
             maxLines: null,
-            decoration: const InputDecoration(
-              hintText: "Add details here...",
+            style: const TextStyle(fontFamily: 'Lexend'),
+            decoration: InputDecoration(
+              hintText: readOnly ? null : "Add details here...",
               border: InputBorder.none,
+              isDense: true,
             ),
           ),
-          if (showSaveButton) ...[
+          if (!readOnly && showSaveButton) ...[
             const SizedBox(height: 12),
             Center(
               child: ElevatedButton(

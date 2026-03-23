@@ -159,53 +159,11 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
       case 0:
         return MhpActivitiesSection(communityId: _community?.id ?? _profile?.communityId);
       case 1:
-        if (_viewingOther) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: ListView(
-              children: [
-                Text(
-                  'Who I am',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[800],
-                    fontFamily: 'Lexend',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _profile?.whoIAm ?? '',
-                  style: const TextStyle(fontFamily: 'Lexend'),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'How I can help',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[800],
-                    fontFamily: 'Lexend',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _profile?.howICanHelp ?? '',
-                  style: const TextStyle(fontFamily: 'Lexend'),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'What to expect',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[800],
-                    fontFamily: 'Lexend',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _profile?.whatToExpect ?? '',
-                  style: const TextStyle(fontFamily: 'Lexend'),
-                ),
-              ],
+        if (_viewingOther && _loading) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(),
             ),
           );
         }
@@ -213,6 +171,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
           initialWhoIAm: _profile?.whoIAm,
           initialHowICanHelp: _profile?.howICanHelp,
           initialWhatToExpect: _profile?.whatToExpect,
+          readOnly: _viewingOther,
         );
       case 2:
         if (_viewingOther) {
