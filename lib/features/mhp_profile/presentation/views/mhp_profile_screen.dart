@@ -19,6 +19,7 @@ import 'package:fly/features/profile_creation/domain/usecases/get_mhp_profile_by
 import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/about_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/connect_tab_content.dart';
+import 'package:fly/features/mhp_profile/mhp_profile_strings.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/mhp_activities_section.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
@@ -410,7 +411,9 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                                         ),
                                         const SizedBox(width: 16),
                                         _buildTabItem(
-                                          "Connect",
+                                          mhpProfileThirdTabTitle(
+                                            viewingOther: _viewingOther,
+                                          ),
                                           Icons.calendar_month_outlined,
                                           2,
                                         ),
