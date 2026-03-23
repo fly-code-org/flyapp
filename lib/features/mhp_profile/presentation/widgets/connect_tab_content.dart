@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/mhp_booking_card.dart';
 import 'package:fly/features/profile_creation/domain/usecases/update_connect.dart';
 import 'package:get/get.dart';
 
 const _purple = Color(0xFF855DFC);
 
-/// Connect tab: Your availability + Upcoming sessions. Light purple UI.
+/// Connect tab: Your availability + bookings (sessions). Light purple UI.
 class ConnectTabContent extends StatelessWidget {
   final List<Map<String, dynamic>> availableSlots;
+  /// Passed from profile; will map to [MhpBookingCard] when integrated.
   final List<Map<String, dynamic>> appointments;
   final VoidCallback? onSlotsUpdated;
 
@@ -21,6 +23,7 @@ class ConnectTabContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      key: ValueKey(appointments.length),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -52,22 +55,33 @@ class ConnectTabContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          _sectionTitle('Upcoming sessions'),
+          _sectionTitle('Your bookings'),
           const SizedBox(height: 8),
-          if (appointments.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                'No upcoming sessions.',
-                style: TextStyle(fontFamily: 'Lexend', color: Colors.grey),
-              ),
-            )
-          else
-            ...appointments.map((a) => _appointmentTile(a)),
+          // Demo cards — replace with API-driven list when integrating.
+          MhpBookingCard(
+            fullName: 'Morgan Ellis',
+            username: '@morganellis',
+            clientUserId: 'demo-mhp-booking-client-1',
+            status: MhpBookingCardStatus.confirmed,
+            startTimeLabel: '10:00 AM',
+            dateLabel: 'Mar 28, 2025',
+          ),
+          MhpBookingCard(
+            fullName: 'Sam Rivera',
+            username: '@samrivera',
+            clientUserId: 'demo-mhp-booking-client-2',
+            status: MhpBookingCardStatus.pending,
+            startTimeLabel: '2:30 PM',
+            dateLabel: 'Apr 2, 2025',
+          ),
+          MhpBookingCard(
+            fullName: 'Alex Chen',
+            username: '@alexchen',
+            clientUserId: 'demo-mhp-booking-client-3',
+            status: MhpBookingCardStatus.confirmed,
+            startTimeLabel: '9:00 AM',
+            dateLabel: 'Apr 5, 2025',
+          ),
         ],
       ),
     );
@@ -105,37 +119,6 @@ class ConnectTabContent extends StatelessWidget {
             child: Text(
               '$day $start – $end',
               style: const TextStyle(fontFamily: 'Lexend', fontSize: 14),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _appointmentTile(Map<String, dynamic> a) {
-    final date = a['date']?.toString() ?? '';
-    final time = a['time']?.toString() ?? '';
-    final status = a['status']?.toString() ?? '';
-    final preference = a['preference']?.toString() ?? '';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.event, color: _purple, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$date · $time', style: const TextStyle(fontFamily: 'Lexend', fontWeight: FontWeight.w500)),
-                if (preference.isNotEmpty) Text(preference, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                if (status.isNotEmpty) Text(status, style: TextStyle(fontSize: 12, color: _purple)),
-              ],
             ),
           ),
         ],
