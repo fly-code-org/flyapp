@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fly/features/community/domain/entities/community.dart';
 import 'package:fly/core/utils/profile_picture_helper.dart';
+import 'package:fly/core/widgets/square_entity_avatar.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
@@ -68,17 +69,37 @@ class MHPSquare extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey[300],
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(kSquareEntityAvatarRadius),
+                  child: SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: imagePath.startsWith('http')
+                        ? Image.network(
+                            imagePath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => ColoredBox(
+                              color: Colors.grey.shade300,
+                              child: Icon(
+                                Icons.groups_outlined,
+                                color: Colors.grey.shade600,
+                                size: 26,
+                              ),
+                            ),
+                          )
+                        : Image.asset(
+                            imagePath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => ColoredBox(
+                              color: Colors.grey.shade300,
+                              child: Icon(
+                                Icons.groups_outlined,
+                                color: Colors.grey.shade600,
+                                size: 26,
+                              ),
+                            ),
+                          ),
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: imagePath.startsWith('http')
-                      ? Image.network(imagePath, fit: BoxFit.cover)
-                      : Image.asset(imagePath, fit: BoxFit.cover),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/widgets/square_entity_avatar.dart';
 
 class ProfileAvatar extends StatelessWidget {
   final String imagePath; // can be asset or network
@@ -22,7 +23,7 @@ class ProfileAvatar extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(kSquareEntityAvatarRadius),
               border: Border.all(color: Colors.white, width: 5),
               image: DecorationImage(
                 image: imagePath.startsWith("http")

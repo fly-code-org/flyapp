@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fly/core/widgets/square_entity_avatar.dart';
 
 class CommunityProfileCard extends StatelessWidget {
   final String communityType; // "social" or "support"
@@ -23,31 +24,29 @@ class CommunityProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isSocial = communityType.toLowerCase() == "social";
-
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Profile image (network URL or asset)
+        // Profile image (network URL or asset) — rounded square for social + support
         ClipRRect(
-          borderRadius: isSocial
-              ? BorderRadius.circular(50)
-              : BorderRadius.circular(8),
-          child: profileImageUrl != null && profileImageUrl!.isNotEmpty && profileImageUrl!.startsWith('http')
-              ? Image.network(
-                  profileImageUrl!,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildPlaceholder(),
-                )
-              : Image.asset(
-                  profileImagePath,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildPlaceholder(),
-                ),
+          borderRadius: BorderRadius.circular(kSquareEntityAvatarRadius),
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child: profileImageUrl != null &&
+                    profileImageUrl!.isNotEmpty &&
+                    profileImageUrl!.startsWith('http')
+                ? Image.network(
+                    profileImageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                  )
+                : Image.asset(
+                    profileImagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                  ),
+          ),
         ),
         const SizedBox(width: 12),
 

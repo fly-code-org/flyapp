@@ -16,6 +16,7 @@ import 'package:fly/features/interests/data/server_tag_catalog.dart';
 import 'package:fly/features/interests/domain/usecases/follow_tag.dart';
 import 'package:fly/features/interests/domain/usecases/unfollow_tag.dart';
 import 'package:fly/core/storage/token_storage.dart';
+import 'package:fly/core/widgets/square_entity_avatar.dart';
 import 'package:fly/core/utils/jwt_decoder.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/community/domain/entities/community.dart';
@@ -218,14 +219,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     : '';
                 return ListTile(
                   dense: true,
-                  leading: CircleAvatar(
-                    radius: 22,
-                    backgroundImage: pic.isNotEmpty
-                        ? NetworkImage(pic)
-                        : null,
-                    child: pic.isEmpty
-                        ? const Icon(Icons.person, color: Colors.white)
-                        : null,
+                  leading: SquareEntityAvatar(
+                    imageUrl: pic.isNotEmpty ? pic : null,
+                    size: 44,
+                    placeholderIcon: Icons.person_outline,
                   ),
                   title: Text(
                     m.displayName,
@@ -264,10 +261,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ...social.map((c) {
                 return ListTile(
                   dense: true,
-                  leading: CircleAvatar(
-                    radius: 20,
-                    backgroundImage:
-                        NetworkImage(_cdnLogoUrl(c.logoPath)),
+                  leading: SquareEntityAvatar(
+                    imageUrl: _cdnLogoUrl(c.logoPath),
+                    size: 40,
+                    placeholderIcon: Icons.groups_outlined,
                   ),
                   title: Text(
                     c.name,
@@ -300,10 +297,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ...support.map((c) {
                 return ListTile(
                   dense: true,
-                  leading: CircleAvatar(
-                    radius: 20,
-                    backgroundImage:
-                        NetworkImage(_cdnLogoUrl(c.logoPath)),
+                  leading: SquareEntityAvatar(
+                    imageUrl: _cdnLogoUrl(c.logoPath),
+                    size: 40,
+                    placeholderIcon: Icons.groups_outlined,
                   ),
                   title: Text(
                     c.name,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/widgets/square_entity_avatar.dart';
 
 class CommunityCard extends StatelessWidget {
   final String profilePicUrl;
@@ -43,55 +44,10 @@ class CommunityCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  profilePicUrl,
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    print('❌ Error loading community image: $error');
-                    print('   URL: $profilePicUrl');
-                    return Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.group,
-                        color: Colors.grey.shade600,
-                        size: 24,
-                      ),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              SquareEntityAvatar(
+                imageUrl: profilePicUrl,
+                size: 48,
+                placeholderIcon: Icons.groups_outlined,
               ),
               Spacer(),
               TextButton(
