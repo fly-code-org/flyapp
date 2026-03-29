@@ -15,6 +15,7 @@ import '../../features/user_verification/domain/usecases/verify_email.dart';
 import '../../features/user_verification/domain/usecases/verify_phone.dart';
 import '../../features/user_verification/presentation/controllers/verification_controller.dart';
 import '../../features/profile_creation/data/datasources/mhp_profile_remote_data_source.dart';
+import '../../features/mhp_profile/data/datasources/connect_booking_remote_data_source.dart';
 import '../../features/profile_creation/data/datasources/user_profile_remote_data_source.dart';
 import '../../features/profile_creation/data/repositories/mhp_profile_repository_impl.dart';
 import '../../features/profile_creation/data/repositories/user_profile_repository_impl.dart';
@@ -167,6 +168,10 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton<MhpProfileRemoteDataSource>(
     () => MhpProfileRemoteDataSourceImpl(dio: ApiClient.dio),
+  );
+
+  sl.registerLazySingleton<ConnectBookingRemoteDataSource>(
+    () => ConnectBookingRemoteDataSourceImpl(dio: ApiClient.dio),
   );
 
   //! Features - Profile Creation (User)

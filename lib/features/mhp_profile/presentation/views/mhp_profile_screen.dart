@@ -19,6 +19,7 @@ import 'package:fly/features/profile_creation/domain/usecases/get_mhp_profile_by
 import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/about_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/connect_tab_content.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/mhp_visitor_connect_booking_tab.dart';
 import 'package:fly/features/mhp_profile/mhp_profile_strings.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/mhp_activities_section.dart';
 import 'package:fly/routes/app_routes.dart';
@@ -174,16 +175,32 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
           readOnly: _viewingOther,
         );
       case 2:
-        if (_viewingOther) {
+        if (_viewingOther && _loading) {
           return const Center(
             child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'Availability is managed on this professional’s account.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontFamily: 'Lexend'),
-              ),
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(),
             ),
+          );
+        }
+        if (_viewingOther) {
+          final uid = _viewedUserId?.trim();
+          if (uid == null || uid.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'Unable to load booking for this profile.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontFamily: 'Lexend'),
+                ),
+              ),
+            );
+          }
+          return MhpVisitorConnectBookingTab(
+            mhpUserId: uid,
+            mhpDisplayName: _profile?.userName,
+            mhpPicturePath: _profile?.picturePath,
           );
         }
         return ConnectTabContent(

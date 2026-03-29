@@ -6,6 +6,8 @@ import 'package:fly/features/explore/presentation/views/explore.dart';
 import 'package:fly/features/home/presentation/views/home.dart';
 import 'package:fly/features/mhp_profile/presentation/views/book_session_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/views/mhp_profile_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/views/connect_payment_success_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/views/session_payment_placeholder_screen.dart';
 import 'package:fly/features/nira/screens/nira_chat_screen.dart';
 import 'package:fly/features/notifications/presentation/view/notification_screen.dart';
 import 'package:fly/features/profile_creation/presentation/views/add_session_form.dart';
@@ -133,6 +135,14 @@ class AppPages {
         final args = Get.arguments as Map<String, dynamic>?;
         return BookSessionScreen(mhpId: args?['mhpId'] as String?);
       },
+    ),
+    GetPage(
+      name: AppRoutes.sessionPayment,
+      page: () => const SessionPaymentPlaceholderScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.connectPaymentSuccess,
+      page: () => const ConnectPaymentSuccessScreen(),
     ),
 
     // Bottom Nav

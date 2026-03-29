@@ -1,5 +1,6 @@
 package com.example.fly
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+/// FlutterFragmentActivity is recommended for Razorpay (UPI / third-party apps returning to the host).
+class MainActivity : FlutterFragmentActivity()
