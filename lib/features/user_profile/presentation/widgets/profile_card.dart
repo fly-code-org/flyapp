@@ -15,6 +15,9 @@ class ProfileAvatar extends StatelessWidget {
   /// expanding inside [Row] and matches compact list layout.
   final bool dense;
 
+  /// When true, clip as a rounded square (support / community style) instead of a circle.
+  final bool useRoundedSquare;
+
   const ProfileAvatar({
     super.key,
     required this.imagePath,
@@ -22,6 +25,7 @@ class ProfileAvatar extends StatelessWidget {
     this.showEditIcon = false,
     this.userId,
     this.dense = false,
+    this.useRoundedSquare = false,
   });
 
   String _getAvatarUrl() {
@@ -75,18 +79,31 @@ class ProfileAvatar extends StatelessWidget {
       '🖼️ [AVATAR] isLocalAsset: $isLocalAsset, isNetworkImage: $isNetworkImage, isAssetImage: $isAssetImage',
     );
 
-    final inner = ClipOval(
-      child: SizedBox(
-        width: size,
-        height: size,
-        child: _buildAvatarWidget(
-          avatarUrl,
-          isLocalAsset,
-          isNetworkImage,
-          isAssetImage,
-        ),
-      ),
+    final child = _buildAvatarWidget(
+      avatarUrl,
+      isLocalAsset,
+      isNetworkImage,
+      isAssetImage,
     );
+    final squareRadius = BorderRadius.circular(
+      (size * 0.2).clamp(6.0, 10.0),
+    );
+    final inner = useRoundedSquare
+        ? ClipRRect(
+            borderRadius: squareRadius,
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: child,
+            ),
+          )
+        : ClipOval(
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: child,
+            ),
+          );
 
     if (dense) {
       return SizedBox(width: size, height: size, child: inner);
@@ -100,7 +117,8 @@ class ProfileAvatar extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              shape: useRoundedSquare ? BoxShape.rectangle : BoxShape.circle,
+              borderRadius: useRoundedSquare ? squareRadius : null,
               border: Border.all(color: Colors.white, width: 4),
               // Beautiful gradient background matching app's purple theme
               gradient: LinearGradient(

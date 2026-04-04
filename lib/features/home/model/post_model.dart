@@ -40,6 +40,10 @@ class Post {
   /// List of user IDs who have bookmarked this post (for checking if current user has bookmarked)
   final List<String>? bookmarkedBy;
 
+  /// True when the post is in a support context (support tag and/or support community feed).
+  /// Drives square avatars and can be used for other support styling.
+  final bool isSupportContext;
+
   const Post({
     required this.id,
     required this.authorId,
@@ -60,6 +64,7 @@ class Post {
     this.poll,
     this.likedBy,
     this.bookmarkedBy,
+    this.isSupportContext = false,
   });
 
   // Optional: convenience factory to build from map (if you need later)
@@ -83,6 +88,7 @@ class Post {
     poll: null,
     likedBy: (m['likedBy'] as List<dynamic>?)?.cast<String>(),
     bookmarkedBy: (m['bookmarkedBy'] as List<dynamic>?)?.cast<String>(),
+    isSupportContext: m['isSupportContext'] as bool? ?? false,
   );
 
   Map<String, dynamic> toMap() => {
@@ -105,6 +111,7 @@ class Post {
     'poll': poll,
     'likedBy': likedBy,
     'bookmarkedBy': bookmarkedBy,
+    'isSupportContext': isSupportContext,
   };
   
   /// Creates a copy of this Post with updated likes count
@@ -128,6 +135,7 @@ class Post {
     UiPoll? poll,
     List<String>? likedBy,
     List<String>? bookmarkedBy,
+    bool? isSupportContext,
   }) {
     return Post(
       id: id ?? this.id,
@@ -149,6 +157,7 @@ class Post {
       poll: poll ?? this.poll,
       likedBy: likedBy ?? this.likedBy,
       bookmarkedBy: bookmarkedBy ?? this.bookmarkedBy,
+      isSupportContext: isSupportContext ?? this.isSupportContext,
     );
   }
 }

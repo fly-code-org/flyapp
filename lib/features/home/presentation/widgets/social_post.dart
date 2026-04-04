@@ -705,18 +705,13 @@ class _SocialPostState extends State<SocialPost> {
   }
 
   Widget _buildProfilePicture() {
-    final avatar = ProfileAvatar(
+    final useSquare = widget.post.isSupportContext || !widget.isSocialTab;
+    return ProfileAvatar(
       imagePath: widget.post.profileUrl,
       userId: widget.post.authorId.isNotEmpty ? widget.post.authorId : null,
       size: 40,
       dense: true,
-    );
-    if (widget.isSocialTab) {
-      return avatar;
-    }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(2),
-      child: avatar,
+      useRoundedSquare: useSquare,
     );
   }
   

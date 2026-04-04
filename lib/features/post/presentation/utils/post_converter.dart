@@ -87,7 +87,10 @@ class PostConverter {
     final finalUsername = (username != null && username.isNotEmpty)
         ? username
         : 'user_${apiPost.authorId.substring(0, 8)}';
-    
+
+    final tagT = apiPost.tagType?.toLowerCase();
+    final isSupportContext = tagT == 'support';
+
     return ui_model.Post(
       id: apiPost.id,
       authorId: apiPost.authorId,
@@ -107,6 +110,7 @@ class PostConverter {
       poll: uiPoll,
       likedBy: apiPost.likes, // Pass the list of user IDs who liked the post
       bookmarkedBy: apiPost.bookmarkedBy, // Pass the list of user IDs who bookmarked the post
+      isSupportContext: isSupportContext,
     );
   }
   

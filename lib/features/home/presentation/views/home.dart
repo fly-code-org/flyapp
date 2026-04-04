@@ -516,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Use RepaintBoundary to optimize rebuilds
                         return RepaintBoundary(
                           child: RefreshIndicator(
-                            onRefresh: _refreshPosts,
+                            onRefresh: _refreshBothTabs,
                             child: SocialFeed(
                               posts: _currentPosts,
                               isSocialTab: activeTabIndex == 0,
@@ -578,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Small delay to ensure backend has processed the post
                       await Future.delayed(const Duration(milliseconds: 500));
                       if (mounted) {
-                        await _refreshPosts();
+                        await _refreshBothTabs();
                       }
                     }
                   },
