@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fly/core/di/service_locator.dart';
@@ -8,6 +10,7 @@ import 'package:fly/features/mhp_profile/data/datasources/connect_booking_remote
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -204,6 +207,60 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
     }
   }
 
+  String? _serverMessageIfJsonBody(Uint8List bytes) {
+    final text = utf8.decode(bytes, allowMalformed: true).trimLeft();
+    if (!text.startsWith('{')) return null;
+    try {
+      final dynamic obj = jsonDecode(text);
+      if (obj is Map<String, dynamic>) {
+        final msg = obj['msg'];
+        if (msg is String && msg.isNotEmpty) return msg;
+        final err = obj['error'];
+        if (err is String && err.isNotEmpty) return err;
+      }
+    } catch (_) {}
+    return 'Unexpected server response.';
+  }
+
+  void _assertPdfBytes(Uint8List bytes) {
+    if (bytes.length < 5) {
+      throw const FormatException('Receipt download was empty.');
+    }
+    final head = String.fromCharCodes(bytes.sublist(0, 5));
+    if (head.startsWith('%PDF-')) return;
+    final msg = _serverMessageIfJsonBody(bytes);
+    throw FormatException(msg ?? 'Server did not return a PDF file.');
+  }
+
+  Future<void> _openLocalPdfFile({
+    required String filePath,
+    required String fileName,
+  }) async {
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      final result = await OpenFile.open(filePath);
+      if (result.type == ResultType.done) return;
+      await Share.shareXFiles(
+        [
+          XFile(
+            filePath,
+            mimeType: 'application/pdf',
+            name: fileName,
+          ),
+        ],
+        subject: 'Fly payment receipt',
+        text: 'Open or save your Fly payment receipt.',
+      );
+      return;
+    }
+    final opened = await launchUrl(
+      Uri.file(filePath),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened) {
+      throw Exception('Could not open the receipt file.');
+    }
+  }
+
   void _onClose(BuildContext context) {
     final mhpId = (_args['mhpUserId'] as String?)?.trim();
     if (mhpId != null && mhpId.isNotEmpty) {
@@ -327,24 +384,13 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
         throw Exception('Receipt file is empty.');
       }
 
+      _assertPdfBytes(bytes);
+
       final fileName = 'fly-connect-receipt-$bookingId.pdf';
       final file = File('${Directory.systemTemp.path}/$fileName');
       await file.writeAsBytes(bytes, flush: true);
 
-      final opened = await launchUrl(
-        Uri.file(file.path),
-        mode: LaunchMode.externalApplication,
-      );
-      if (!opened) {
-        Get.snackbar(
-          'Receipt',
-          'Receipt downloaded to temporary storage, but we could not open it automatically.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange.shade800,
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(16),
-        );
-      }
+      await _openLocalPdfFile(filePath: file.path, fileName: fileName);
     } catch (e) {
       _closeLoadingDialogIfOpen();
       Get.snackbar(
