@@ -21,4 +21,12 @@ class AppConfig {
       return dotenv.env['ANDROID_CLIENT_ID'] ?? '';
     }
   }
+
+  /// Web OAuth client for Google Sign-In [serverClientId]. Same value as fly-be `GOOGLE_OAUTH_CLIENT_ID`.
+  /// Falls back to `WEB_CLIENT_ID` if set (legacy).
+  static String get googleWebClientId {
+    final oauth = dotenv.env['GOOGLE_OAUTH_CLIENT_ID']?.trim() ?? '';
+    if (oauth.isNotEmpty) return oauth;
+    return dotenv.env['WEB_CLIENT_ID']?.trim() ?? '';
+  }
 }

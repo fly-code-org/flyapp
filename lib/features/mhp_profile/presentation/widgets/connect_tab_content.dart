@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/config/config.dart';
+import 'package:fly/core/config/fly_google_sign_in.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/error/exceptions.dart';
+import 'package:fly/core/network/api_client.dart';
+import 'package:fly/core/storage/pending_mhp_google_calendar_code.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/mhp_booking_card.dart';
+import 'package:fly/features/profile_creation/domain/usecases/link_mhp_google_calendar.dart';
 import 'package:fly/features/profile_creation/domain/usecases/update_connect.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 const _purple = Color(0xFF855DFC);
 
 /// Connect tab: Your availability + bookings (sessions). Light purple UI.
-class ConnectTabContent extends StatelessWidget {
+class ConnectTabContent extends StatefulWidget {
   final List<Map<String, dynamic>> availableSlots;
   /// Passed from profile; will map to [MhpBookingCard] when integrated.
   final List<Map<String, dynamic>> appointments;
@@ -21,16 +28,164 @@ class ConnectTabContent extends StatelessWidget {
   });
 
   @override
+  State<ConnectTabContent> createState() => _ConnectTabContentState();
+}
+
+class _ConnectTabContentState extends State<ConnectTabContent> {
+  bool _calendarLinkBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _tryDeferredCalendarLink());
+  }
+
+  Future<void> _tryDeferredCalendarLink() async {
+    await ApiClient.refreshToken();
+    final ok = await PendingMhpGoogleCalendarCode.consumeAndLinkIfPresent(
+      sl<LinkMhpGoogleCalendar>(),
+    );
+    if (!mounted || !ok) return;
+    widget.onSlotsUpdated?.call();
+    Get.snackbar(
+      'Google Calendar',
+      'Connected — paid video sessions can create Meet links.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green.shade700,
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(16),
+    );
+  }
+
+  Future<void> _connectGoogleCalendar(BuildContext context) async {
+    if (AppConfig.googleWebClientId.isEmpty) {
+      Get.snackbar(
+        'Configuration',
+        'Set GOOGLE_OAUTH_CLIENT_ID in .env (same as fly-be).',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange.shade800,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+      return;
+    }
+    setState(() => _calendarLinkBusy = true);
+    final GoogleSignIn googleSignIn = createFlyGoogleSignIn();
+    try {
+      await googleSignIn.signOut();
+      final account = await googleSignIn.signIn();
+      if (!mounted) return;
+      if (account == null) {
+        setState(() => _calendarLinkBusy = false);
+        return;
+      }
+      final code = account.serverAuthCode?.trim();
+      if (code == null || code.isEmpty) {
+        setState(() => _calendarLinkBusy = false);
+        Get.snackbar(
+          'Google',
+          'No server auth code — try again or set GOOGLE_OAUTH_CLIENT_ID in .env.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange.shade800,
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+        );
+        return;
+      }
+      await ApiClient.refreshToken();
+      await sl<LinkMhpGoogleCalendar>()(code);
+      if (!mounted) return;
+      setState(() => _calendarLinkBusy = false);
+      widget.onSlotsUpdated?.call();
+      Get.snackbar(
+        'Google Calendar',
+        'Connected successfully.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.shade700,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    } on ServerException catch (e) {
+      if (!mounted) return;
+      setState(() => _calendarLinkBusy = false);
+      Get.snackbar(
+        'Could not connect',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    } on NetworkException catch (e) {
+      if (!mounted) return;
+      setState(() => _calendarLinkBusy = false);
+      Get.snackbar(
+        'Network',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _calendarLinkBusy = false);
+      Get.snackbar(
+        'Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      key: ValueKey(appointments.length),
+      key: ValueKey(widget.appointments.length),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _sectionTitle('Video sessions'),
+          const SizedBox(height: 6),
+          Text(
+            'Connect Google Calendar so paid video bookings get a Meet link.',
+            style: TextStyle(
+              fontFamily: 'Lexend',
+              fontSize: 13,
+              color: Colors.grey.shade700,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed:
+                _calendarLinkBusy ? null : () => _connectGoogleCalendar(context),
+            icon: _calendarLinkBusy
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.video_camera_front_outlined, size: 20, color: _purple),
+            label: Text(
+              _calendarLinkBusy ? 'Connecting…' : 'Connect Google Calendar',
+              style: const TextStyle(fontFamily: 'Lexend', color: _purple),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: _purple),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
           _sectionTitle('Your availability'),
           const SizedBox(height: 8),
-          if (availableSlots.isEmpty)
+          if (widget.availableSlots.isEmpty)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -43,7 +198,7 @@ class ConnectTabContent extends StatelessWidget {
               ),
             )
           else
-            ...availableSlots.map((s) => _slotTile(s)),
+            ...widget.availableSlots.map((s) => _slotTile(s)),
           const SizedBox(height: 16),
           OutlinedButton.icon(
             onPressed: () => _openEditSlots(context),
@@ -127,7 +282,7 @@ class ConnectTabContent extends StatelessWidget {
   }
 
   void _openEditSlots(BuildContext context) {
-    final slots = List<Map<String, dynamic>>.from(availableSlots);
+    final slots = List<Map<String, dynamic>>.from(widget.availableSlots);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -141,7 +296,7 @@ class ConnectTabContent extends StatelessWidget {
             await sl<UpdateConnect>().call({
               'available_slots': newSlots,
             });
-            onSlotsUpdated?.call();
+            widget.onSlotsUpdated?.call();
             Get.snackbar('Saved', 'Availability updated', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
           } catch (e) {
             Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.red, colorText: Colors.white);

@@ -11,10 +11,11 @@ import '../../domain/usecases/google_login_user.dart';
 import '../../domain/usecases/login_user.dart';
 import '../../domain/usecases/signup_user.dart';
 import '../../../profile_creation/domain/usecases/create_user_profile.dart';
+import '../../../profile_creation/domain/usecases/link_mhp_google_calendar.dart';
 import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 import '../../../../core/di/service_locator.dart' as sl;
+import '../../../../core/storage/pending_mhp_google_calendar_code.dart';
 import '../../../../features/interests/data/server_tag_catalog.dart';
-import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 
 class AuthController extends GetxController {
   final SignupUser signupUser;
@@ -84,6 +85,41 @@ class AuthController extends GetxController {
       await sl.sl<ServerTagCatalog>().refresh();
     } catch (e) {
       print('⚠️ [AUTH] Tag catalog prefetch: $e');
+    }
+  }
+
+  bool _shouldDeferMhpCalendarLink(ServerException e) {
+    final m = e.message.toLowerCase();
+    return m.contains('mhp profile not found') ||
+        m.contains('complete profile setup');
+  }
+
+  /// MHP only: exchanges [serverAuthCode] for Calendar tokens on the server.
+  /// If the MHP profile does not exist yet, the code is stored for [PendingMhpGoogleCalendarCode].
+  Future<void> _linkMhpGoogleCalendarIfNeeded({
+    required String role,
+    String? serverAuthCode,
+  }) async {
+    final code = serverAuthCode?.trim();
+    if (code == null || code.isEmpty) return;
+    if (role.toLowerCase() != 'mhp') return;
+    try {
+      await ApiClient.refreshToken();
+      await sl.sl<LinkMhpGoogleCalendar>()(code);
+      print('✅ [AUTH] MHP Google Calendar linked');
+    } on ServerException catch (e) {
+      if (_shouldDeferMhpCalendarLink(e)) {
+        await PendingMhpGoogleCalendarCode.save(code);
+        print(
+          '⚠️ [AUTH] Calendar link deferred until MHP profile exists: ${e.message}',
+        );
+        return;
+      }
+      print('⚠️ [AUTH] MHP Google Calendar link failed: ${e.message}');
+    } on NetworkException catch (e) {
+      print('⚠️ [AUTH] MHP Google Calendar link network error: ${e.message}');
+    } catch (e) {
+      print('⚠️ [AUTH] MHP Google Calendar link error: $e');
     }
   }
 
@@ -233,6 +269,8 @@ class AuthController extends GetxController {
     required String accessToken,
     required String role,
     String? currentPlatform,
+    /// From [GoogleSignInAccount.serverAuthCode]; stored for MHP Meet / Calendar on the server.
+    String? serverAuthCode,
   }) async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -295,6 +333,10 @@ class AuthController extends GetxController {
         _prefetchUserProfile();
       }
       _prefetchTagCatalog();
+      await _linkMhpGoogleCalendarIfNeeded(
+        role: role,
+        serverAuthCode: serverAuthCode,
+      );
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
       errorMessage.value = e.message;

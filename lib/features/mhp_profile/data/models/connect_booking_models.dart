@@ -344,12 +344,18 @@ class ConnectConfirmResult {
   final bool isPaid;
   final String status;
   final String? meetLink;
+  /// Video session only: backend set when Meet could not be created after successful payment.
+  final bool meetGenerationFailed;
+  /// Short support code (e.g. `google_token`, `calendar_api`); null if not failed or old API.
+  final String? meetGenerationCode;
 
   const ConnectConfirmResult({
     required this.bookingId,
     required this.isPaid,
     required this.status,
     this.meetLink,
+    this.meetGenerationFailed = false,
+    this.meetGenerationCode,
   });
 
   static ConnectConfirmResult fromJson(Object? json) {
@@ -362,11 +368,19 @@ class ConnectConfirmResult {
     final st = (json['status'] ?? '').toString();
     final meet = json['meet_link'] ?? json['meetLink'];
     final meetStr = meet is String && meet.isNotEmpty ? meet : null;
+    final meetGenFailed =
+        json['meet_generation_failed'] == true || json['meetGenerationFailed'] == true;
+    final codeRaw = json['meet_generation_code'] ?? json['meetGenerationCode'];
+    final codeStr = codeRaw is String && codeRaw.trim().isNotEmpty
+        ? codeRaw.trim()
+        : null;
     return ConnectConfirmResult(
       bookingId: id,
       isPaid: paid,
       status: st,
       meetLink: meetStr,
+      meetGenerationFailed: meetGenFailed,
+      meetGenerationCode: codeStr,
     );
   }
 }

@@ -26,6 +26,8 @@ import 'package:fly/features/start_quiz/views/user_second_ques.dart';
 import 'package:fly/features/start_quiz/views/user_third_ques.dart';
 import 'package:fly/features/user_profile/presentation/views/create_journal_screen.dart';
 import 'package:fly/features/user_profile/presentation/views/user_profile_screen.dart';
+import 'package:fly/features/legal/presentation/views/privacy_policy_screen.dart';
+import 'package:fly/features/legal/presentation/views/terms_conditions_screen.dart';
 import 'package:fly/features/user_profile/presentation/views/user_settings.dart';
 import 'package:fly/features/user_verification/presentation/views/email_verification.dart';
 import 'package:fly/features/user_verification/presentation/views/phone_verification.dart';
@@ -126,6 +128,14 @@ class AppPages {
     GetPage(
       name: AppRoutes.UserSettingsScreen,
       page: () => const UserSettingsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.termsConditions,
+      page: () => const TermsConditionsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.privacyPolicy,
+      page: () => const PrivacyPolicyScreen(),
     ),
 
     GetPage(name: AppRoutes.mhpProfile, page: () => const MhpProfileScreen()),

@@ -57,6 +57,7 @@ dependencies:
   video_player: ^2.6.1
   uuid: ^4.5.1  # For generating UUIDs for poll options
   share_plus: ^10.1.2  # For native share functionality
+  url_launcher: ^6.2.5
   app_links: ^6.3.2  # For deep link handling (replaces uni_links)
 
   # The following adds the Cupertino Icons font to your application.

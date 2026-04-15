@@ -1,5 +1,8 @@
 // data/datasources/mhp_profile_remote_data_source.dart
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/mhp_profile_response_model.dart';
@@ -14,6 +17,8 @@ abstract class MhpProfileRemoteDataSource {
   Future<Map<String, dynamic>> getAboutMe();
   Future<void> updateAboutMe(Map<String, dynamic> body);
   Future<void> updateConnect(Map<String, dynamic> body);
+  /// PATCH /mhp/external/v1/google?token= — exchange serverAuthCode, store Calendar tokens.
+  Future<void> linkGoogleCalendar({required String serverAuthCode});
 }
 
 class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
@@ -246,6 +251,69 @@ class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
           'Failed to update connect',
           statusCode: e.response!.statusCode,
         );
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> linkGoogleCalendar({required String serverAuthCode}) async {
+    if (kDebugMode) {
+      final jwtLen = ApiClient.getAuthToken()?.length ?? 0;
+      developer.log(
+        'PATCH /mhp/external/v1/google: googleCodeLen=${serverAuthCode.length} '
+        'flyJwtCachedLen=$jwtLen baseUrl=${client.options.baseUrl}',
+        name: 'MhpProfileRemote',
+      );
+    }
+    try {
+      final response = await client.patch(
+        '/mhp/external/v1/google',
+        queryParameters: {'token': serverAuthCode},
+      );
+      if (response.statusCode == 200) return;
+      throw ServerException(
+        'Failed to link Google Calendar',
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        developer.log(
+          'linkGoogleCalendar DioException: ${e.type} status=${e.response?.statusCode} '
+          'data=${e.response?.data}',
+          name: 'MhpProfileRemote',
+          error: e,
+        );
+      }
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        var errorMessage = 'Failed to link Google Calendar';
+        if (responseData is Map<String, dynamic>) {
+          if (responseData.containsKey('msg')) {
+            final msg = responseData['msg'];
+            if (msg is String && msg.isNotEmpty) {
+              errorMessage = msg;
+            } else if (msg is Map) {
+              for (final entry in msg.entries) {
+                final v = entry.value;
+                if (v is String && v.isNotEmpty) {
+                  errorMessage = v;
+                  break;
+                }
+              }
+            }
+          } else if (responseData.containsKey('error') &&
+              responseData['error'] is String) {
+            errorMessage = responseData['error'] as String;
+          }
+        }
+        if (statusCode == 401) {
+          errorMessage =
+              '$errorMessage If this keeps happening, sign in again and ensure '
+              'API_BASE_URL points at the same server that issued your session.';
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
       }
       throw NetworkException('Network error: ${e.message}');
     }

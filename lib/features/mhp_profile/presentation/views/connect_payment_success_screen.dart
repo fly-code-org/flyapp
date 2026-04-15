@@ -1,12 +1,36 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/mhp_profile/data/datasources/connect_booking_remote_data_source.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const _backHomePurple = Color(0xFF3B16A7);
+
+String _connectMeetFailureCopy(String? code) {
+  switch (code) {
+    case 'google_auth_missing':
+      return 'Your professional may need to connect Google Calendar in Fly before video links work. Your payment went through—support can help.';
+    case 'google_token':
+      return 'We could not use the calendar connection (token). Your payment was successful—contact support with the code below.';
+    case 'calendar_api':
+      return 'Google Calendar was unavailable when creating the meeting. Your payment was successful—try again later or contact support.';
+    case 'meet_response':
+      return 'Google did not return a meeting link. Your payment was successful—contact support with the code below.';
+    case 'no_meet_link':
+      return 'A video link could not be created. Your payment was successful—contact support with the code below.';
+    case 'server_config':
+      return 'Something is misconfigured on our side. Your payment was successful—contact support with the code below.';
+    default:
+      return 'We could not create your video meeting link. Your payment was successful—contact support with your reference and the code below.';
+  }
+}
 
 /// Ticket clip: rounded rectangle with semicircular bites on left/right at [notchCenterFromTop].
 /// Cuts reveal the background (not filled white).
@@ -153,6 +177,13 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
   Map<String, dynamic> get _args =>
       Map<String, dynamic>.from(Get.arguments as Map? ?? {});
 
+  bool get _meetGenerationFailed => _args['meetGenerationFailed'] == true;
+
+  String? get _meetGenerationCode {
+    final c = _args['meetGenerationCode'];
+    return c is String && c.trim().isNotEmpty ? c.trim() : null;
+  }
+
   String _referenceLabel() {
     final pay = (_args['razorpayPaymentId'] as String?)?.trim();
     if (pay != null && pay.isNotEmpty) return pay;
@@ -165,6 +196,12 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
     final s = _args['paidAt'] as String?;
     if (s == null || s.isEmpty) return DateTime.now();
     return DateTime.tryParse(s) ?? DateTime.now();
+  }
+
+  void _closeLoadingDialogIfOpen() {
+    if (Get.isDialogOpen ?? false) {
+      Get.back();
+    }
   }
 
   void _onClose(BuildContext context) {
@@ -188,6 +225,8 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
         : (amt is num ? '₹${amt.toInt()}' : '—');
     final mhp = _args['mhpDisplayName'] as String? ?? 'Fly professional';
     final meet = (_args['meetLink'] as String?)?.trim();
+    final meetFail = _args['meetGenerationFailed'] == true;
+    final meetCode = _meetGenerationCode;
 
     final buf = StringBuffer()
       ..writeln('Fly — Payment successful')
@@ -199,6 +238,9 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
       ..writeln('Session with: $mhp');
     if (meet != null && meet.isNotEmpty) {
       buf.writeln('Meet link: $meet');
+    } else if (meetFail) {
+      buf.writeln('Video link: not created — contact support');
+      buf.writeln('Support code: ${meetCode ?? "unknown"}');
     }
     final text = buf.toString().trim();
 
@@ -226,10 +268,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
       );
     } catch (_) {
       try {
-        await Share.share(
-          text,
-          sharePositionOrigin: sharePositionOrigin,
-        );
+        await Share.share(text, sharePositionOrigin: sharePositionOrigin);
       } catch (e) {
         Get.snackbar(
           'Share',
@@ -243,17 +282,96 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
     }
   }
 
-  void _onPdfReceipt() {
-    Get.snackbar(
-      'Receipt',
-      'PDF receipts will be available soon.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.grey.shade800,
-      colorText: Colors.white,
+  Future<void> _onPdfReceipt() async {
+    final bookingId = (_args['bookingId'] as String?)?.trim();
+    if (bookingId == null || bookingId.isEmpty) {
+      Get.snackbar(
+        'Receipt',
+        'Missing booking reference.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange.shade800,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
     );
+
+    try {
+      final ds = sl<ConnectBookingRemoteDataSource>();
+      final receipt = await ds.getReceipt(bookingId);
+
+      _closeLoadingDialogIfOpen();
+
+      final redirectUrl = receipt.redirectUrl?.trim();
+      if (redirectUrl != null && redirectUrl.isNotEmpty) {
+        final uri = Uri.tryParse(redirectUrl);
+        if (uri == null || !(uri.isScheme('http') || uri.isScheme('https'))) {
+          throw const FormatException('Invalid receipt URL');
+        }
+        final opened = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!opened) {
+          throw Exception('Could not open receipt URL.');
+        }
+        return;
+      }
+
+      final bytes = receipt.pdfBytes;
+      if (bytes == null || bytes.isEmpty) {
+        throw Exception('Receipt file is empty.');
+      }
+
+      final fileName = 'fly-connect-receipt-$bookingId.pdf';
+      final file = File('${Directory.systemTemp.path}/$fileName');
+      await file.writeAsBytes(bytes, flush: true);
+
+      final opened = await launchUrl(
+        Uri.file(file.path),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened) {
+        Get.snackbar(
+          'Receipt',
+          'Receipt downloaded to temporary storage, but we could not open it automatically.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange.shade800,
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+        );
+      }
+    } catch (e) {
+      _closeLoadingDialogIfOpen();
+      Get.snackbar(
+        'Receipt',
+        'Could not fetch receipt. $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    }
   }
 
   void _onHelp() {
+    if (_meetGenerationFailed) {
+      final code = _meetGenerationCode;
+      Get.snackbar(
+        'Video link',
+        '${_connectMeetFailureCopy(code)} Code: ${code ?? "—"}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.deepOrange.shade800,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 6),
+      );
+      return;
+    }
     Get.snackbar(
       'Help',
       'Help center is coming soon. For urgent issues, contact support from Settings.',
@@ -262,6 +380,32 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
       colorText: Colors.white,
       margin: const EdgeInsets.all(16),
     );
+  }
+
+  Future<void> _openMeetLink(String raw) async {
+    final uri = Uri.tryParse(raw.trim());
+    if (uri == null || !(uri.isScheme('http') || uri.isScheme('https'))) {
+      Get.snackbar(
+        'Link',
+        'This link cannot be opened.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade800,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+      return;
+    }
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok) {
+      Get.snackbar(
+        'Link',
+        'Could not open the browser.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade800,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    }
   }
 
   @override
@@ -274,16 +418,16 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
     final amountStr = amt is int
         ? '₹$amt'
         : (amt is num ? '₹${amt.toInt()}' : '—');
+    final meet = (_args['meetLink'] as String?)?.trim();
+    final meetFail = _meetGenerationFailed;
+    final meetCode = _meetGenerationCode;
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/bg_fly.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
           ),
           SafeArea(
             child: Column(
@@ -380,13 +524,139 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(height: 20),
-                                _ticketRow('Reference Number', _referenceLabel()),
+                                _ticketRow(
+                                  'Reference Number',
+                                  _referenceLabel(),
+                                ),
                                 _ticketRow('Date', dateStr),
                                 _ticketRow('Time', timeStr),
                                 _ticketRow('Payment Method', method),
                                 _ticketRow('Amount', amountStr),
+                                if (meet != null && meet.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: TextButton.icon(
+                                      onPressed: () => _openMeetLink(meet),
+                                      icon: Icon(
+                                        Icons.videocam_outlined,
+                                        color: Colors.deepPurple.shade700,
+                                        size: 22,
+                                      ),
+                                      label: Text(
+                                        'Open video link',
+                                        style: TextStyle(
+                                          fontFamily: 'Lexend',
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                          color: Colors.deepPurple.shade700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                if (meetFail) ...[
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.shade50,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.amber.shade200,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.info_outline_rounded,
+                                              color: Colors.amber.shade900,
+                                              size: 22,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Video link unavailable',
+                                                style: TextStyle(
+                                                  fontFamily: 'Lexend',
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 14,
+                                                  color: Colors.amber.shade900,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          _connectMeetFailureCopy(meetCode),
+                                          style: TextStyle(
+                                            fontFamily: 'Lexend',
+                                            fontSize: 12.5,
+                                            height: 1.35,
+                                            color: Colors.brown.shade800,
+                                          ),
+                                        ),
+                                        if (meetCode != null) ...[
+                                          const SizedBox(height: 10),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: SelectableText(
+                                                  'Code: $meetCode',
+                                                  style: TextStyle(
+                                                    fontFamily: 'monospace',
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        Colors.brown.shade900,
+                                                  ),
+                                                ),
+                                              ),
+                                              IconButton(
+                                                tooltip: 'Copy code',
+                                                onPressed: () async {
+                                                  await Clipboard.setData(
+                                                    ClipboardData(
+                                                      text: meetCode,
+                                                    ),
+                                                  );
+                                                  Get.snackbar(
+                                                    'Copied',
+                                                    'Support code copied',
+                                                    snackPosition:
+                                                        SnackPosition.BOTTOM,
+                                                    backgroundColor:
+                                                        Colors.grey.shade800,
+                                                    colorText: Colors.white,
+                                                    margin:
+                                                        const EdgeInsets.all(
+                                                          16,
+                                                        ),
+                                                  );
+                                                },
+                                                icon: Icon(
+                                                  Icons.copy_rounded,
+                                                  size: 20,
+                                                  color: Colors.brown.shade700,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 18),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 18,
+                                  ),
                                   child: Divider(
                                     height: 1,
                                     thickness: 1,
@@ -411,7 +681,9 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                   style: OutlinedButton.styleFrom(
                                     backgroundColor: Colors.white,
                                     foregroundColor: Colors.black87,
-                                    side: BorderSide(color: Colors.grey.shade400),
+                                    side: BorderSide(
+                                      color: Colors.grey.shade400,
+                                    ),
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 14,
                                       horizontal: 16,
@@ -447,7 +719,8 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Trouble with your payment?',
@@ -455,7 +728,9 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                             fontFamily: 'Lexend',
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.white.withValues(alpha: 0.98),
+                                            color: Colors.white.withValues(
+                                              alpha: 0.98,
+                                            ),
                                             height: 1.25,
                                           ),
                                         ),
@@ -466,7 +741,9 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                             fontFamily: 'Lexend',
                                             fontSize: 12,
                                             fontWeight: FontWeight.w400,
-                                            color: Colors.white.withValues(alpha: 0.75),
+                                            color: Colors.white.withValues(
+                                              alpha: 0.75,
+                                            ),
                                             height: 1.3,
                                           ),
                                         ),
@@ -550,10 +827,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
 }
 
 class _GlassCircleButton extends StatelessWidget {
-  const _GlassCircleButton({
-    required this.onPressed,
-    required this.child,
-  });
+  const _GlassCircleButton({required this.onPressed, required this.child});
 
   final VoidCallback onPressed;
   final Widget child;
@@ -567,11 +841,7 @@ class _GlassCircleButton extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Center(child: child),
-        ),
+        child: SizedBox(width: 44, height: 44, child: Center(child: child)),
       ),
     );
   }

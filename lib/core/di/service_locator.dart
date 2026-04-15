@@ -28,6 +28,7 @@ import '../../features/profile_creation/domain/usecases/get_mhp_profile.dart';
 import '../../features/profile_creation/domain/usecases/get_mhp_profile_by_user_id.dart';
 import '../../features/profile_creation/domain/usecases/update_about_me.dart';
 import '../../features/profile_creation/domain/usecases/update_connect.dart';
+import '../../features/profile_creation/domain/usecases/link_mhp_google_calendar.dart';
 import '../../features/profile_creation/domain/usecases/get_user_profile.dart';
 import '../../features/user_profile/presentation/controllers/user_profile_controller.dart';
 import '../../features/journal/presentation/controllers/journal_controller.dart';
@@ -159,6 +160,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetAboutMe(sl()));
   sl.registerLazySingleton(() => UpdateAboutMe(sl()));
   sl.registerLazySingleton(() => UpdateConnect(sl()));
+  sl.registerLazySingleton(() => LinkMhpGoogleCalendar(sl<MhpProfileRemoteDataSource>()));
 
   // Repository
   sl.registerLazySingleton<MhpProfileRepository>(

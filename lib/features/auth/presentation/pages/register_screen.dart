@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fly/core/config/config.dart';
+import 'package:fly/core/config/fly_google_sign_in.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:fly/features/auth/presentation/widgets/already_member_text.dart';
@@ -26,15 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   // Get AuthController from dependency injection
   late final AuthController _authController;
 
-  // Google Sign-In setup
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: [
-      'email',
-      'profile',
-      'https://www.googleapis.com/auth/calendar.events',
-    ],
-    clientId: AppConfig.googleClientId, // Android client ID
-  );
+  final GoogleSignIn _googleSignIn = createFlyGoogleSignIn();
   String _status = "";
   bool _isLogin = false;
   String selectedRole = '';
@@ -268,12 +261,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       print("🎫 Access Token received: ${auth.accessToken != null}");
 
       final accessToken = auth.accessToken;
+      final serverAuthCode = account.serverAuthCode?.trim();
 
       if (accessToken == null) {
         setState(() {
           _status = "Access token is null";
         });
         return;
+      }
+      if (AppConfig.googleWebClientId.isEmpty) {
+        print(
+          '⚠️ GOOGLE_OAUTH_CLIENT_ID is empty; serverAuthCode will be null — set it in .env (same as fly-be)',
+        );
       }
 
       // Determine current platform
@@ -308,6 +307,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         accessToken: accessToken,
         role: role,
         currentPlatform: currentPlatform,
+        serverAuthCode: serverAuthCode,
       );
 
       // Navigation will be handled by the ever listener for message

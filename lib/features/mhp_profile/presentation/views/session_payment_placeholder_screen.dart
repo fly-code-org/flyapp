@@ -163,6 +163,8 @@ class _SessionPaymentPlaceholderScreenState
           'mhpDisplayName': mhpName,
           'mhpUserId': _args['mhpUserId'],
           'meetLink': result.meetLink,
+          'meetGenerationFailed': result.meetGenerationFailed,
+          'meetGenerationCode': result.meetGenerationCode,
           'bookingId': result.bookingId,
           'amountInr': _singleSessionInr,
           'paymentMethod': 'Razorpay',

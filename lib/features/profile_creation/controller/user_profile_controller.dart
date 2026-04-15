@@ -6,9 +6,13 @@ import '../../../core/storage/mhp_profile_cache.dart';
 import '../../../core/services/s3_upload_service.dart';
 import '../../../core/utils/jwt_decoder.dart';
 import '../../../core/storage/token_storage.dart';
+import '../../../core/storage/pending_mhp_google_calendar_code.dart';
+import '../../../core/di/service_locator.dart';
+import '../../../core/network/api_client.dart';
 import '../../../features/user_profile/data/utils/default_profile_picture.dart';
 import '../domain/usecases/create_mhp_profile.dart';
 import '../domain/usecases/create_user_profile.dart';
+import '../domain/usecases/link_mhp_google_calendar.dart';
 
 class UserProfileController extends GetxController {
   var username = ''.obs;
@@ -440,6 +444,15 @@ class UserProfileController extends GetxController {
       print('🔍 [CREATE PROFILE] Clearing cache...');
       await MhpProfileCache.clearCache();
       print('✅ [CREATE PROFILE] Cache cleared');
+
+      await ApiClient.refreshToken();
+      final linked =
+          await PendingMhpGoogleCalendarCode.consumeAndLinkIfPresent(
+        sl<LinkMhpGoogleCalendar>(),
+      );
+      if (linked) {
+        print('✅ [CREATE PROFILE] Deferred Google Calendar link succeeded');
+      }
 
       print('🔍 [CREATE PROFILE] Calling update()...');
       update(); // Notify GetBuilder listeners

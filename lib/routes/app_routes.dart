@@ -55,4 +55,8 @@ abstract class AppRoutes {
   //User Profile Flow
   static const CreateJournalScreen = '/create-journal-screen';
   static const UserSettingsScreen = '/user-settings-screen';
+
+  /// Legal
+  static const termsConditions = '/terms-conditions';
+  static const privacyPolicy = '/privacy-policy';
 }

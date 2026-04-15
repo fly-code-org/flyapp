@@ -1,7 +1,22 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:fly/core/error/exceptions.dart';
 import 'package:fly/core/network/api_client.dart';
 import 'package:fly/features/mhp_profile/data/models/connect_booking_models.dart';
+
+class ConnectReceiptResult {
+  const ConnectReceiptResult._({this.redirectUrl, this.pdfBytes});
+
+  factory ConnectReceiptResult.redirect(String url) =>
+      ConnectReceiptResult._(redirectUrl: url.trim());
+
+  factory ConnectReceiptResult.pdf(Uint8List bytes) =>
+      ConnectReceiptResult._(pdfBytes: bytes);
+
+  final String? redirectUrl;
+  final Uint8List? pdfBytes;
+}
 
 /// fly-be `connect/external/v1` — seeker JWT required.
 abstract class ConnectBookingRemoteDataSource {
@@ -32,9 +47,12 @@ abstract class ConnectBookingRemoteDataSource {
     required String razorpayPaymentId,
     required String razorpaySignature,
   });
+
+  Future<ConnectReceiptResult> getReceipt(String bookingId);
 }
 
-class ConnectBookingRemoteDataSourceImpl implements ConnectBookingRemoteDataSource {
+class ConnectBookingRemoteDataSourceImpl
+    implements ConnectBookingRemoteDataSource {
   ConnectBookingRemoteDataSourceImpl({Dio? dio}) : _dio = dio ?? ApiClient.dio;
 
   final Dio _dio;
@@ -89,9 +107,7 @@ class ConnectBookingRemoteDataSourceImpl implements ConnectBookingRemoteDataSour
   @override
   Future<List<ConnectOfferOption>> getOffers(String mhpUserId) async {
     try {
-      final response = await _dio.get(
-        '$_basePath/mhp/$mhpUserId/offers',
-      );
+      final response = await _dio.get('$_basePath/mhp/$mhpUserId/offers');
       final raw = _unwrapData(response);
       if (raw is! List) return [];
       return raw
@@ -148,10 +164,7 @@ class ConnectBookingRemoteDataSourceImpl implements ConnectBookingRemoteDataSour
       if (therapyTypeId != null && therapyTypeId.isNotEmpty) {
         body['therapy_type_id'] = therapyTypeId;
       }
-      final response = await _dio.post(
-        '$_basePath/bookings',
-        data: body,
-      );
+      final response = await _dio.post('$_basePath/bookings', data: body);
       final raw = _unwrapData(response);
       return ConnectHoldResult.fromJson(raw);
     } on DioException catch (e) {
@@ -160,7 +173,9 @@ class ConnectBookingRemoteDataSourceImpl implements ConnectBookingRemoteDataSour
   }
 
   @override
-  Future<ConnectPreparePaymentResult> prepareRazorpayOrder(String bookingId) async {
+  Future<ConnectPreparePaymentResult> prepareRazorpayOrder(
+    String bookingId,
+  ) async {
     try {
       final response = await _dio.post(
         '$_basePath/bookings/$bookingId/razorpay-order',
@@ -168,7 +183,10 @@ class ConnectBookingRemoteDataSourceImpl implements ConnectBookingRemoteDataSour
       final raw = _unwrapData(response);
       final parsed = ConnectPreparePaymentResult.fromJson(raw);
       if (parsed == null) {
-        throw ServerException('Invalid payment order response', statusCode: response.statusCode);
+        throw ServerException(
+          'Invalid payment order response',
+          statusCode: response.statusCode,
+        );
       }
       return parsed;
     } on DioException catch (e) {
@@ -194,6 +212,44 @@ class ConnectBookingRemoteDataSourceImpl implements ConnectBookingRemoteDataSour
       );
       final raw = _unwrapData(response);
       return ConnectConfirmResult.fromJson(raw);
+    } on DioException catch (e) {
+      _throwDio(e);
+    }
+  }
+
+  @override
+  Future<ConnectReceiptResult> getReceipt(String bookingId) async {
+    try {
+      final response = await _dio.get(
+        '$_basePath/bookings/$bookingId/receipt',
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: false,
+          headers: {'Accept': 'application/pdf'},
+          validateStatus: (code) => code != null && code >= 200 && code < 400,
+        ),
+      );
+
+      final statusCode = response.statusCode ?? 0;
+      if (statusCode >= 300 && statusCode < 400) {
+        final redirectUrl = response.headers.value('location')?.trim();
+        if (redirectUrl == null || redirectUrl.isEmpty) {
+          throw ServerException(
+            'Receipt redirect is unavailable right now.',
+            statusCode: statusCode,
+          );
+        }
+        return ConnectReceiptResult.redirect(redirectUrl);
+      }
+
+      final body = response.data;
+      if (body is Uint8List && body.isNotEmpty) {
+        return ConnectReceiptResult.pdf(body);
+      }
+      if (body is List<int> && body.isNotEmpty) {
+        return ConnectReceiptResult.pdf(Uint8List.fromList(body));
+      }
+      throw ServerException('Receipt data is empty.', statusCode: statusCode);
     } on DioException catch (e) {
       _throwDio(e);
     }

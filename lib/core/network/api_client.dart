@@ -2,6 +2,7 @@
 // All backend API calls (auth, post, nira, community, journal, etc.) use this client.
 // Base URL comes from AppConfig.backendApiBaseUrl (API_BASE_URL in .env or default).
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:logger/logger.dart';
 import '../config/config.dart';
 import '../storage/token_storage.dart';
@@ -11,6 +12,19 @@ class ApiClient {
   static String? _cachedToken;
   static bool _isLoadingToken = false;
   static final _logger = Logger();
+
+  /// Debug-only: JWT 401 triage for `PATCH .../mhp/external/v1/google`.
+  static void _debugLogMhpGoogleAuth(RequestOptions options) {
+    if (!kDebugMode) return;
+    if (!options.path.contains('/mhp/external/v1/google')) return;
+    final auth = options.headers['Authorization'];
+    final has = auth != null && auth.toString().trim().isNotEmpty;
+    final len = has ? auth.toString().length : 0;
+    _logger.i(
+      '[ApiClient] mhp/google request: hasAuthorization=$has authHeaderChars≈$len '
+      'baseUrl=${options.baseUrl} path=${options.path}',
+    );
+  }
 
   /// Initialize Dio instance eagerly (call this in main before runApp)
   static Future<void> initialize() async {
@@ -49,6 +63,7 @@ class ApiClient {
             _logger.e('Error loading token: $e');
           }
 
+          _debugLogMhpGoogleAuth(options);
           _logger.d('Request: ${options.method} ${options.path}');
           handler.next(options);
         },
@@ -63,6 +78,9 @@ class ApiClient {
             'Error: ${error.response?.statusCode} ${error.requestOptions.path}',
           );
           _logger.e('Message: ${error.message}');
+          if (kDebugMode && error.response?.data != null) {
+            _logger.e('[ApiClient] error body: ${error.response!.data}');
+          }
           handler.next(error);
         },
       ),
@@ -113,6 +131,7 @@ class ApiClient {
             } catch (e) {
               _logger.e('Error loading token: $e');
             }
+            _debugLogMhpGoogleAuth(options);
             handler.next(options);
           },
         ),
