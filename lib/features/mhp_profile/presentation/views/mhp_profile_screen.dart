@@ -206,6 +206,8 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
         return ConnectTabContent(
           availableSlots: _profile?.availableSlots ?? [],
           appointments: _profile?.appointments ?? [],
+          googleCalendarConnected: _profile?.googleCalendarConnected ?? false,
+          googleCalendarStatus: _profile?.googleCalendarStatus,
           onSlotsUpdated: _loadProfile,
         );
       default:

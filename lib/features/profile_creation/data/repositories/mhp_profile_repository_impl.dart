@@ -28,6 +28,14 @@ class MhpProfileRepositoryImpl implements MhpProfileRepository {
   }
 
   @override
+  Future<Map<String, dynamic>> getBookedSessions({
+    int skip = 0,
+    int limit = 20,
+  }) async {
+    return remoteDataSource.getBookedSessions(skip: skip, limit: limit);
+  }
+
+  @override
   Future<Map<String, dynamic>> getAboutMe() async {
     return remoteDataSource.getAboutMe();
   }

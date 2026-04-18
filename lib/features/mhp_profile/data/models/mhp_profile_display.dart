@@ -11,6 +11,10 @@ class MhpProfileDisplay {
   final List<Map<String, dynamic>> availableSlots;
   final List<Map<String, dynamic>> appointments;
   final String? communityId;
+  /// From GET self profile: server-backed Google Calendar link state (no tokens).
+  final bool googleCalendarConnected;
+  /// `active` | `reauth_required` when [googleCalendarConnected] is true.
+  final String? googleCalendarStatus;
 
   const MhpProfileDisplay({
     required this.userName,
@@ -24,6 +28,8 @@ class MhpProfileDisplay {
     this.availableSlots = const [],
     this.appointments = const [],
     this.communityId,
+    this.googleCalendarConnected = false,
+    this.googleCalendarStatus,
   });
 
   /// Builds display from API response map. [userName] comes from JWT (pass separately).
@@ -107,6 +113,13 @@ class MhpProfileDisplay {
         ? displayFromApi
         : (userName.isNotEmpty ? userName : 'MHP');
 
+    final gcc = map['google_calendar_connected'];
+    final googleCalendarConnected = gcc == true;
+    final gcsRaw = map['google_calendar_status'];
+    final String? googleCalendarStatus = gcsRaw is String && gcsRaw.trim().isNotEmpty
+        ? gcsRaw.trim()
+        : null;
+
     return MhpProfileDisplay(
       userName: resolvedName,
       bio: bio,
@@ -119,6 +132,8 @@ class MhpProfileDisplay {
       availableSlots: availableSlots,
       appointments: appointments,
       communityId: communityId,
+      googleCalendarConnected: googleCalendarConnected,
+      googleCalendarStatus: googleCalendarStatus,
     );
   }
 

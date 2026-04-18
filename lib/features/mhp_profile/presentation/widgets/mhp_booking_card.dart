@@ -102,7 +102,7 @@ class MhpBookingCard extends StatelessWidget {
                   ),
                 ),
               ),
-              _VideoPill(onPressed: onVideoPressed),
+              if (onVideoPressed != null) _VideoPill(onPressed: onVideoPressed),
             ],
           ),
         ],

@@ -10,5 +10,6 @@ abstract class MhpProfileRepository {
   Future<Map<String, dynamic>> getAboutMe();
   Future<void> updateAboutMe(Map<String, dynamic> body);
   Future<void> updateConnect(Map<String, dynamic> body);
+  Future<Map<String, dynamic>> getBookedSessions({int skip = 0, int limit = 20});
 }
 

@@ -25,6 +25,7 @@ import '../../features/profile_creation/domain/usecases/create_mhp_profile.dart'
 import '../../features/profile_creation/domain/usecases/create_user_profile.dart';
 import '../../features/profile_creation/domain/usecases/get_about_me.dart';
 import '../../features/profile_creation/domain/usecases/get_mhp_profile.dart';
+import '../../features/profile_creation/domain/usecases/get_mhp_booked_sessions.dart';
 import '../../features/profile_creation/domain/usecases/get_mhp_profile_by_user_id.dart';
 import '../../features/profile_creation/domain/usecases/update_about_me.dart';
 import '../../features/profile_creation/domain/usecases/update_connect.dart';
@@ -156,6 +157,7 @@ Future<void> init() async {
   // Use cases
   sl.registerLazySingleton(() => CreateMhpProfile(sl()));
   sl.registerLazySingleton(() => GetMhpProfile(sl()));
+  sl.registerLazySingleton(() => GetMhpBookedSessions(sl()));
   sl.registerLazySingleton(() => GetMhpProfileByUserId(sl()));
   sl.registerLazySingleton(() => GetAboutMe(sl()));
   sl.registerLazySingleton(() => UpdateAboutMe(sl()));

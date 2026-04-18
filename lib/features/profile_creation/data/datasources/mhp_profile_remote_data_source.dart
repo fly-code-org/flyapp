@@ -19,6 +19,8 @@ abstract class MhpProfileRemoteDataSource {
   Future<void> updateConnect(Map<String, dynamic> body);
   /// PATCH /mhp/external/v1/google?token= — exchange serverAuthCode, store Calendar tokens.
   Future<void> linkGoogleCalendar({required String serverAuthCode});
+  /// GET /mhp/external/v1/booked-sessions — MHP merged Connect + therapy sessions.
+  Future<Map<String, dynamic>> getBookedSessions({int skip = 0, int limit = 20});
 }
 
 class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
@@ -314,6 +316,35 @@ class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
               'API_BASE_URL points at the same server that issued your session.';
         }
         throw ServerException(errorMessage, statusCode: statusCode);
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getBookedSessions({
+    int skip = 0,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await client.get(
+        '/mhp/external/v1/booked-sessions',
+        queryParameters: {'skip': skip, 'limit': limit},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return response.data as Map<String, dynamic>;
+      }
+      throw ServerException(
+        'Unexpected status: ${response.statusCode}',
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException(
+          'Failed to load sessions',
+          statusCode: e.response!.statusCode,
+        );
       }
       throw NetworkException('Network error: ${e.message}');
     }
