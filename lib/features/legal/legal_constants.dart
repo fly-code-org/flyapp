@@ -1,3 +1,4 @@
-/// Platform Community Guidelines (Google Doc), referenced in Privacy Policy & Terms.
-const kFlyCommunityGuidelinesUrl =
-    'https://docs.google.com/document/d/11dsAakOvQyrTaFyJB3_0iF9W3f5UMQjtqdXxF63dmX4/edit?usp=sharing';
+import 'package:fly/features/legal/legal_urls.dart';
+
+/// Prefer [LegalUrls.communityGuidelines]. Kept for in-app legal screens.
+String get kFlyCommunityGuidelinesUrl => LegalUrls.communityGuidelines;
