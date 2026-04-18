@@ -12,6 +12,9 @@ import 'package:fly/features/post/presentation/services/user_profile_service.dar
 import 'package:fly/features/home/presentation/widgets/social_feed.dart';
 import 'package:fly/features/home/model/post_model.dart';
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
+import 'package:fly/core/services/streak_engagement_service.dart';
+import 'package:fly/features/streak/presentation/streak_detail_sheet.dart';
+import 'package:fly/features/streak/presentation/streak_view_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isUsingFeed = false;
   bool _isLoadingMore = false;
   bool _hasReachedEnd = false;
+  bool _streakScrollEngaged = false;
 
   @override
   void initState() {
@@ -63,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Future.microtask(() {
         if (mounted) _refreshBothTabs();
       });
+      StreakEngagementService.instance.recordEngagement(reason: 'home_open');
     });
 
     _scrollController.addListener(_onScroll);
@@ -76,8 +81,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onScroll() {
-    if (_hasReachedEnd || _isLoadingMore || !_isUsingFeed) return;
     final pos = _scrollController.position;
+    if (!_streakScrollEngaged && pos.pixels > 80) {
+      _streakScrollEngaged = true;
+      StreakEngagementService.instance.recordEngagement(reason: 'feed_scroll');
+    }
+    if (_hasReachedEnd || _isLoadingMore || !_isUsingFeed) return;
     if (pos.pixels >= pos.maxScrollExtent - 300) {
       _loadMorePosts();
     }
@@ -361,29 +370,52 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      DottedBorder(
-                        options: RoundedRectDottedBorderOptions(
-                          strokeWidth: 1.5,
-                          dashPattern: const [6, 3],
-                          color: Colors.grey,
-                          radius: const Radius.circular(30),
-                          padding: EdgeInsets.zero,
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
+                      GestureDetector(
+                        onTap: () {
+                          final vm = Get.isRegistered<StreakViewModel>()
+                              ? Get.find<StreakViewModel>()
+                              : null;
+                          final count = vm?.streakCount.value ??
+                              _profileController.streakCount.value;
+                          final last = vm?.lastEngagedAt.value ??
+                              _profileController.streakLastEngagedAt.value;
+                          showStreakDetailSheet(
+                            context,
+                            streakCount: count,
+                            lastEngagedAt: last,
+                          );
+                        },
+                        child: DottedBorder(
+                          options: RoundedRectDottedBorderOptions(
+                            strokeWidth: 1.5,
+                            dashPattern: const [6, 3],
+                            color: Colors.grey,
+                            radius: const Radius.circular(30),
+                            padding: EdgeInsets.zero,
                           ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Obx(
-                            () => Text(
-                              "🪽${_profileController.streakCount.value} Streaks",
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Obx(
+                              () {
+                                final n = Get.isRegistered<StreakViewModel>()
+                                    ? Get.find<StreakViewModel>()
+                                        .streakCount
+                                        .value
+                                    : _profileController.streakCount.value;
+                                return Text(
+                                  "🪽${n} Streaks",
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),

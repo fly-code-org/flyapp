@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../streak/data/streak_patch_result.dart';
 import '../models/mhp_profile_response_model.dart';
 
 abstract class MhpProfileRemoteDataSource {
@@ -21,6 +22,7 @@ abstract class MhpProfileRemoteDataSource {
   Future<void> linkGoogleCalendar({required String serverAuthCode});
   /// GET /mhp/external/v1/booked-sessions — MHP merged Connect + therapy sessions.
   Future<Map<String, dynamic>> getBookedSessions({int skip = 0, int limit = 20});
+  Future<StreakPatchResult?> updateStreak();
 }
 
 class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
@@ -345,6 +347,46 @@ class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
           'Failed to load sessions',
           statusCode: e.response!.statusCode,
         );
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  @override
+  Future<StreakPatchResult?> updateStreak() async {
+    try {
+      final offset = DateTime.now().timeZoneOffset.inMinutes;
+      final response = await client.patch(
+        '/mhp/external/v1/streaks',
+        queryParameters: {'offset_minutes': offset},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+      if (response.statusCode == 200) {
+        final body = response.data;
+        if (body is Map<String, dynamic>) {
+          final data = body['data'];
+          if (data is Map<String, dynamic>) {
+            return StreakPatchResult.fromJson(data);
+          }
+        }
+        return null;
+      }
+      throw ServerException(
+        'Unexpected status code: ${response.statusCode}',
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        final responseData = e.response!.data;
+        var errorMessage = 'Failed to update streak';
+        if (responseData is Map<String, dynamic> &&
+            responseData['msg'] is Map) {
+          final msg = responseData['msg'] as Map<String, dynamic>;
+          errorMessage =
+              (msg['err'] ?? msg['err: '] ?? errorMessage).toString();
+        }
+        throw ServerException(errorMessage, statusCode: statusCode);
       }
       throw NetworkException('Network error: ${e.message}');
     }

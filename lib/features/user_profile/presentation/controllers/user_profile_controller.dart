@@ -5,10 +5,12 @@ import '../../../../core/di/service_locator.dart';
 import '../../../../core/utils/jwt_decoder.dart';
 import '../../../../core/utils/profile_picture_helper.dart';
 import '../../../../core/storage/token_storage.dart';
+import '../../../../core/services/streak_engagement_service.dart';
 import '../../../profile_creation/domain/usecases/get_user_profile.dart';
 import '../../data/utils/default_profile_picture.dart';
 import '../../data/services/profile_update_service.dart';
-import '../../../profile_creation/data/datasources/user_profile_remote_data_source.dart';
+import '../../../streak/data/streak_patch_result.dart';
+import '../../../streak/presentation/streak_view_model.dart';
 
 class UserProfileController extends GetxController {
   final GetUserProfile getUserProfile;
@@ -28,6 +30,7 @@ class UserProfileController extends GetxController {
   var location = ''.obs;
   var createdAt = ''.obs;
   var streakCount = 0.obs;
+  var streakLastEngagedAt = Rxn<DateTime>();
   var activities = <String>[].obs;
   var bookmarkedPosts = <Map<String, dynamic>>[].obs;
 
@@ -236,14 +239,27 @@ class UserProfileController extends GetxController {
       createdAt.value = '';
     }
 
-    // Streak count
+    // Streak count + last engaged (for week UI)
     if (data.containsKey('streaks') && data['streaks'] != null) {
       final streaks = data['streaks'] as Map<String, dynamic>?;
       if (streaks != null) {
-        streakCount.value = streaks['score'] as int? ?? 0;
+        streakCount.value = StreakViewModel.readScoreFromMap(streaks);
+        final raw = streaks['last_engaged_at'];
+        if (raw is String && raw.isNotEmpty) {
+          streakLastEngagedAt.value = DateTime.tryParse(raw);
+        } else {
+          streakLastEngagedAt.value = null;
+        }
+        if (Get.isRegistered<StreakViewModel>()) {
+          Get.find<StreakViewModel>().applyFromProfileMap(streaks);
+        }
       }
     } else {
       streakCount.value = 0;
+      streakLastEngagedAt.value = null;
+      if (Get.isRegistered<StreakViewModel>()) {
+        Get.find<StreakViewModel>().applyFromProfileMap(null);
+      }
     }
 
     // Activities - extract post_ids
@@ -284,22 +300,35 @@ class UserProfileController extends GetxController {
     print('   - Bookmarks: ${bookmarkedPosts.length}');
   }
 
-  /// Update user streak (non-blocking, fire-and-forget)
-  /// Called automatically when user performs activities (like, comment, bookmark, create post)
   Future<void> updateStreak() async {
-    try {
-      print('🔥 [STREAK] Updating user streak...');
-      // Get the remote data source from service locator
-      final remoteDataSource = sl<UserProfileRemoteDataSource>();
-      await remoteDataSource.updateStreak();
-      print('✅ [STREAK] Streak updated successfully');
-      // Refresh profile to get updated streak count
-      await fetchUserProfile(forceRefresh: true);
-    } catch (e) {
-      // Silently fail - don't block user activities if streak update fails
-      print('⚠️ [STREAK] Failed to update streak (non-blocking): $e');
+    await StreakEngagementService.instance.recordEngagement(reason: 'manual');
+  }
+
+  void applyStreakPatch(StreakPatchResult r) {
+    streakCount.value = r.streaks.score;
+    streakLastEngagedAt.value = r.streaks.lastEngagedAt;
+    if (profileData.value != null) {
+      final m = Map<String, dynamic>.from(profileData.value!);
+      m['streaks'] = {
+        'score': r.streaks.score,
+        if (r.streaks.lastEngagedAt != null)
+          'last_engaged_at': r.streaks.lastEngagedAt!.toUtc().toIso8601String(),
+        'free_streak_uses': r.streaks.freeStreakUses,
+        'paid_streak_credits': r.streaks.paidStreakCredits,
+      };
+      profileData.value = m;
+    }
+    if (Get.isRegistered<StreakViewModel>()) {
+      Get.find<StreakViewModel>().applyFromProfileMap({
+        'score': r.streaks.score,
+        if (r.streaks.lastEngagedAt != null)
+          'last_engaged_at': r.streaks.lastEngagedAt!.toUtc().toIso8601String(),
+        'free_streak_uses': r.streaks.freeStreakUses,
+        'paid_streak_credits': r.streaks.paidStreakCredits,
+      });
     }
   }
+
 
   // Save profile picture to backend (placeholder for when endpoint is available)
   Future<void> _saveProfilePictureToBackend(String userId, String profilePictureUrl) async {
@@ -333,6 +362,7 @@ class UserProfileController extends GetxController {
     location.value = '';
     createdAt.value = '';
     streakCount.value = 0;
+    streakLastEngagedAt.value = null;
     activities.clear();
     bookmarkedPosts.clear();
     errorMessage.value = '';

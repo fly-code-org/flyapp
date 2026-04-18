@@ -2,6 +2,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../streak/data/streak_patch_result.dart';
 import '../models/user_profile_response_model.dart';
 
 abstract class UserProfileRemoteDataSource {
@@ -9,7 +10,7 @@ abstract class UserProfileRemoteDataSource {
     required Map<String, dynamic> profileData,
   });
   Future<Map<String, dynamic>> getUserProfile();
-  Future<void> updateStreak();
+  Future<StreakPatchResult?> updateStreak();
 }
 
 class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
@@ -190,21 +191,24 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   }
 
   @override
-  Future<void> updateStreak() async {
+  Future<StreakPatchResult?> updateStreak() async {
     try {
-      print('🔥 [STREAK] Updating user streak...');
-
+      final offset = DateTime.now().timeZoneOffset.inMinutes;
       final response = await client.patch(
         '/users/external/v1/streaks',
+        queryParameters: {'offset_minutes': offset},
         options: Options(headers: {"Content-Type": "application/json"}),
       );
 
-      print('📦 [STREAK] Response Status: ${response.statusCode}');
-      print('📦 [STREAK] Response Data: ${response.data}');
-
       if (response.statusCode == 200) {
-        print('✅ [STREAK] Streak updated successfully');
-        return;
+        final body = response.data;
+        if (body is Map<String, dynamic>) {
+          final data = body['data'];
+          if (data is Map<String, dynamic>) {
+            return StreakPatchResult.fromJson(data);
+          }
+        }
+        return null;
       } else {
         throw ServerException(
           'Unexpected status code: ${response.statusCode}',
@@ -212,7 +216,6 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
         );
       }
     } on DioException catch (e) {
-      print('❌ [STREAK] DioException: ${e.type}');
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout) {
@@ -255,4 +258,5 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
     }
   }
 }
+
 

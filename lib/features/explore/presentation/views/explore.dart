@@ -22,6 +22,9 @@ import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/community/domain/entities/community.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_mhp_profile.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_user_profile.dart';
+import 'package:fly/core/services/streak_engagement_service.dart';
+import 'package:fly/features/streak/presentation/streak_detail_sheet.dart';
+import 'package:fly/features/streak/presentation/streak_view_model.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -97,12 +100,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
   final Set<String> _followedTagNames = {};
   // Track followed community IDs from user profile (so MHP/user sees correct "joined" state)
   List<String> _followedCommunityIds = [];
+  bool _isMhpRole = false;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _initRole();
     _startExploreLoads();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      StreakEngagementService.instance.recordEngagement(reason: 'explore_open');
+    });
+  }
+
+  Future<void> _initRole() async {
+    final t = await TokenStorage.getToken();
+    if (!mounted) return;
+    setState(() => _isMhpRole = JwtDecoder.isMhp(t));
   }
 
   @override
@@ -399,6 +413,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
           }
         }
       }
+
+      if (profile['streaks'] is Map<String, dynamic> &&
+          Get.isRegistered<StreakViewModel>()) {
+        Get.find<StreakViewModel>().applyFromProfileMap(
+          profile['streaks'] as Map<String, dynamic>,
+        );
+      }
     });
   }
   
@@ -640,19 +661,57 @@ class _ExploreScreenState extends State<ExploreScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔙 Title Row
-            Row(
-              children: const [
-                SizedBox(width: 20),
-                Text(
-                  "Explore",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+            Padding(
+              padding: const EdgeInsets.only(left: 20, right: 8),
+              child: Row(
+                children: [
+                  if (_isMhpRole) ...[
+                    GestureDetector(
+                      onTap: () {
+                        if (!Get.isRegistered<StreakViewModel>()) return;
+                        final vm = Get.find<StreakViewModel>();
+                        showStreakDetailSheet(
+                          context,
+                          streakCount: vm.streakCount.value,
+                          lastEngagedAt: vm.lastEngagedAt.value,
+                        );
+                      },
+                      child: Obx(() {
+                        if (!Get.isRegistered<StreakViewModel>()) {
+                          return const SizedBox.shrink();
+                        }
+                        final n = Get.find<StreakViewModel>().streakCount.value;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: Colors.grey),
+                          ),
+                          child: Text(
+                            "🪽$n Streaks",
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  const Text(
+                    "Explore",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             Row(
               children: const [

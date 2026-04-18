@@ -12,6 +12,8 @@ import 'core/network/api_client.dart';
 import 'firebase_options.dart'; // Generated from flutterfire configure
 import 'routes/app_routes.dart';
 import 'routes/app_pages.dart';
+import 'features/streak/presentation/streak_view_model.dart';
+import 'core/services/streak_engagement_service.dart';
 
 Future<void> main() async {
   // Set up error handling to catch SVG parsing errors (must be before any widget code)
@@ -232,8 +234,28 @@ void _handleDeepLink(String link) {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    if (!Get.isRegistered<StreakViewModel>()) {
+      Get.put(StreakViewModel(), permanent: true);
+    }
+    StreakEngagementService.instance.ensureInitialized();
+  }
+
+  @override
+  void dispose() {
+    StreakEngagementService.instance.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
