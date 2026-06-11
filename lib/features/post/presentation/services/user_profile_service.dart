@@ -11,18 +11,72 @@ class UserProfileService {
   final Map<String, _CachedProfile> _cache = {};
   static const Duration _cacheValidDuration = Duration(minutes: 10);
 
+  /// Bump when display-name resolution changes so stale cached nulls are not reused.
+  static const int _cacheSchemaVersion = 2;
+
+  /// API keys to try in order. `user_name` early — Mongo Users collection uses it.
+  static const List<String> _profileDisplayNameKeys = [
+    'username',
+    'user_name',
+    'display_name',
+    'displayName',
+    'name',
+  ];
+
   UserProfileService({Dio? dio}) : _client = dio ?? ApiClient.dio;
+
+  static String _profileCacheKey(String userId) =>
+      '${userId}_dn$_cacheSchemaVersion';
+
+  static String? _normalizeStringField(dynamic value) {
+    if (value == null) return null;
+    if (value is String) {
+      final t = value.trim();
+      return t.isEmpty ? null : t;
+    }
+    final t = value.toString().trim();
+    return t.isEmpty ? null : t;
+  }
+
+  /// Display name from one map: handle fields + optional first/last name (Mongo-style).
+  static String? _displayNameFromFlatMap(Map<String, dynamic> m) {
+    for (final key in _profileDisplayNameKeys) {
+      final s = _normalizeStringField(m[key]);
+      if (s != null) return s;
+    }
+    final fn = _normalizeStringField(m['first_name']);
+    final ln = _normalizeStringField(m['last_name']);
+    if (fn != null && ln != null) return '$fn $ln';
+    if (fn != null) return fn;
+    if (ln != null) return ln;
+    return null;
+  }
+
+  /// Top-level and nested maps (`profile`, `user`, …) as returned by various API shapes.
+  static String? _resolveDisplayNameFromProfile(Map<String, dynamic> profileData) {
+    final direct = _displayNameFromFlatMap(profileData);
+    if (direct != null) return direct;
+    for (final nestedKey in <String>['profile', 'user', 'user_profile']) {
+      final nested = profileData[nestedKey];
+      if (nested is Map<String, dynamic>) {
+        final n = _displayNameFromFlatMap(nested);
+        if (n != null) return n;
+      }
+    }
+    return null;
+  }
 
   /// Fetches user profile by user ID
   Future<Map<String, String?>> getUserProfile(String userId) async {
+    final cacheKey = _profileCacheKey(userId);
     // Check cache first
-    if (_cache.containsKey(userId)) {
-      final cached = _cache[userId]!;
+    if (_cache.containsKey(cacheKey)) {
+      final cached = _cache[cacheKey]!;
       if (DateTime.now().difference(cached.timestamp) < _cacheValidDuration) {
         print('📦 [USER PROFILE SERVICE] Using cached profile for $userId');
         return cached.profile;
       } else {
-        _cache.remove(userId);
+        _cache.remove(cacheKey);
       }
     }
 
@@ -53,18 +107,9 @@ class UserProfileService {
         print('🔍 [USER PROFILE SERVICE] Response user_id: $responseUserId (type: ${responseUserId.runtimeType})');
         print('🔍 [USER PROFILE SERVICE] Requested userId: $userId');
         
-        // Extract username and picture_path
-        // Handle different possible types (String, null, or dynamic)
-        var username = profileData['username'];
-        if (username is String) {
-          username = username.trim();
-        } else if (username != null) {
-          // Convert to string if it's not null but not a String
-          username = username.toString().trim();
-        } else {
-          username = null;
-        }
-        
+        // Display name: prefer `username`, then other common API / Firestore-mapped keys
+        var username = _resolveDisplayNameFromProfile(profileData);
+
         print('🔍 [USER PROFILE SERVICE] Extracted username for $userId: "$username" (type: ${username.runtimeType})');
         print('🔍 [USER PROFILE SERVICE] Full profileData keys: ${profileData.keys.toList()}');
         print('🔍 [USER PROFILE SERVICE] Full profileData: $profileData');
@@ -118,7 +163,7 @@ class UserProfileService {
         print('📝 [USER PROFILE SERVICE] Profile data: username=${profile['username']}, picture_path=${profile['picture_path']}');
 
         // Cache the result
-        _cache[userId] = _CachedProfile(
+        _cache[cacheKey] = _CachedProfile(
           profile: profile,
           timestamp: DateTime.now(),
         );

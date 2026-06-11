@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fly/core/di/service_locator.dart';
+import '../../../../features/interests/data/models/tag_icon_mapping.dart';
 import '../../../../features/interests/data/server_tag_catalog.dart';
 
 class TagSelectionBottomSheet extends StatefulWidget {
@@ -52,36 +53,15 @@ class TagSelectionBottomSheet extends StatefulWidget {
     },
   ];
 
-  // Support tags with icons
-  static final List<Map<String, dynamic>> supportTags = [
-    {
-      'name': 'Emotional Healing',
-      'icon': Icons.healing,
-    },
-    {
-      'name': 'Anxiety & Stress',
-      'icon': Icons.sentiment_dissatisfied,
-    },
-    {
-      'name': 'Grief & Heartbreak',
-      'icon': Icons.heart_broken,
-    },
-    {
-      'name': 'Work & Career',
-      'icon': Icons.work,
-    },
-    {
-      'name': 'Trauma',
-      'icon': Icons.local_hospital,
-    },
-    {
-      'name': 'Family & Relations',
-      'icon': Icons.family_restroom,
-    },
-    {
-      'name': 'Self-Worth & Identity',
-      'icon': Icons.person,
-    },
+  // Support tag names — icons resolved via [TagIconMapping] (same assets as explore/feed)
+  static const List<String> supportTagNames = [
+    'Emotional Healing',
+    'Anxiety & Stress',
+    'Grief & Heartbreak',
+    'Work & Career',
+    'Trauma',
+    'Family & Relations',
+    'Self-Worth & Identity',
   ];
 
   @override
@@ -174,8 +154,7 @@ class _TagSelectionBottomSheetState extends State<TagSelectionBottomSheet> {
                           context: context,
                           tagName: tagName,
                           tagId: tagId,
-                          icon: tag['icon'] as String,
-                          isSvg: true,
+                          iconPath: tag['icon'] as String,
                         );
                       }),
                       const SizedBox(height: 24),
@@ -188,18 +167,19 @@ class _TagSelectionBottomSheetState extends State<TagSelectionBottomSheet> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ...TagSelectionBottomSheet.supportTags.map((tag) {
-                        final tagName = tag['name'] as String;
+                      ...TagSelectionBottomSheet.supportTagNames.map((tagName) {
                         final tagId =
                             sl<ServerTagCatalog>().tagIdForName(tagName);
                         if (tagId == null) return const SizedBox.shrink();
+
+                        final iconPath = TagIconMapping.getTagIconPath(tagName);
+                        if (iconPath.isEmpty) return const SizedBox.shrink();
 
                         return _buildTagTile(
                           context: context,
                           tagName: tagName,
                           tagId: tagId,
-                          icon: tag['icon'] as IconData,
-                          isSvg: false,
+                          iconPath: iconPath,
                         );
                       }),
                     ],
@@ -217,8 +197,7 @@ class _TagSelectionBottomSheetState extends State<TagSelectionBottomSheet> {
     required BuildContext context,
     required String tagName,
     required int tagId,
-    required dynamic icon,
-    required bool isSvg,
+    required String iconPath,
   }) {
     return InkWell(
       onTap: () {
@@ -241,18 +220,12 @@ class _TagSelectionBottomSheetState extends State<TagSelectionBottomSheet> {
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: isSvg
-                  ? SvgPicture.asset(
-                      icon as String,
-                      width: 24,
-                      height: 24,
-                      fit: BoxFit.scaleDown,
-                    )
-                  : Icon(
-                      icon as IconData,
-                      size: 24,
-                      color: const Color(0xFF855DFC),
-                    ),
+              child: SvgPicture.asset(
+                iconPath,
+                width: 24,
+                height: 24,
+                fit: BoxFit.scaleDown,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(

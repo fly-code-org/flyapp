@@ -4,7 +4,6 @@ import 'package:fly/features/user_verification/presentation/controllers/verifica
 import 'package:fly/features/user_verification/presentation/widgets/add_otp.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_text.dart';
-import 'package:fly/features/user_verification/presentation/widgets/not_recieved_otp.dart';
 import 'package:fly/features/user_verification/presentation/widgets/phone_number_input_field.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
@@ -20,26 +19,31 @@ class _PhoneVerificationState extends State<PhoneVerification> {
   double _dragPosition = 0.8;
   final phoneController = TextEditingController();
   late final String role;
+  late final String email;
   late final VerificationController _verificationController;
   String _otp = '';
+  bool _otpSent = false;
 
   @override
   void initState() {
     super.initState();
     final args = Get.arguments;
-    role = (args['role'] ?? 'user').toLowerCase(); // normalize to lowercase
+    role = (args['role'] ?? 'user').toLowerCase();
+    email = args['email'] ?? '';
+    final passedPhone = args['phone_number'] ?? '';
+    if (passedPhone.isNotEmpty) {
+      phoneController.text = passedPhone;
+    }
     print("PhoneVerification role: $role");
+    print("PhoneVerification email: $email");
 
-    // Get VerificationController from dependency injection
     _verificationController = sl<VerificationController>();
 
-    // Listen to controller changes
     ever(_verificationController.isLoading, (isLoading) {
       if (mounted) setState(() {});
     });
     ever(_verificationController.errorMessage, (error) {
       if (mounted && error.isNotEmpty) {
-        // Show error message
         Get.snackbar(
           'Error',
           error,
@@ -49,41 +53,29 @@ class _PhoneVerificationState extends State<PhoneVerification> {
         );
       }
     });
-    ever(_verificationController.message, (message) {
-      if (mounted && message.isNotEmpty) {
-        // Success - navigate to next screen
-        Get.snackbar(
-          'Success',
-          message,
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-        // Navigate based on role only on success
-        if (role == 'user') {
-          Get.toNamed('/create-user-profile', arguments: {
-            'role': role,
-            'phone': phoneController.text.trim(),
-          });
-        } else {
-          // MHP: route to quiz intro (MHP flow)
-          Get.toNamed(AppRoutes.IntroScreen, arguments: {
-            'role': role,
-            'phone': phoneController.text.trim(),
-          });
-        }
-      }
+    ever(_verificationController.resendCooldown, (_) {
+      if (mounted) setState(() {});
     });
   }
 
   @override
   void dispose() {
-    phoneController.dispose(); // clean up
+    phoneController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleVerifyPhone() async {
-    // Validate phone number
+  String _formatPhoneNumber(String phone) {
+    phone = phone.trim();
+    if (!phone.startsWith('+')) {
+      if (phone.startsWith('91') && phone.length == 12) {
+        return '+$phone';
+      }
+      return '+91$phone';
+    }
+    return phone;
+  }
+
+  Future<void> _handleSendOtp() async {
     final phone = phoneController.text.trim();
     if (phone.isEmpty) {
       Get.snackbar(
@@ -96,11 +88,32 @@ class _PhoneVerificationState extends State<PhoneVerification> {
       return;
     }
 
-    // Validate OTP
-    if (_otp.isEmpty || _otp.length != 4) {
+    final formattedPhone = _formatPhoneNumber(phone);
+    final success = await _verificationController.sendPhoneOtp(
+      phoneNumber: formattedPhone,
+      purpose: 'signup',
+    );
+
+    if (success) {
+      setState(() {
+        _otpSent = true;
+      });
+      Get.snackbar(
+        'OTP Sent',
+        'Verification code sent to $formattedPhone',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> _handleVerifyPhone() async {
+    final phone = phoneController.text.trim();
+    if (phone.isEmpty) {
       Get.snackbar(
         'Error',
-        'Please enter a valid 4-digit OTP',
+        'Please enter a phone number',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -108,14 +121,83 @@ class _PhoneVerificationState extends State<PhoneVerification> {
       return;
     }
 
-    // Call verification API
-    await _verificationController.verifyPhoneOtp(
-      phoneNumber: phone,
+    if (_otp.isEmpty || _otp.length != 6) {
+      Get.snackbar(
+        'Error',
+        'Please enter a valid 6-digit OTP',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final formattedPhone = _formatPhoneNumber(phone);
+    final success = await _verificationController.verifyPhoneOtp(
+      phoneNumber: formattedPhone,
       otp: _otp,
+      purpose: 'signup',
     );
 
-    // Navigation is handled in the ever() listener above
-    // Only navigates if success is true (message is set)
+    if (success) {
+      Get.snackbar(
+        'Success',
+        'Phone verified successfully',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      _navigateToNextScreen();
+    }
+  }
+
+  void _navigateToNextScreen() {
+    if (role == 'user') {
+      Get.toNamed('/create-user-profile', arguments: {
+        'role': role,
+        'phone': phoneController.text.trim(),
+      });
+    } else {
+      Get.toNamed(AppRoutes.IntroScreen, arguments: {
+        'role': role,
+        'phone': phoneController.text.trim(),
+      });
+    }
+  }
+
+  Future<void> _handleResendOtp() async {
+    if (_verificationController.resendCooldown.value > 0) {
+      return;
+    }
+
+    final phone = phoneController.text.trim();
+    if (phone.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'Please enter a phone number first',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final formattedPhone = _formatPhoneNumber(phone);
+    final success = await _verificationController.resendOtp(
+      target: formattedPhone,
+      channel: 'sms',
+      purpose: 'signup',
+    );
+
+    if (success) {
+      Get.snackbar(
+        'OTP Resent',
+        'New verification code sent to $formattedPhone',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    }
   }
 
   @override
@@ -184,7 +266,7 @@ class _PhoneVerificationState extends State<PhoneVerification> {
                       ),
                       const SizedBox(height: 20),
                       const Text(
-                        "Feel free to share your number",
+                        "Verify your phone number",
                         textAlign: TextAlign.left,
                         style: TextStyle(
                           fontFamily: 'Lexend',
@@ -194,50 +276,65 @@ class _PhoneVerificationState extends State<PhoneVerification> {
                           letterSpacing: 0.25,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "This step is optional but recommended for account recovery",
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       PhoneNumberInputField(controller: phoneController),
-                      const SizedBox(height: 40),
-                      EnterOtpWidget(
-                        onOtpChanged: (otp) {
-                          setState(() {
-                            _otp = otp;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 30),
-                      NotRecievedOTP(),
-                      const SizedBox(height: 60),
-                      // Show error message if any
-                      if (_verificationController.errorMessage.value.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: Text(
-                            _verificationController.errorMessage.value,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 14,
+                      const SizedBox(height: 16),
+                      if (!_otpSent)
+                        GradientButton(
+                          text: _verificationController.isLoading.value
+                              ? "Sending..."
+                              : "Send OTP",
+                          onPressed: _verificationController.isLoading.value
+                              ? () {}
+                              : _handleSendOtp,
+                        ),
+                      if (_otpSent) ...[
+                        const SizedBox(height: 20),
+                        EnterOtpWidget(
+                          length: 6,
+                          onOtpChanged: (otp) {
+                            setState(() {
+                              _otp = otp;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        _buildResendOtpButton(),
+                        const SizedBox(height: 40),
+                        if (_verificationController
+                            .errorMessage.value.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: Text(
+                              _verificationController.errorMessage.value,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
+                        GradientButton(
+                          text: _verificationController.isLoading.value
+                              ? "Verifying..."
+                              : "Verify and Continue",
+                          onPressed: _verificationController.isLoading.value
+                              ? () {}
+                              : _handleVerifyPhone,
                         ),
-                      GradientButton(
-                        text: _verificationController.isLoading.value
-                            ? "Verifying..."
-                            : "Verify and Continue",
-                        onPressed: _verificationController.isLoading.value
-                            ? () {}
-                            : _handleVerifyPhone,
-                      ),
+                      ],
                       const SizedBox(height: 20),
                       GradientTextButton(
                         text: "<Skip for now>",
-                        onTap: () {
-                          if (role == 'user') {
-                            Get.toNamed('/create-user-profile', arguments: {'role': role});
-                          } else {
-                            // MHP: route to quiz intro (MHP flow)
-                            Get.toNamed(AppRoutes.IntroScreen, arguments: {'role': role});
-                          }
-                        },
+                        onTap: _navigateToNextScreen,
                       ),
                     ],
                   ),
@@ -246,6 +343,34 @@ class _PhoneVerificationState extends State<PhoneVerification> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildResendOtpButton() {
+    final cooldown = _verificationController.resendCooldown.value;
+    final canResend = cooldown == 0;
+
+    return GestureDetector(
+      onTap: canResend ? _handleResendOtp : null,
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(
+            fontFamily: 'Lexend',
+            fontSize: 14,
+            color: Colors.black,
+          ),
+          children: [
+            const TextSpan(text: "Didn't receive the code? "),
+            TextSpan(
+              text: canResend ? "Resend OTP" : "Resend in ${cooldown}s",
+              style: TextStyle(
+                color: canResend ? const Color(0xFF7A5AF8) : Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -11,8 +11,6 @@ import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../../features/user_verification/data/datasources/verification_remote_data_source.dart';
 import '../../features/user_verification/data/repositories/verification_repository_impl.dart';
 import '../../features/user_verification/domain/repositories/verification_repository.dart';
-import '../../features/user_verification/domain/usecases/verify_email.dart';
-import '../../features/user_verification/domain/usecases/verify_phone.dart';
 import '../../features/user_verification/presentation/controllers/verification_controller.dart';
 import '../../features/profile_creation/data/datasources/mhp_profile_remote_data_source.dart';
 import '../../features/mhp_profile/data/datasources/connect_booking_remote_data_source.dart';
@@ -136,12 +134,8 @@ Future<void> init() async {
   //! Features - User Verification
   // Controllers
   sl.registerFactory(
-    () => VerificationController(verifyEmail: sl(), verifyPhone: sl()),
+    () => VerificationController(repository: sl()),
   );
-
-  // Use cases
-  sl.registerLazySingleton(() => VerifyEmail(sl()));
-  sl.registerLazySingleton(() => VerifyPhone(sl()));
 
   // Repository
   sl.registerLazySingleton<VerificationRepository>(

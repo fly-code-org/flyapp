@@ -409,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         .value
                                     : _profileController.streakCount.value;
                                 return Text(
-                                  "🪽${n} Streaks",
+                                  "🪽$n Streaks",
                                   style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,

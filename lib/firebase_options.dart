@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '228834943626',
     projectId: 'firstloveyourself-b0c13',
     storageBucket: 'firstloveyourself-b0c13.firebasestorage.app',
-    iosBundleId: 'com.example.fly',
+    iosBundleId: 'com.fly.mentalhealth',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '228834943626',
     projectId: 'firstloveyourself-b0c13',
     storageBucket: 'firstloveyourself-b0c13.firebasestorage.app',
-    iosBundleId: 'com.example.flyapp',
+    iosBundleId: 'com.fly.mentalhealth',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

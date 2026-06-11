@@ -98,6 +98,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           arguments: {
             'role': selectedRole,
             'email': emailController.text.trim(),
+            'phone_number': phoneNumberController.text.trim(),
           },
         );
       }

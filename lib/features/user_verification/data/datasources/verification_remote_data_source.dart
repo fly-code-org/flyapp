@@ -1,18 +1,35 @@
-// data/datasources/verification_remote_data_source.dart
 import 'package:dio/dio.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/email_verification_response_model.dart';
 
 abstract class VerificationRemoteDataSource {
-  Future<EmailVerificationResponseModel> verifyEmail({
+  Future<EmailVerificationResponseModel> sendEmailOtp({
     required String email,
-    required String otp,
+    required String purpose,
   });
 
-  Future<EmailVerificationResponseModel> verifyPhone({
+  Future<EmailVerificationResponseModel> verifyEmailOtp({
+    required String email,
+    required String otp,
+    required String purpose,
+  });
+
+  Future<EmailVerificationResponseModel> sendPhoneOtp({
+    required String phoneNumber,
+    required String purpose,
+  });
+
+  Future<EmailVerificationResponseModel> verifyPhoneOtp({
     required String phoneNumber,
     required String otp,
+    required String purpose,
+  });
+
+  Future<EmailVerificationResponseModel> resendOtp({
+    required String target,
+    required String channel,
+    required String purpose,
   });
 }
 
@@ -21,42 +38,30 @@ class VerificationRemoteDataSourceImpl implements VerificationRemoteDataSource {
   VerificationRemoteDataSourceImpl({Dio? dio}) : client = dio ?? ApiClient.dio;
 
   @override
-  Future<EmailVerificationResponseModel> verifyEmail({
+  Future<EmailVerificationResponseModel> sendEmailOtp({
     required String email,
-    required String otp,
+    required String purpose,
   }) async {
     try {
-      print('📧 Verifying email: $email with OTP: $otp');
-      
-      final response = await client.patch(
-        '/users/external/v1/email-verify-otp',
+      print('📧 Sending OTP to email: $email for purpose: $purpose');
+
+      final response = await client.post(
+        '/api/v1/otp/send',
         data: {
-          "email": email,
-          "otp": otp,
+          "target": email,
+          "channel": "email",
+          "purpose": purpose,
         },
         options: Options(
           headers: {"Content-Type": "application/json"},
         ),
       );
 
-      // Debug: Log the actual response
-      print('📦 Email Verification API Response:');
+      print('📦 Send Email OTP Response:');
       print('   Status Code: ${response.statusCode}');
       print('   Response Data: ${response.data}');
-      print('   Response Type: ${response.data.runtimeType}');
 
-      // Check if response is successful
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Ensure response.data is a Map
-        if (response.data is! Map<String, dynamic>) {
-          print(
-            '❌ Response is not a Map. Actual type: ${response.data.runtimeType}',
-          );
-          throw ServerException(
-            'Invalid response format: Expected Map but got ${response.data.runtimeType}. Response: ${response.data}',
-          );
-        }
-
         return EmailVerificationResponseModel.fromJson(
           response.data as Map<String, dynamic>,
         );
@@ -67,105 +72,40 @@ class VerificationRemoteDataSourceImpl implements VerificationRemoteDataSource {
         );
       }
     } on DioException catch (e) {
-      // Handle Dio-specific errors
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        throw NetworkException(
-          'Connection timeout. Please check your internet connection.',
-        );
-      } else if (e.type == DioExceptionType.connectionError) {
-        throw NetworkException(
-          'No internet connection. Please check your network.',
-        );
-      } else if (e.response != null) {
-        // Handle API error responses
-        final statusCode = e.response!.statusCode;
-        final responseData = e.response!.data;
-
-        // Parse error message from response
-        String errorMessage = 'An error occurred';
-        if (responseData is Map<String, dynamic>) {
-          if (responseData.containsKey('error') && responseData['error'] is String) {
-            errorMessage = responseData['error'] as String;
-          } else if (responseData.containsKey('msg')) {
-            if (responseData['msg'] is Map) {
-              final msgMap = responseData['msg'] as Map<String, dynamic>;
-              // Check for "err" key
-              if (msgMap.containsKey('err')) {
-                errorMessage = msgMap['err'] as String;
-              }
-              // Check for "err: " key (with colon and space)
-              else if (msgMap.containsKey('err: ')) {
-                errorMessage = msgMap['err: '] as String;
-              }
-              // Check for any key starting with "err"
-              else {
-                for (final key in msgMap.keys) {
-                  if (key.toString().trim().startsWith('err')) {
-                    errorMessage = msgMap[key] as String;
-                    break;
-                  }
-                }
-              }
-            } else if (responseData['msg'] is String) {
-              errorMessage = responseData['msg'] as String;
-            }
-          } else if (responseData.containsKey('message')) {
-            errorMessage = responseData['message'] as String;
-          }
-        }
-
-        throw ServerException(errorMessage, statusCode: statusCode);
-      } else {
-        throw NetworkException('Network error: ${e.message}');
-      }
+      throw _handleDioError(e);
     } catch (e) {
-      // Handle other exceptions (like from EmailVerificationResponseModel.fromJson)
-      if (e is ServerException || e is NetworkException) {
-        rethrow;
-      }
+      if (e is ServerException || e is NetworkException) rethrow;
       throw ServerException('Unexpected error: ${e.toString()}');
     }
   }
 
   @override
-  Future<EmailVerificationResponseModel> verifyPhone({
-    required String phoneNumber,
+  Future<EmailVerificationResponseModel> verifyEmailOtp({
+    required String email,
     required String otp,
+    required String purpose,
   }) async {
     try {
-      print('📱 Verifying phone: $phoneNumber with OTP: $otp');
+      print('📧 Verifying email OTP: $email with code: $otp');
 
-      final response = await client.patch(
-        '/users/external/v1/phone-verify-otp',
+      final response = await client.post(
+        '/api/v1/otp/verify',
         data: {
-          "phone_number": phoneNumber,
-          "otp": otp,
+          "target": email,
+          "channel": "email",
+          "code": otp,
+          "purpose": purpose,
         },
         options: Options(
           headers: {"Content-Type": "application/json"},
         ),
       );
 
-      // Debug: Log the actual response
-      print('📦 Phone Verification API Response:');
+      print('📦 Verify Email OTP Response:');
       print('   Status Code: ${response.statusCode}');
       print('   Response Data: ${response.data}');
-      print('   Response Type: ${response.data.runtimeType}');
 
-      // Check if response is successful
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Ensure response.data is a Map
-        if (response.data is! Map<String, dynamic>) {
-          print(
-            '❌ Response is not a Map. Actual type: ${response.data.runtimeType}',
-          );
-          throw ServerException(
-            'Invalid response format: Expected Map but got ${response.data.runtimeType}. Response: ${response.data}',
-          );
-        }
-
         return EmailVerificationResponseModel.fromJson(
           response.data as Map<String, dynamic>,
         );
@@ -176,67 +116,169 @@ class VerificationRemoteDataSourceImpl implements VerificationRemoteDataSource {
         );
       }
     } on DioException catch (e) {
-      // Handle Dio-specific errors
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        throw NetworkException(
-          'Connection timeout. Please check your internet connection.',
-        );
-      } else if (e.type == DioExceptionType.connectionError) {
-        throw NetworkException(
-          'No internet connection. Please check your network.',
-        );
-      } else if (e.response != null) {
-        // Handle API error responses
-        final statusCode = e.response!.statusCode;
-        final responseData = e.response!.data;
-
-        // Parse error message from response
-        String errorMessage = 'An error occurred';
-        if (responseData is Map<String, dynamic>) {
-          if (responseData.containsKey('error') &&
-              responseData['error'] is String) {
-            errorMessage = responseData['error'] as String;
-          } else if (responseData.containsKey('msg')) {
-            if (responseData['msg'] is Map) {
-              final msgMap = responseData['msg'] as Map<String, dynamic>;
-              // Check for "err" key
-              if (msgMap.containsKey('err')) {
-                errorMessage = msgMap['err'] as String;
-              }
-              // Check for "err: " key (with colon and space)
-              else if (msgMap.containsKey('err: ')) {
-                errorMessage = msgMap['err: '] as String;
-              }
-              // Check for any key starting with "err"
-              else {
-                for (final key in msgMap.keys) {
-                  if (key.toString().trim().startsWith('err')) {
-                    errorMessage = msgMap[key] as String;
-                    break;
-                  }
-                }
-              }
-            } else if (responseData['msg'] is String) {
-              errorMessage = responseData['msg'] as String;
-            }
-          } else if (responseData.containsKey('message')) {
-            errorMessage = responseData['message'] as String;
-          }
-        }
-
-        throw ServerException(errorMessage, statusCode: statusCode);
-      } else {
-        throw NetworkException('Network error: ${e.message}');
-      }
+      throw _handleDioError(e);
     } catch (e) {
-      // Handle other exceptions (like from EmailVerificationResponseModel.fromJson)
-      if (e is ServerException || e is NetworkException) {
-        rethrow;
-      }
+      if (e is ServerException || e is NetworkException) rethrow;
       throw ServerException('Unexpected error: ${e.toString()}');
     }
   }
-}
 
+  @override
+  Future<EmailVerificationResponseModel> sendPhoneOtp({
+    required String phoneNumber,
+    required String purpose,
+  }) async {
+    try {
+      print('📱 Sending OTP to phone: $phoneNumber for purpose: $purpose');
+
+      final response = await client.post(
+        '/api/v1/otp/send',
+        data: {
+          "target": phoneNumber,
+          "channel": "sms",
+          "purpose": purpose,
+        },
+        options: Options(
+          headers: {"Content-Type": "application/json"},
+        ),
+      );
+
+      print('📦 Send Phone OTP Response:');
+      print('   Status Code: ${response.statusCode}');
+      print('   Response Data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return EmailVerificationResponseModel.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+      } else {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) rethrow;
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<EmailVerificationResponseModel> verifyPhoneOtp({
+    required String phoneNumber,
+    required String otp,
+    required String purpose,
+  }) async {
+    try {
+      print('📱 Verifying phone OTP: $phoneNumber with code: $otp');
+
+      final response = await client.post(
+        '/api/v1/otp/verify',
+        data: {
+          "target": phoneNumber,
+          "channel": "sms",
+          "code": otp,
+          "purpose": purpose,
+        },
+        options: Options(
+          headers: {"Content-Type": "application/json"},
+        ),
+      );
+
+      print('📦 Verify Phone OTP Response:');
+      print('   Status Code: ${response.statusCode}');
+      print('   Response Data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return EmailVerificationResponseModel.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+      } else {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) rethrow;
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<EmailVerificationResponseModel> resendOtp({
+    required String target,
+    required String channel,
+    required String purpose,
+  }) async {
+    try {
+      print('🔄 Resending OTP to $target via $channel');
+
+      final response = await client.post(
+        '/api/v1/otp/resend',
+        data: {
+          "target": target,
+          "channel": channel,
+          "purpose": purpose,
+        },
+        options: Options(
+          headers: {"Content-Type": "application/json"},
+        ),
+      );
+
+      print('📦 Resend OTP Response:');
+      print('   Status Code: ${response.statusCode}');
+      print('   Response Data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return EmailVerificationResponseModel.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+      } else {
+        throw ServerException(
+          'Unexpected status code: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) rethrow;
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  Exception _handleDioError(DioException e) {
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout) {
+      return NetworkException(
+        'Connection timeout. Please check your internet connection.',
+      );
+    } else if (e.type == DioExceptionType.connectionError) {
+      return NetworkException(
+        'No internet connection. Please check your network.',
+      );
+    } else if (e.response != null) {
+      final statusCode = e.response!.statusCode;
+      final responseData = e.response!.data;
+
+      String errorMessage = 'An error occurred';
+      if (responseData is Map<String, dynamic>) {
+        if (responseData.containsKey('error')) {
+          errorMessage = responseData['error'] as String;
+        } else if (responseData.containsKey('message')) {
+          errorMessage = responseData['message'] as String;
+        }
+      }
+
+      return ServerException(errorMessage, statusCode: statusCode);
+    } else {
+      return NetworkException('Network error: ${e.message}');
+    }
+  }
+}
