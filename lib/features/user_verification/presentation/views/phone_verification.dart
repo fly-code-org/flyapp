@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/storage/onboarding_progress.dart';
 import 'package:fly/features/user_verification/presentation/controllers/verification_controller.dart';
 import 'package:fly/features/user_verification/presentation/widgets/add_otp.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
@@ -36,6 +37,13 @@ class _PhoneVerificationState extends State<PhoneVerification> {
     }
     print("PhoneVerification role: $role");
     print("PhoneVerification email: $email");
+
+    // Resume point if the app is killed on this step.
+    OnboardingProgress.saveStep(
+      step: AppRoutes.phoneVerification,
+      role: role,
+      email: email,
+    );
 
     _verificationController = sl<VerificationController>();
 

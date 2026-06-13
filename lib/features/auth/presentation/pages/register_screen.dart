@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:fly/core/config/config.dart';
 import 'package:fly/core/config/fly_google_sign_in.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/storage/onboarding_progress.dart';
 import 'package:fly/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:fly/features/auth/presentation/widgets/already_member_text.dart';
 import 'package:fly/features/auth/presentation/widgets/input_text_field.dart';
@@ -24,28 +25,29 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // Get AuthController from dependency injection
   late final AuthController _authController;
 
   final GoogleSignIn _googleSignIn = createFlyGoogleSignIn();
   String _status = "";
   bool _isLogin = false;
-  String selectedRole = '';
+  String selectedRole = 'User';
   bool _isGoogleLogin = false;
+  bool _passwordFocused = false;
 
-  // Controllers for form fields
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController userNameController = TextEditingController();
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController phoneNumberController = TextEditingController();
+  final FocusNode _passwordFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _authController = sl<AuthController>();
-    // Listen to auth controller changes
+    _passwordFocusNode.addListener(() {
+      if (mounted) setState(() => _passwordFocused = _passwordFocusNode.hasFocus);
+    });
     ever(_authController.isLoading, (isLoading) {
       if (mounted) setState(() {});
     });
@@ -61,10 +63,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         setState(() {
           _status = message;
         });
-        // Navigate on success
         if (_isGoogleLogin) {
           _handleGoogleAuthSuccess();
-          _isGoogleLogin = false; // Reset flag
+          _isGoogleLogin = false;
         } else {
           _handleAuthSuccess();
         }
@@ -79,7 +80,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     userNameController.dispose();
     firstNameController.dispose();
     lastNameController.dispose();
-    phoneNumberController.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -88,17 +89,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // Navigate based on mode
       if (_isLogin) {
         print('✅ [LOGIN] Navigating to home screen...');
+        // Returning user: their account is already onboarded.
+        await OnboardingProgress.markComplete();
         // Navigate to home screen after login
         Get.offAllNamed(AppRoutes.Home);
         print('✅ [LOGIN] Navigation to home completed');
       } else {
+        // Fresh signup: reset any stale progress and gate onboarding from the
+        // first post-signup step so a half-registered user can be resumed.
+        await OnboardingProgress.saveStep(
+          step: AppRoutes.emailVerification,
+          role: selectedRole,
+          email: emailController.text.trim(),
+        );
         // Navigate to email verification after signup
         Get.toNamed(
           AppRoutes.emailVerification,
           arguments: {
             'role': selectedRole,
             'email': emailController.text.trim(),
-            'phone_number': phoneNumberController.text.trim(),
+            'phone_number': '',
           },
         );
       }
@@ -125,15 +135,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         if (role == 'user') {
           print('   🚀 Navigating to: /create-user-profile');
+          // Google email is pre-verified, so onboarding resumes at profile creation.
+          await OnboardingProgress.saveStep(
+            step: AppRoutes.createUserProfile,
+            role: role,
+          );
           Get.toNamed(AppRoutes.createUserProfile, arguments: {'role': role});
         } else {
           // MHP: route to quiz intro (MHP flow)
           print('   🚀 Navigating to: /intro-quiz (MHP flow)');
+          await OnboardingProgress.saveStep(
+            step: AppRoutes.IntroScreen,
+            role: role,
+          );
           Get.toNamed(AppRoutes.IntroScreen, arguments: {'role': role});
         }
       } else {
         // Existing user logging in via Google - navigate to home
         print('✅ [GOOGLE LOGIN] Existing user, navigating to home screen...');
+        await OnboardingProgress.markComplete();
         Get.offAllNamed(AppRoutes.Home);
         print('✅ [GOOGLE LOGIN] Navigation to home completed');
       }
@@ -141,47 +161,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleSignup() async {
-    // Validate required fields
     if (userNameController.text.isEmpty) {
-      setState(() {
-        _status = "Please enter a username";
-      });
+      setState(() => _status = "Please enter a username");
       return;
     }
     if (firstNameController.text.isEmpty) {
-      setState(() {
-        _status = "Please enter your first name";
-      });
+      setState(() => _status = "Please enter your first name");
       return;
     }
     if (lastNameController.text.isEmpty) {
-      setState(() {
-        _status = "Please enter your last name";
-      });
-      return;
-    }
-    if (phoneNumberController.text.isEmpty) {
-      setState(() {
-        _status = "Please enter your phone number";
-      });
+      setState(() => _status = "Please enter your last name");
       return;
     }
     if (emailController.text.isEmpty) {
-      setState(() {
-        _status = "Please enter your email";
-      });
+      setState(() => _status = "Please enter your email");
       return;
     }
     if (passwordController.text.isEmpty) {
-      setState(() {
-        _status = "Please enter a password";
-      });
+      setState(() => _status = "Please enter a password");
       return;
     }
     if (selectedRole.isEmpty) {
-      setState(() {
-        _status = "Please select a role";
-      });
+      setState(() => _status = "Please select a role");
       return;
     }
 
@@ -190,7 +191,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       firstName: firstNameController.text.trim(),
       lastName: lastNameController.text.trim(),
       password: passwordController.text,
-      phoneNumber: phoneNumberController.text.trim(),
+      phoneNumber: '',
       email: emailController.text.trim(),
       role: selectedRole,
     );
@@ -322,239 +323,232 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Text(
-                      _isLogin ? "Log In" : "Create your account",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 27,
-                        fontWeight: FontWeight.w400,
-                        height: 33.75 / 27,
-                        letterSpacing: 0.25,
-                      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Scrollable form content
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    _isLogin ? "Log In" : "Create your account",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'Lexend',
+                      fontSize: 27,
+                      fontWeight: FontWeight.w400,
+                      height: 33.75 / 27,
+                      letterSpacing: 0.25,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                ),
+                const SizedBox(height: 20),
 
-                  if (!_isLogin)
-                    RoleSelector(
-                      onRoleSelected: (role) {
-                        setState(() {
-                          selectedRole = role; // ✅ Important line
-                          _status = "$role selected";
-                        });
-                      },
-                    ),
+                if (!_isLogin)
+                  RoleSelector(
+                    onRoleSelected: (role) {
+                      setState(() {
+                        selectedRole = role;
+                        _status = '';
+                      });
+                    },
+                  ),
 
-                  if (!_isLogin) const SizedBox(height: 30),
+                if (!_isLogin) const SizedBox(height: 20),
 
-                  // Signup specific fields
-                  if (!_isLogin)
-                    InputTextField(
-                      label: "Username",
-                      icon: Icons.person_outline,
-                      inputType: TextInputType.text,
-                      controller: userNameController,
-                    ),
-                  if (!_isLogin)
-                    InputTextField(
-                      label: "First Name",
-                      icon: Icons.person_outline,
-                      inputType: TextInputType.name,
-                      controller: firstNameController,
-                    ),
-                  if (!_isLogin)
-                    InputTextField(
-                      label: "Last Name",
-                      icon: Icons.person_outline,
-                      inputType: TextInputType.name,
-                      controller: lastNameController,
-                    ),
-                  if (!_isLogin)
-                    InputTextField(
-                      label: "Phone Number",
-                      icon: Icons.phone_outlined,
-                      inputType: TextInputType.phone,
-                      controller: phoneNumberController,
-                    ),
-
+                if (!_isLogin)
                   InputTextField(
-                    label: "Enter your Email",
-                    icon: Icons.email_outlined,
-                    inputType: TextInputType.emailAddress,
-                    controller: emailController,
+                    label: "Username",
+                    icon: Icons.person_outline,
+                    inputType: TextInputType.text,
+                    controller: userNameController,
                   ),
+                if (!_isLogin)
                   InputTextField(
-                    label: "Enter your password",
-                    icon: Icons.lock_outline,
-                    inputType: TextInputType.visiblePassword,
-                    obscureText: true,
-                    controller: passwordController,
+                    label: "First Name",
+                    icon: Icons.person_outline,
+                    inputType: TextInputType.name,
+                    controller: firstNameController,
                   ),
-                  const SizedBox(height: 5),
-
-                  if (!_isLogin)
-                    const Text(
-                      "💪🏻 Keep it strong and safe.",
-                      style: TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        height: 28.75 / 23,
-                        color: Colors.red,
-                      ),
-                    ),
-
-                  if (!_isLogin)
-                    const Text(
-                      "Min 8 letters, add numbers or symbols.",
-                      style: TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        height: 28.75 / 23,
-                        color: Colors.black,
-                      ),
-                    ),
-
-                  // Show status/error message
-                  if (_status.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text(
-                        _status,
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          color: _authController.errorMessage.value.isNotEmpty
-                              ? Colors.red
-                              : Colors.green,
-                        ),
-                      ),
-                    ),
-
-                  const SizedBox(height: 20),
-
-                  Center(
-                    child: Container(
-                      width: 377,
-                      height: 53,
-                      decoration: BoxDecoration(
-                        gradient: const RadialGradient(
-                          center: Alignment.center,
-                          radius: 3.0,
-                          colors: [Color(0xFFC36AFD), Color(0xFF7A5AF8)],
-                        ),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: TextButton(
-                        onPressed: _authController.isLoading.value
-                            ? null
-                            : () {
-                                if (_isLogin) {
-                                  _handleLogin();
-                                } else {
-                                  _handleSignup();
-                                }
-                              },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.all(0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          disabledBackgroundColor: Colors.grey,
-                        ),
-                        child: _authController.isLoading.value
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                            : Text(
-                                _isLogin ? "Log in" : "Continue",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontFamily: 'Lexend',
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                      ),
-                    ),
+                if (!_isLogin)
+                  InputTextField(
+                    label: "Last Name",
+                    icon: Icons.person_outline,
+                    inputType: TextInputType.name,
+                    controller: lastNameController,
                   ),
 
-                  const SizedBox(height: 30),
-                  const OrContinueWith(),
-                  const SizedBox(height: 30),
+                InputTextField(
+                  label: "Enter your Email",
+                  icon: Icons.email_outlined,
+                  inputType: TextInputType.emailAddress,
+                  controller: emailController,
+                ),
+                InputTextField(
+                  label: "Enter your password",
+                  icon: Icons.lock_outline,
+                  inputType: TextInputType.visiblePassword,
+                  obscureText: true,
+                  controller: passwordController,
+                  focusNode: _passwordFocusNode,
+                ),
 
-                  GestureDetector(
-                    onTap: _handleGoogleSignIn,
-                    child: Container(
-                      width: 377,
-                      height: 53,
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        border: Border.all(color: Colors.grey.shade400),
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            'assets/icon/google.png',
-                            height: 22,
-                            width: 22,
-                          ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Google',
-                            style: TextStyle(
-                              fontFamily: 'Lexend',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
+                if (!_isLogin && _passwordFocused) ...[
+                  const SizedBox(height: 6),
+                  const Text(
+                    "💪🏻 Keep it strong and safe.",
+                    style: TextStyle(
+                      fontFamily: 'Lexend',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.red,
+                    ),
+                  ),
+                  const Text(
+                    "Min 8 letters, add numbers or symbols.",
+                    style: TextStyle(
+                      fontFamily: 'Lexend',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black,
                     ),
                   ),
                 ],
-              ),
+
+                if (_status.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      _status,
+                      style: TextStyle(
+                        fontFamily: 'Lexend',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: _authController.errorMessage.value.isNotEmpty
+                            ? Colors.red
+                            : Colors.green,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 30),
-            AlreadyMemberText(
-              text: _isLogin
-                  ? "Not logged in? Signup here"
-                  : "Already a fly member? Login here",
-              onTap: () {
-                setState(() {
-                  _isLogin = !_isLogin;
-                });
-              },
-            ),
-          ],
+          ),
         ),
-      ),
+
+        // Sticky footer — always visible
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 53,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: const RadialGradient(
+                      center: Alignment.center,
+                      radius: 3.0,
+                      colors: [Color(0xFFC36AFD), Color(0xFF7A5AF8)],
+                    ),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: TextButton(
+                    onPressed: _authController.isLoading.value
+                        ? null
+                        : () {
+                            if (_isLogin) {
+                              _handleLogin();
+                            } else {
+                              _handleSignup();
+                            }
+                          },
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      disabledBackgroundColor: Colors.grey,
+                    ),
+                    child: _authController.isLoading.value
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            _isLogin ? "Log in" : "Create account",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontFamily: 'Lexend',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const OrContinueWith(),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: _handleGoogleSignIn,
+                child: Container(
+                  width: double.infinity,
+                  height: 53,
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(color: Colors.grey.shade400),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/icon/google.png',
+                        height: 22,
+                        width: 22,
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Google',
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              AlreadyMemberText(
+                text: _isLogin
+                    ? "Not logged in? Signup here"
+                    : "Already a fly member? Login here",
+                onTap: () {
+                  setState(() {
+                    _isLogin = !_isLogin;
+                    _status = '';
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

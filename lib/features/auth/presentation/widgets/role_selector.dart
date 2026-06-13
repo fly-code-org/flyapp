@@ -10,14 +10,40 @@ class RoleSelector extends StatefulWidget {
 }
 
 class _RoleSelectorState extends State<RoleSelector> {
-  String selectedRole = '';
+  String selectedRole = 'User';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onRoleSelected('User');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildRoleButton('MHP'),
-        _buildRoleButton('User'),
+        Row(
+          children: [
+            _buildRoleButton('User'),
+            _buildRoleButton('MHP'),
+          ],
+        ),
+        if (selectedRole == 'MHP')
+          const Padding(
+            padding: EdgeInsets.only(top: 8, left: 4),
+            child: Text(
+              'Mental Health Professional — therapist, counselor, or coach',
+              style: TextStyle(
+                fontFamily: 'Lexend',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF8545E1),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -31,14 +57,14 @@ class _RoleSelectorState extends State<RoleSelector> {
           setState(() {
             selectedRole = role;
           });
-          widget.onRoleSelected(role); // notify parent
+          widget.onRoleSelected(role);
         },
         child: Container(
           height: 45,
-          margin: EdgeInsets.symmetric(horizontal: 4),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
           decoration: BoxDecoration(
             border: Border.all(
-              color: isSelected ? Color(0xFF8545E1) : Colors.grey,
+              color: isSelected ? const Color(0xFF8545E1) : Colors.grey,
               width: 2,
             ),
             borderRadius: BorderRadius.circular(50),
@@ -50,16 +76,16 @@ class _RoleSelectorState extends State<RoleSelector> {
               Icon(
                 Icons.person_outline,
                 size: 18,
-                color: isSelected ? Color(0xFF8545E1) : Colors.grey,
+                color: isSelected ? const Color(0xFF8545E1) : Colors.grey,
               ),
-              SizedBox(width: 6),
+              const SizedBox(width: 6),
               Text(
                 role,
                 style: TextStyle(
                   fontFamily: 'Lexend',
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: isSelected ? Color(0xFF8545E1) : Colors.grey,
+                  color: isSelected ? const Color(0xFF8545E1) : Colors.grey,
                 ),
               ),
             ],

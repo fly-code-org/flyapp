@@ -5,6 +5,7 @@ import 'package:fly/features/profile_creation/presentation/widgets/list_input.da
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
+import 'package:fly/core/storage/onboarding_progress.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_user_profile.dart';
@@ -67,6 +68,8 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
     final args = Get.arguments;
     role = (args['role'] ?? 'user').toLowerCase();
     print("✅ [MHP MORE INFO] [INIT STATE] Role set to: $role");
+    // Resume point if the app is killed on this step.
+    OnboardingProgress.saveStep(step: AppRoutes.AddMoreInfo, role: role);
     try {
       print("🔍 [MHP MORE INFO] [INIT STATE] Initializing controller...");
       final ctrl = controller;
@@ -210,7 +213,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                       ),
                       const SizedBox(height: 10),
                       GeneralCustomInputField(
-                        hintText: "1-3 yrs",
+                        hintText: "e.g. 5",
                         onChanged: (value) {
                           controller.yearsOfExperience.value = value;
                           controller.saveToCache();
@@ -247,9 +250,13 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                         },
                       ),
                       const SizedBox(height: 10),
-                      const ListInputWidget(
+                      ListInputWidget(
                         title: "Add Specializations",
-                        hintText: 'Enter your specializations',
+                        hintText: 'Type a specialization and press space',
+                        onLanguagesChanged: (specs) {
+                          controller.specializations.value = specs;
+                          controller.saveToCache();
+                        },
                       ),
                       const SizedBox(height: 10),
                       const Text(

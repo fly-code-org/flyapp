@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
+import 'package:fly/core/storage/onboarding_progress.dart';
 import 'package:fly/features/community/domain/usecases/create_community.dart';
 import 'package:fly/features/create_community/controller/user_profile_controller.dart';
 import 'package:fly/features/create_community/presentation/widgets/bio_input_field.dart';
@@ -189,6 +190,11 @@ class _CreateSupportCommunityScreenState
   @override
   void initState() {
     super.initState();
+    // Final mandatory MHP step — resume here if killed before the community is created.
+    OnboardingProgress.saveStep(
+      step: AppRoutes.CreateSupportCommunity,
+      role: 'mhp',
+    );
   }
 
   Future<void> _saveCommunity() async {
@@ -265,6 +271,9 @@ class _CreateSupportCommunityScreenState
       );
 
       print('✅ [COMMUNITY] Community created successfully');
+
+      // MHP onboarding fully complete (email + profile + community).
+      await OnboardingProgress.markComplete();
 
       // Show success message
       if (mounted) {
@@ -372,10 +381,22 @@ class _CreateSupportCommunityScreenState
                       Obx(() {
                         final image = controller.selectedImage.value;
                         return image != null
-                            ? Center(
-                                child: Text(
-                                  "Image selected: ${image.path.split('/').last}",
-                                  style: const TextStyle(fontSize: 14),
+                            ? const Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle,
+                                        color: Color(0xFF34A853), size: 18),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      "Photo selected",
+                                      style: TextStyle(
+                                        fontFamily: 'Lexend',
+                                        fontSize: 14,
+                                        color: Color(0xFF34A853),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               )
                             : const SizedBox();

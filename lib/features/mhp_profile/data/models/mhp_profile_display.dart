@@ -11,10 +11,15 @@ class MhpProfileDisplay {
   final List<Map<String, dynamic>> availableSlots;
   final List<Map<String, dynamic>> appointments;
   final String? communityId;
-  /// From GET self profile: server-backed Google Calendar link state (no tokens).
   final bool googleCalendarConnected;
-  /// `active` | `reauth_required` when [googleCalendarConnected] is true.
   final String? googleCalendarStatus;
+  final bool certifiedMhp;
+  final int yearsOfExperience;
+  final int streakCount;
+  final String degreePath;
+  final double averageRating;
+  final int ratingCount;
+  final List<String> specializations;
 
   const MhpProfileDisplay({
     required this.userName,
@@ -30,6 +35,13 @@ class MhpProfileDisplay {
     this.communityId,
     this.googleCalendarConnected = false,
     this.googleCalendarStatus,
+    this.certifiedMhp = false,
+    this.yearsOfExperience = 0,
+    this.streakCount = 0,
+    this.degreePath = '',
+    this.averageRating = 0.0,
+    this.ratingCount = 0,
+    this.specializations = const [],
   });
 
   /// Builds display from API response map. [userName] comes from JWT (pass separately).
@@ -53,6 +65,10 @@ class MhpProfileDisplay {
     if (locationString.isEmpty && map['geo_location'] is Map) {
       final geo = map['geo_location'] as Map<String, dynamic>;
       locationString = _string(geo['formatted_address'] ?? geo['address']);
+    }
+    // Free-text work location captured during MHP onboarding ("State where you practice").
+    if (locationString.isEmpty) {
+      locationString = _string(map['work_location']);
     }
 
     String memberSinceString = '';
@@ -120,6 +136,47 @@ class MhpProfileDisplay {
         ? gcsRaw.trim()
         : null;
 
+    final certifiedMhp = map['certified_mhp'] == true;
+
+    int yearsOfExperience = 0;
+    final yoe = map['years_of_experience'];
+    if (yoe is int) {
+      yearsOfExperience = yoe;
+    } else if (yoe is double) {
+      yearsOfExperience = yoe.toInt();
+    }
+
+    int streakCount = 0;
+    final streaks = map['streaks'];
+    if (streaks is Map<String, dynamic>) {
+      final score = streaks['score'];
+      if (score is int) streakCount = score;
+      else if (score is double) streakCount = score.toInt();
+    }
+
+    final degreePath = _string(map['degree_path']);
+
+    final specializations = <String>[];
+    final specs = map['specializations'];
+    if (specs is List) {
+      for (final e in specs) {
+        final s = _string(e);
+        if (s.isNotEmpty) specializations.add(s);
+      }
+    }
+
+    double averageRating = 0.0;
+    int ratingCount = 0;
+    final rating = map['rating'];
+    if (rating is Map<String, dynamic>) {
+      final avg = rating['average_stars'];
+      if (avg is double) averageRating = avg;
+      else if (avg is int) averageRating = avg.toDouble();
+      final cnt = rating['number_of_rating'];
+      if (cnt is int) ratingCount = cnt;
+      else if (cnt is double) ratingCount = cnt.toInt();
+    }
+
     return MhpProfileDisplay(
       userName: resolvedName,
       bio: bio,
@@ -134,6 +191,13 @@ class MhpProfileDisplay {
       communityId: communityId,
       googleCalendarConnected: googleCalendarConnected,
       googleCalendarStatus: googleCalendarStatus,
+      certifiedMhp: certifiedMhp,
+      yearsOfExperience: yearsOfExperience,
+      streakCount: streakCount,
+      degreePath: degreePath,
+      averageRating: averageRating,
+      ratingCount: ratingCount,
+      specializations: specializations,
     );
   }
 

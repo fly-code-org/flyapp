@@ -5,6 +5,8 @@ import 'package:fly/features/profile_creation/presentation/widgets/time_field.da
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
+import 'package:fly/core/storage/onboarding_progress.dart';
+import 'package:fly/routes/app_routes.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_user_profile.dart';
@@ -66,6 +68,8 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
     print("🚀 [INIT STATE] AddSessionScreen initState started");
     role = 'mhp';
     print("✅ [INIT STATE] Role set to: $role");
+    // Resume point if killed here (MHP profile not yet submitted / community pending).
+    OnboardingProgress.saveStep(step: AppRoutes.AddSessionForm, role: role);
     // Initialize controller early to ensure it's available
     try {
       print("🔍 [INIT STATE] Initializing controller...");
@@ -149,14 +153,9 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                       const SizedBox(height: 30),
                       const ListInputWidget(
                         title: "What are your types of therapies you provide",
-                        hintText: 'Type a language and press space',
+                        hintText: 'Type a therapy and press space',
                       ),
-                      const SizedBox(height: 10),
-                      const ListInputWidget(
-                        title: "Select the mode of session",
-                        hintText: 'Enter your specializations',
-                      ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 24),
                       const Text(
                         "Select the mode of session",
                         textAlign: TextAlign.left,
@@ -168,14 +167,14 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                           letterSpacing: 0.25,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       SelectablePillList(
                         options: ["Online", "In-Person", "Hybrid"],
                         onSelectionChanged: (selected) {
                           print("Selected options: $selected");
                         },
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 24),
                       const Text(
                         "Select your available days",
                         textAlign: TextAlign.left,
@@ -187,7 +186,7 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                           letterSpacing: 0.25,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       SelectablePillList(
                         options: [
                           "Mon",
@@ -202,8 +201,7 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                           print("Selected options: $selected");
                         },
                       ),
-                      // 👇 NEW SECTION: Time Availability
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
                       const Text(
                         "Set your availability time",
                         textAlign: TextAlign.left,
@@ -215,7 +213,7 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                           letterSpacing: 0.25,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       TimeAvailabilityField(
                         onTimeSelected: (from, to) {
                           print(
@@ -223,7 +221,7 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                           );
                         },
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
                       Builder(
                         builder: (context) {
                           print(

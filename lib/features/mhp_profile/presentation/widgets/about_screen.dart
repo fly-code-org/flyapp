@@ -10,6 +10,9 @@ class MHPProfileEditScreen extends StatefulWidget {
   final String? initialWhatToExpect;
   /// When true (viewer on another MHP's profile): same layout as edit mode but no edits or API load of *viewer's* about me.
   final bool readOnly;
+  final double averageRating;
+  final int ratingCount;
+  final List<String> specializations;
 
   const MHPProfileEditScreen({
     super.key,
@@ -17,6 +20,9 @@ class MHPProfileEditScreen extends StatefulWidget {
     this.initialHowICanHelp,
     this.initialWhatToExpect,
     this.readOnly = false,
+    this.averageRating = 0.0,
+    this.ratingCount = 0,
+    this.specializations = const [],
   });
 
   @override
@@ -34,13 +40,6 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
   bool showSaveHowICanHelp = false;
   bool showSaveWhatToExpect = false;
   bool _saving = false;
-
-  final List<String> helpTags = [
-    "Anxiety",
-    "Depression",
-    "Job Aspirant",
-    "Teenager",
-  ];
 
   @override
   void initState() {
@@ -160,12 +159,14 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                 onSave: () => _saveAboutMe(),
                 readOnly: widget.readOnly,
               ),
-              const SizedBox(height: 16),
-              _buildTagCard(
-                title: "I help people going through:",
-                color: primaryColor,
-                tags: helpTags,
-              ),
+              if (widget.specializations.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _buildTagCard(
+                  title: "I help people going through:",
+                  color: primaryColor,
+                  tags: widget.specializations,
+                ),
+              ],
               const SizedBox(height: 16),
               _buildEditableCard(
                 icon: Icons.flash_on_outlined,
@@ -179,11 +180,75 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                 onSave: () => _saveAboutMe(),
                 readOnly: widget.readOnly,
               ),
+              const SizedBox(height: 24),
+              _buildRatingSection(),
               const SizedBox(height: 20),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRatingSection() {
+    if (widget.averageRating <= 0 && widget.ratingCount == 0) {
+      return const SizedBox.shrink();
+    }
+    final displayRating = widget.averageRating.toStringAsFixed(1);
+    final fullStars = widget.averageRating.floor();
+    final hasHalf = (widget.averageRating - fullStars) >= 0.25;
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: Divider(color: Colors.grey.shade300)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                'what clients say',
+                style: TextStyle(
+                  fontFamily: 'Lexend',
+                  fontSize: 13,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ),
+            Expanded(child: Divider(color: Colors.grey.shade300)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          displayRating,
+          style: const TextStyle(
+            fontFamily: 'Lexend',
+            fontSize: 48,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        if (widget.ratingCount > 0)
+          Text(
+            '${widget.ratingCount} ${widget.ratingCount == 1 ? 'review' : 'reviews'}',
+            style: TextStyle(
+              fontFamily: 'Lexend',
+              fontSize: 13,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(5, (i) {
+            if (i < fullStars) {
+              return const Icon(Icons.star, color: Color(0xFFFFC107), size: 28);
+            } else if (i == fullStars && hasHalf) {
+              return const Icon(Icons.star_half, color: Color(0xFFFFC107), size: 28);
+            }
+            return const Icon(Icons.star_border, color: Color(0xFFFFC107), size: 28);
+          }),
+        ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 

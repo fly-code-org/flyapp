@@ -6,6 +6,7 @@ class InputTextField extends StatefulWidget {
   final TextInputType inputType;
   final bool obscureText;
   final TextEditingController controller;
+  final FocusNode? focusNode;
 
   const InputTextField({
     super.key,
@@ -14,6 +15,7 @@ class InputTextField extends StatefulWidget {
     required this.inputType,
     this.obscureText = false,
     required this.controller,
+    this.focusNode,
   });
 
   @override
@@ -43,6 +45,7 @@ class _InputTextFieldState extends State<InputTextField> {
         padding: const EdgeInsets.symmetric(horizontal: 8.0),
         child: TextField(
           controller: widget.controller,
+          focusNode: widget.focusNode,
           keyboardType: widget.inputType,
           obscureText: _isObscure,
           style: const TextStyle(

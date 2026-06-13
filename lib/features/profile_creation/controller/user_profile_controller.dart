@@ -24,6 +24,7 @@ class UserProfileController extends GetxController {
   var degree = ''.obs;
   var yearsOfExperience = ''.obs;
   var languages = <String>[].obs;
+  var specializations = <String>[].obs;
   var workLocation = ''.obs;
   var certifiedMhp = false.obs;
   var degreePath = ''.obs;
@@ -135,6 +136,10 @@ class UserProfileController extends GetxController {
       final langsList = languages.toList();
       print('✅ [SAVE TO CACHE] languages.toList() = $langsList');
 
+      print('🔍 [SAVE TO CACHE] Accessing specializations...');
+      final specsList = specializations.toList();
+      print('✅ [SAVE TO CACHE] specializations.toList() = $specsList');
+
       print('🔍 [SAVE TO CACHE] Accessing communityId...');
       final commIdValue = communityId.value;
       print('✅ [SAVE TO CACHE] communityId.value = "$commIdValue"');
@@ -150,6 +155,7 @@ class UserProfileController extends GetxController {
         if (yearsValue.isNotEmpty)
           'years_of_experience': int.tryParse(yearsValue) ?? 0,
         if (langsList.isNotEmpty) 'languages': langsList,
+        if (specsList.isNotEmpty) 'specializations': specsList,
         if (commIdValue.isNotEmpty) 'community_id': commIdValue,
       };
 
@@ -409,6 +415,10 @@ class UserProfileController extends GetxController {
       final langsList = languages.toList();
       print('   ✅ languages.toList() = $langsList');
 
+      print('   - Accessing specializations...');
+      final specsList = specializations.toList();
+      print('   ✅ specializations.toList() = $specsList');
+
       print('   - Accessing communityId...');
       final commIdValue = communityId.value;
       print('   ✅ communityId.value = "$commIdValue"');
@@ -426,6 +436,7 @@ class UserProfileController extends GetxController {
         if (yearsValue.isNotEmpty)
           'years_of_experience': int.tryParse(yearsValue) ?? 0,
         if (langsList.isNotEmpty) 'languages': langsList,
+        if (specsList.isNotEmpty) 'specializations': specsList,
         if (commIdValue.isNotEmpty) 'community_id': commIdValue,
       };
 

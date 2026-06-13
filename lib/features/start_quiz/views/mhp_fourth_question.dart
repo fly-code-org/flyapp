@@ -134,7 +134,9 @@ class _MhpQuestionFourthScreenState extends State<MhpQuestionFourthScreen> {
                                 ? defaultIcons[index]
                                 : Icons.radio_button_unchecked,
                             'title': entry.value.optionText,
-                            'subtitle': entry.value.optionText,
+                            // API options carry no separate description; avoid
+                            // repeating the title as a subtitle.
+                            'subtitle': '',
                           };
                         }).toList();
 

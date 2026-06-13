@@ -3,6 +3,8 @@ import 'package:fly/features/profile_creation/presentation/widgets/input_field.d
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
+import 'package:fly/core/storage/onboarding_progress.dart';
+import 'package:fly/routes/app_routes.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/bio_input_field.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/dob_input_field.dart';
@@ -69,6 +71,11 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
     final args = Get.arguments;
     role = (args?['role'] ?? 'user').toLowerCase();
     print("✅ [USER PROFILE FORM] [INIT STATE] Role set to: $role");
+    // Resume point if killed here; completion is marked once the profile saves.
+    OnboardingProgress.saveStep(
+      step: AppRoutes.createUserProfile,
+      role: role,
+    );
     try {
       print("🔍 [USER PROFILE FORM] [INIT STATE] Initializing controller...");
       final ctrl = controller;
@@ -176,10 +183,22 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                             return Obx(() {
                               final image = ctrl.selectedImage.value;
                               return image != null
-                                  ? Center(
-                                      child: Text(
-                                        "Image selected: ${image.path.split('/').last}",
-                                        style: const TextStyle(fontSize: 14),
+                                  ? const Center(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.check_circle,
+                                              color: Color(0xFF34A853), size: 18),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            "Photo selected",
+                                            style: TextStyle(
+                                              fontFamily: 'Lexend',
+                                              fontSize: 14,
+                                              color: Color(0xFF34A853),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     )
                                   : const SizedBox();
@@ -459,6 +478,9 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
 
                                               if (success && ctrl.message.value.isNotEmpty) {
                                                 print("✅ [USER PROFILE FORM] Profile created successfully, navigating to quiz...");
+                                                // User mandatory gate met (email + profile). Quiz/interests
+                                                // that follow are optional, so onboarding is complete now.
+                                                await OnboardingProgress.markComplete();
                                                 // Navigate to quiz only on success
                                                 Get.toNamed(
                                                   '/intro-quiz',

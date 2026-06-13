@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/storage/onboarding_progress.dart';
 import 'package:fly/features/auth/presentation/widgets/or_continue_with.dart';
 import 'package:fly/features/start_quiz/widgets/gradient_button.dart';
 import 'package:fly/routes/app_routes.dart';
@@ -24,6 +25,11 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
     final args = Get.arguments ?? {};
     role = (args['role'] ?? 'user').toLowerCase();
     print("PhoneVerification role: $role");
+    // For MHP the quiz precedes the mandatory profile/community steps, so this
+    // is a valid resume point. For users the quiz is post-completion, so skip.
+    if (role == 'mhp') {
+      OnboardingProgress.saveStep(step: AppRoutes.IntroScreen, role: role);
+    }
   }
 
   void _handleButtonPressed() {

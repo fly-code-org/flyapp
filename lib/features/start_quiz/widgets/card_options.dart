@@ -38,7 +38,8 @@ class _OptionsGridState extends State<OptionsGrid> {
           crossAxisCount: 2,
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 1,
+          // Slightly taller than square so long labels (e.g. 3 lines) fit.
+          childAspectRatio: 0.82,
         ),
         itemBuilder: (context, index) {
           final isSelected = index == selectedIndex;
@@ -65,27 +66,33 @@ class _OptionsGridState extends State<OptionsGrid> {
                   ),
                 ],
               ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(
+                vertical: 12,
+                horizontal: 8,
+              ),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     widget.emojis[index],
-                    style: const TextStyle(fontSize: 40),
+                    style: const TextStyle(fontSize: 36),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    widget.labels[index],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: 'lexend',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                  // Flexible + ellipsis keeps long labels within the card bounds.
+                  Flexible(
+                    child: Text(
+                      widget.labels[index],
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'lexend',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                        height: 1.2,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

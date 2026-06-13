@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fly/features/user_verification/presentation/widgets/gradient_button.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
+import 'package:fly/core/storage/onboarding_progress.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_user_profile.dart';
@@ -87,6 +88,8 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
     final args = Get.arguments;
     role = (args['role'] ?? 'user').toLowerCase();
     print("✅ [MHP PROFILE FORM] [INIT STATE] Role set to: $role");
+    // Resume point if the app is killed on this step.
+    OnboardingProgress.saveStep(step: AppRoutes.createMhpProfile, role: role);
     try {
       print("🔍 [MHP PROFILE FORM] [INIT STATE] Initializing controller...");
       final ctrl = controller;
@@ -191,10 +194,22 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
                       Obx(() {
                         final image = controller.selectedImage.value;
                         return image != null
-                            ? Center(
-                                child: Text(
-                                  "Image selected: ${image.path.split('/').last}",
-                                  style: const TextStyle(fontSize: 14),
+                            ? const Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle,
+                                        color: Color(0xFF34A853), size: 18),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      "Photo selected",
+                                      style: TextStyle(
+                                        fontFamily: 'Lexend',
+                                        fontSize: 14,
+                                        color: Color(0xFF34A853),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               )
                             : const SizedBox();

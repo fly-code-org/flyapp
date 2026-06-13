@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/token_storage.dart';
+import '../../../../core/storage/onboarding_progress.dart';
 import '../../../../core/storage/user_verification_storage.dart';
 import '../../../../core/utils/jwt_decoder.dart';
 import '../../../../features/user_profile/data/utils/default_profile_picture.dart';
@@ -355,6 +356,7 @@ class AuthController extends GetxController {
   // Method to logout
   Future<void> logout() async {
     await TokenStorage.deleteToken();
+    await OnboardingProgress.clear();
     await UserVerificationStorage.clearVerificationStatus();
     ApiClient.clearAuthToken();
     try {

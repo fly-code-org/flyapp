@@ -173,6 +173,9 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
           initialHowICanHelp: _profile?.howICanHelp,
           initialWhatToExpect: _profile?.whatToExpect,
           readOnly: _viewingOther,
+          averageRating: _profile?.averageRating ?? 0.0,
+          ratingCount: _profile?.ratingCount ?? 0,
+          specializations: _profile?.specializations ?? const [],
         );
       case 2:
         if (_viewingOther && _loading) {
@@ -241,6 +244,42 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
             child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
           ),
 
+          // "Certified MHP" badge — only when actually certified (admin flag) or a degree is on file.
+          if (_profile != null &&
+              (_profile!.certifiedMhp || _profile!.degreePath.isNotEmpty))
+            Positioned(
+              top: 52,
+              left: _viewingOther ? 56 : 16,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/fly_logo.png',
+                    height: 24,
+                    width: 24,
+                    color: Colors.white,
+                    colorBlendMode: BlendMode.srcIn,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.self_improvement,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Certified MHP',
+                    style: TextStyle(
+                      fontFamily: 'Lexend',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           if (_viewingOther)
             Positioned(
               top: 50,
@@ -302,6 +341,36 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // Streaks badge — top-right of white card
+                          if (!_loading && _profile != null && _profile!.streakCount > 0)
+                            Align(
+                              alignment: Alignment.topRight,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF855DFC).withOpacity(0.1),
+                                  border: Border.all(color: const Color(0xFF855DFC), width: 1),
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.local_fire_department, size: 14, color: Color(0xFF855DFC)),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${_profile!.streakCount} Streak${_profile!.streakCount == 1 ? '' : 's'}',
+                                      style: const TextStyle(
+                                        fontFamily: 'Lexend',
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF855DFC),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
                           const SizedBox(height: 60),
                           if (_loading)
                             const Padding(
@@ -325,6 +394,9 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                               bio: _profile!.bio,
                               location: _profile!.locationString,
                               yearsOfExp: _profile!.memberSinceString,
+                              yearsOfExperience: _profile!.yearsOfExperience,
+                              certifiedMhp: _profile!.certifiedMhp,
+                              degreePath: _profile!.degreePath,
                             ),
                           ],
                           if (!_loading && _error == null && _profile != null)

@@ -78,19 +78,22 @@ class _SelectableCardsState extends State<SelectableCards> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 6),
 
-            // Subtitle
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontFamily: 'Lexend',
-                fontSize: 14,
-                color: isSelected ? Colors.white70 : Colors.grey[600],
+            // Subtitle — only when it adds information beyond the title.
+            if (subtitle.trim().isNotEmpty &&
+                subtitle.trim().toLowerCase() != title.trim().toLowerCase()) ...[
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontFamily: 'Lexend',
+                  fontSize: 14,
+                  color: isSelected ? Colors.white70 : Colors.grey[600],
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
+            ],
           ],
         ),
       ),
@@ -113,6 +116,7 @@ class _SelectableCardsState extends State<SelectableCards> {
     ];
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: List.generate(cardsData.length, (index) {
         return _buildCard(
           index: index,
