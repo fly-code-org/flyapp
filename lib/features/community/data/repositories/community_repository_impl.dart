@@ -119,6 +119,11 @@ class CommunityRepositoryImpl implements CommunityRepository {
   Future<ExploreSearchResult> exploreSearch(String q) async {
     return remoteDataSource.exploreSearch(q);
   }
+
+  @override
+  Future<DiscoverMhpsResult> getDiscoverMhps({int skip = 0, int limit = 20}) async {
+    return remoteDataSource.getDiscoverMhps(skip: skip, limit: limit);
+  }
 }
 
 

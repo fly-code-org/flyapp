@@ -57,6 +57,7 @@ import '../../features/community/domain/usecases/get_communities_by_type.dart';
 import '../../features/community/domain/usecases/get_community_by_id.dart';
 import '../../features/community/domain/usecases/get_my_community.dart';
 import '../../features/community/domain/usecases/search_explore.dart';
+import '../../features/community/domain/usecases/get_discover_mhps.dart';
 import '../../features/community/domain/usecases/get_tags.dart';
 import '../../features/community/domain/usecases/update_community.dart';
 import '../../features/community/domain/usecases/unfollow_community.dart';
@@ -243,6 +244,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => GetMyCommunity(sl()));
   sl.registerLazySingleton(() => GetCommunityById(sl()));
   sl.registerLazySingleton(() => SearchExplore(sl()));
+  sl.registerLazySingleton(() => GetDiscoverMhps(sl()));
   sl.registerLazySingleton(() => UpdateCommunity(sl()));
   sl.registerLazySingleton(() => GetTags(sl()));
   sl.registerLazySingleton<ServerTagCatalog>(() => ServerTagCatalog());

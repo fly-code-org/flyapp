@@ -23,6 +23,24 @@ class ExploreSearchMhp {
   });
 }
 
+/// Result of GET /community/external/v1/explore/mhps (paginated "Discover MHPs").
+class DiscoverMhpsResult {
+  final List<ExploreSearchMhp> mhps;
+  final int total;
+  final int skip;
+  final int limit;
+
+  const DiscoverMhpsResult({
+    required this.mhps,
+    required this.total,
+    required this.skip,
+    required this.limit,
+  });
+
+  /// Whether more pages remain after this one.
+  bool get hasMore => skip + mhps.length < total;
+}
+
 class ExploreSearchCommunity {
   final String id;
   final String name;

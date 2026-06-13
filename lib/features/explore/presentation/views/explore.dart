@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/utils/profile_picture_helper.dart';
 import 'package:fly/features/community/domain/entities/explore_search_result.dart';
+import 'package:fly/features/community/domain/usecases/get_discover_mhps.dart';
+import 'package:fly/features/explore/presentation/widgets/mhp_discover_card.dart';
 import 'package:fly/features/community/domain/usecases/search_explore.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
@@ -90,6 +92,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   // Loading states
   bool _isLoadingSocialCommunities = false;
+  // "Discover Mental Health Professionals" carousel.
+  List<ExploreSearchMhp> _discoverMhps = [];
+  bool _isLoadingDiscoverMhps = false;
   bool _isLoadingSupportCommunities = false;
 
   // Communities from API
@@ -357,6 +362,92 @@ class _ExploreScreenState extends State<ExploreScreen> {
     _loadSocialCommunities();
     _loadSupportCommunities();
     _loadFollowedTags();
+    _loadDiscoverMhps();
+  }
+
+  Future<void> _loadDiscoverMhps() async {
+    setState(() => _isLoadingDiscoverMhps = true);
+    try {
+      final res = await sl<GetDiscoverMhps>().call(skip: 0, limit: 10);
+      if (!mounted) return;
+      setState(() {
+        _discoverMhps = res.mhps;
+        _isLoadingDiscoverMhps = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingDiscoverMhps = false);
+      print('⚠️ [EXPLORE] Could not load discover MHPs: $e');
+    }
+  }
+
+  Widget _buildDiscoverMhpsSection() {
+    // Hide entirely until there's something to show.
+    if (!_isLoadingDiscoverMhps && _discoverMhps.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Expanded(
+              child: Text(
+                "Discover Mental\nHealth Professionals",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  height: 1.15,
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => Get.toNamed(AppRoutes.discoverMhps),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "See All",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 2),
+                    Icon(Icons.chevron_right, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 200,
+          child: _isLoadingDiscoverMhps
+              ? const Center(child: CircularProgressIndicator())
+              : ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _discoverMhps.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    return MhpDiscoverCard(
+                      mhp: _discoverMhps[index],
+                      width: 150,
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
   }
 
   int? _resolveTagId(String tagName) =>
@@ -790,6 +881,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    _buildDiscoverMhpsSection(),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

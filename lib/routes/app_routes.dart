@@ -43,6 +43,9 @@ abstract class AppRoutes {
   /// Shown after connect checkout payment succeeds (Razorpay + server confirm).
   static const connectPaymentSuccess = '/connect-payment-success';
 
+  /// Explore "See All" — full Discover Mental Health Professionals grid.
+  static const discoverMhps = '/discover-mhps';
+
   // bottom nav
   static const Home = '/home';
   static const Explore = '/explore';

@@ -23,4 +23,5 @@ abstract class CommunityRepository {
   Future<void> followCommunity(String communityId);
   Future<void> unfollowCommunity(String communityId);
   Future<ExploreSearchResult> exploreSearch(String q);
+  Future<DiscoverMhpsResult> getDiscoverMhps({int skip, int limit});
 }

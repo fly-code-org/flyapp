@@ -21,6 +21,7 @@ import 'package:fly/features/mhp_profile/presentation/widgets/about_screen.dart'
 import 'package:fly/features/mhp_profile/presentation/widgets/connect_tab_content.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/mhp_visitor_connect_booking_tab.dart';
 import 'package:fly/features/mhp_profile/mhp_profile_strings.dart';
+import 'package:fly/features/streak/presentation/streak_view_model.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/mhp_activities_section.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
@@ -140,6 +141,14 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
         community = null;
       }
 
+      // Seed the shared streak state so this (own) profile stays in sync with
+      // live engagement updates from home/explore/posts.
+      final streaks = profileMap['streaks'];
+      if (streaks is Map<String, dynamic> &&
+          Get.isRegistered<StreakViewModel>()) {
+        Get.find<StreakViewModel>().applyFromProfileMap(streaks);
+      }
+
       if (!mounted) return;
       setState(() {
         _profile = MhpProfileDisplay.fromMap(profileMap, userName: userName);
@@ -153,6 +162,57 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
         _loading = false;
       });
     }
+  }
+
+  /// Top-right "N Streaks" pill. For the current user's own profile it tracks
+  /// the shared [StreakViewModel] so live engagement updates show immediately;
+  /// when viewing another MHP it shows that MHP's fetched value.
+  Widget _buildStreakBadge() {
+    if (_viewingOther) {
+      return _streakPill(_profile?.streakCount ?? 0);
+    }
+    if (!Get.isRegistered<StreakViewModel>()) {
+      return _streakPill(_profile?.streakCount ?? 0);
+    }
+    final vm = Get.find<StreakViewModel>();
+    return Obx(() {
+      final count = vm.streakCount.value > 0
+          ? vm.streakCount.value
+          : (_profile?.streakCount ?? 0);
+      return _streakPill(count);
+    });
+  }
+
+  Widget _streakPill(int count) {
+    if (count <= 0) return const SizedBox.shrink();
+    return Align(
+      alignment: Alignment.topRight,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFF855DFC).withOpacity(0.1),
+          border: Border.all(color: const Color(0xFF855DFC), width: 1),
+          borderRadius: BorderRadius.circular(50),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.local_fire_department,
+                size: 14, color: Color(0xFF855DFC)),
+            const SizedBox(width: 4),
+            Text(
+              '$count Streak${count == 1 ? '' : 's'}',
+              style: const TextStyle(
+                fontFamily: 'Lexend',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF855DFC),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildBody() {
@@ -341,35 +401,10 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Streaks badge — top-right of white card
-                          if (!_loading && _profile != null && _profile!.streakCount > 0)
-                            Align(
-                              alignment: Alignment.topRight,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF855DFC).withOpacity(0.1),
-                                  border: Border.all(color: const Color(0xFF855DFC), width: 1),
-                                  borderRadius: BorderRadius.circular(50),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.local_fire_department, size: 14, color: Color(0xFF855DFC)),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${_profile!.streakCount} Streak${_profile!.streakCount == 1 ? '' : 's'}',
-                                      style: const TextStyle(
-                                        fontFamily: 'Lexend',
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF855DFC),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                          // Streaks badge — top-right of white card.
+                          // Own profile reacts to live engagement updates; a
+                          // viewed MHP shows their fetched value.
+                          if (!_loading && _profile != null) _buildStreakBadge(),
 
                           const SizedBox(height: 60),
                           if (_loading)

@@ -22,6 +22,9 @@ abstract class CommunityRemoteDataSource {
   Future<void> unfollowCommunity(String communityId);
   /// GET /community/external/v1/explore/search?q=
   Future<ExploreSearchResult> exploreSearch(String q);
+
+  /// GET /community/external/v1/explore/mhps?skip=&limit= (paginated "Discover MHPs").
+  Future<DiscoverMhpsResult> getDiscoverMhps({int skip = 0, int limit = 20});
 }
 
 class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
@@ -386,6 +389,63 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
       if (e.response != null) {
         throw ServerException(
           'Explore search failed',
+          statusCode: e.response!.statusCode,
+        );
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  @override
+  Future<DiscoverMhpsResult> getDiscoverMhps({int skip = 0, int limit = 20}) async {
+    try {
+      final response = await client.get(
+        '/community/external/v1/explore/mhps',
+        queryParameters: {'skip': skip, 'limit': limit},
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode != 200 || response.data is! Map<String, dynamic>) {
+        throw ServerException(
+          'Unexpected status: ${response.statusCode}',
+          statusCode: response.statusCode,
+        );
+      }
+      final root = response.data as Map<String, dynamic>;
+      final data = root['data'];
+      if (data is! Map<String, dynamic>) {
+        return DiscoverMhpsResult(mhps: const [], total: 0, skip: skip, limit: limit);
+      }
+      final mhps = <ExploreSearchMhp>[];
+      final mhpsRaw = data['mhps'];
+      if (mhpsRaw is List) {
+        for (final e in mhpsRaw) {
+          if (e is! Map) continue;
+          final m = Map<String, dynamic>.from(e);
+          final uid = _stringField(m['user_id']);
+          if (uid.isEmpty) continue;
+          mhps.add(ExploreSearchMhp(
+            userId: uid,
+            displayName: _stringField(m['display_name']),
+            subtitle: _stringField(m['subtitle']),
+            picturePath: _stringField(m['picture_path']),
+          ));
+        }
+      }
+      int asInt(dynamic v, int fallback) {
+        if (v is int) return v;
+        if (v is num) return v.toInt();
+        return fallback;
+      }
+      return DiscoverMhpsResult(
+        mhps: mhps,
+        total: asInt(data['total'], mhps.length),
+        skip: asInt(data['skip'], skip),
+        limit: asInt(data['limit'], limit),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException(
+          'Failed to load MHPs',
           statusCode: e.response!.statusCode,
         );
       }
