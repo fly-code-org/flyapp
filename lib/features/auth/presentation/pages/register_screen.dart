@@ -27,7 +27,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   late final AuthController _authController;
 
-  final GoogleSignIn _googleSignIn = createFlyGoogleSignIn();
+  final GoogleSignIn _googleSignIn = createFlyAuthGoogleSignIn();
   String _status = "";
   bool _isLogin = false;
   String selectedRole = 'User';

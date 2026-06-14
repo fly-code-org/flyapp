@@ -259,7 +259,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
       return;
     }
     setState(() => _calendarLinkBusy = true);
-    final GoogleSignIn googleSignIn = createFlyGoogleSignIn();
+    final GoogleSignIn googleSignIn = createFlyCalendarGoogleSignIn();
     try {
       await googleSignIn.signOut();
       final account = await googleSignIn.signIn();
