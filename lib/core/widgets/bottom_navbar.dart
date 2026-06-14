@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/storage/token_storage.dart';
 import 'package:fly/core/utils/jwt_decoder.dart';
+import 'package:fly/features/notifications/controller/notification_controller.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
@@ -15,20 +16,22 @@ class BottomNavBar extends StatelessWidget {
   /// Determines the correct profile route based on user's role from JWT token
   Future<String> _getProfileRoute() async {
     try {
-      // Get token and check role
       final token = await TokenStorage.getToken();
       if (token != null && token.isNotEmpty) {
         final role = JwtDecoder.getRole(token);
-        print('🔍 [BOTTOM_NAV] User role from JWT: $role');
         if (role?.toLowerCase() == 'mhp') {
           return AppRoutes.mhpProfile;
         }
       }
-    } catch (e) {
-      print('⚠️ [BOTTOM_NAV] Error getting role: $e');
-    }
-    // Default to user profile
+    } catch (_) {}
     return AppRoutes.userProfile;
+  }
+
+  NotificationController? get _notifController {
+    if (Get.isRegistered<NotificationController>()) {
+      return Get.find<NotificationController>();
+    }
+    return null;
   }
 
   @override
@@ -40,7 +43,6 @@ class BottomNavBar extends StatelessWidget {
       unselectedItemColor: Colors.black,
       currentIndex: currentIndex,
       onTap: (index) async {
-        // Direct GetX navigation
         switch (index) {
           case 0:
             Get.offAllNamed(AppRoutes.Home);
@@ -55,37 +57,59 @@ class BottomNavBar extends StatelessWidget {
             Get.offAllNamed(AppRoutes.NotificationScreen);
             break;
           case 4:
-            // Determine profile route based on user role
             final profileRoute = await _getProfileRoute();
-            print('🚀 [BOTTOM_NAV] Navigating to profile: $profileRoute');
             Get.offAllNamed(profileRoute);
             break;
         }
       },
       items: [
-        const BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.explore),
-          label: "Explore",
-        ),
+        const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        const BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),
         BottomNavigationBarItem(
           icon: SizedBox(
             width: 24,
             height: 24,
-            child: Image.asset("assets/images/nira_icon.png"),
+            child: Image.asset('assets/images/nira_icon.png'),
           ),
-          label: "Nira",
+          label: 'Nira',
         ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.notifications),
-          label: "Notifications",
+        BottomNavigationBarItem(
+          icon: Obx(() {
+            final controller = _notifController;
+            final count = controller?.unreadCount.value ?? 0;
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.notifications_outlined),
+                if (count > 0)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE53935),
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Text(
+                        count > 99 ? '99+' : '$count',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }),
+          label: 'Notifications',
         ),
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: "Profile",
-        ),
+        const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
       ],
     );
   }
 }
-

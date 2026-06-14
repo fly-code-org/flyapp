@@ -12,76 +12,94 @@ class NotificationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Fetch mock data (simulate API)
-    controller.fetchNotifications();
-
     return SafePopScope(
       child: Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          'Notifications',
-          style: TextStyle(color: Colors.black),
-        ),
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => popOrGoHome(context),
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'mark_all') controller.markAllAsRead();
-              if (value == 'clear_all') controller.clearAll();
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'mark_all', child: Text('Mark all as read')),
-              PopupMenuItem(value: 'clear_all', child: Text('Clear all')),
-            ],
+        appBar: AppBar(
+          title: const Text(
+            'Notifications',
+            style: TextStyle(color: Colors.black),
           ),
-        ],
-      ),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (controller.notifications.isEmpty) {
-          return const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.notifications_none, size: 80, color: Colors.grey),
-                SizedBox(height: 12),
-                Text(
-                  "No notifications yet",
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
-                ),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => popOrGoHome(context),
+          ),
+          actions: [
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'mark_all') controller.markAllAsRead();
+                if (value == 'clear_all') controller.clearAll();
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'mark_all', child: Text('Mark all as read')),
+                PopupMenuItem(value: 'clear_all', child: Text('Clear all')),
               ],
             ),
-          );
-        }
+          ],
+        ),
+        bottomNavigationBar: const BottomNavBar(currentIndex: 3),
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        return RefreshIndicator(
-          onRefresh: controller.fetchNotifications,
-          child: ListView.builder(
-            itemCount: controller.notifications.length,
-            itemBuilder: (context, index) {
-              final notif = controller.notifications[index];
-              return NotificationCard(
-                notification: notif,
-                onTap: () {
-                  controller.markAsRead(notif.id);
-                  // TODO: handle navigation based on notif type later
-                },
-              );
-            },
-          ),
-        );
-      }),
-    ),
+          if (controller.notifications.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.notifications_none, size: 80, color: Colors.grey),
+                  SizedBox(height: 12),
+                  Text(
+                    'No notifications yet',
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: controller.fetchNotifications,
+            child: ListView.builder(
+              itemCount: controller.notifications.length +
+                  (controller.hasMore.value ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == controller.notifications.length) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                      child: controller.isLoadingMore.value
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : TextButton(
+                              onPressed: controller.loadMore,
+                              child: const Text(
+                                'Load more',
+                                style: TextStyle(
+                                  color: Color(0xFF855DFC),
+                                  fontFamily: 'Lexend',
+                                ),
+                              ),
+                            ),
+                    ),
+                  );
+                }
+                final notif = controller.notifications[index];
+                return NotificationCard(
+                  notification: notif,
+                  onTap: () => controller.markAsRead(notif.id),
+                );
+              },
+            ),
+          );
+        }),
+      ),
     );
   }
 }

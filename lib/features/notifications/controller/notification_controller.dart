@@ -1,64 +1,123 @@
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import '../model/notification_model.dart';
+import '../../../core/network/api_client.dart';
 
 class NotificationController extends GetxController {
   final RxList<NotificationModel> notifications = <NotificationModel>[].obs;
   final RxBool isLoading = false.obs;
+  final RxBool isLoadingMore = false.obs;
+  final RxBool hasMore = true.obs;
+  final RxInt unreadCount = 0.obs;
 
-  Future<void> fetchNotifications() async {
-    isLoading.value = true;
+  static const int _pageSize = 20;
+  int _skip = 0;
 
-    // Simulate API delay
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Fake hardcoded response
-    final List<NotificationModel> fakeData = [
-      NotificationModel(
-        id: '1',
-        title: 'Welcome to Fly!',
-        message: 'Thanks for joining our community.',
-        senderImage: 'https://cdn-icons-png.flaticon.com/512/147/147144.png',
-        createdAt: DateTime.now().subtract(const Duration(minutes: 12)),
-        isRead: false,
-      ),
-      NotificationModel(
-        id: '2',
-        title: 'Weekly Update',
-        message: 'New mindful sessions are available now!',
-        senderImage: 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png',
-        createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-        isRead: false,
-      ),
-      NotificationModel(
-        id: '3',
-        title: 'Community Post',
-        message: 'John Doe shared a new post in Mindful Living.',
-        senderImage: 'https://cdn-icons-png.flaticon.com/512/706/706830.png',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        isRead: true,
-      ),
-    ];
-
-    notifications.assignAll(fakeData);
-    isLoading.value = false;
+  @override
+  void onInit() {
+    super.onInit();
+    fetchNotifications();
+    fetchUnreadCount();
   }
 
-  void markAsRead(String id) {
-    final index = notifications.indexWhere((n) => n.id == id);
-    if (index != -1) {
-      notifications[index].isRead = true;
-      notifications.refresh();
+  Future<void> fetchNotifications() async {
+    if (isLoading.value) return;
+    isLoading.value = true;
+    _skip = 0;
+    hasMore.value = true;
+
+    try {
+      await ApiClient.refreshToken();
+      final res = await ApiClient.dio.get(
+        '/api/notifications',
+        queryParameters: {'skip': 0, 'limit': _pageSize},
+      );
+      final data = res.data as Map<String, dynamic>;
+      final list = (data['notifications'] as List<dynamic>? ?? [])
+          .map((e) => NotificationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      notifications.assignAll(list);
+      unreadCount.value = (data['unread_count'] as int?) ?? 0;
+      _skip = list.length;
+      hasMore.value = list.length == _pageSize;
+    } on DioException catch (e) {
+      final msg = e.response?.data?['error'] ?? e.message ?? 'Failed to load';
+      Get.snackbar('Error', msg.toString(), snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  void markAllAsRead() {
-    for (var n in notifications) {
+  Future<void> loadMore() async {
+    if (isLoadingMore.value || !hasMore.value) return;
+    isLoadingMore.value = true;
+
+    try {
+      await ApiClient.refreshToken();
+      final res = await ApiClient.dio.get(
+        '/api/notifications',
+        queryParameters: {'skip': _skip, 'limit': _pageSize},
+      );
+      final data = res.data as Map<String, dynamic>;
+      final list = (data['notifications'] as List<dynamic>? ?? [])
+          .map((e) => NotificationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      notifications.addAll(list);
+      _skip += list.length;
+      hasMore.value = list.length == _pageSize;
+    } catch (_) {
+      // silently fail on pagination
+    } finally {
+      isLoadingMore.value = false;
+    }
+  }
+
+  Future<void> fetchUnreadCount() async {
+    try {
+      await ApiClient.refreshToken();
+      final res = await ApiClient.dio.get('/api/notifications/unread-count');
+      unreadCount.value = (res.data['unread_count'] as int?) ?? 0;
+    } catch (_) {}
+  }
+
+  Future<void> markAsRead(String id) async {
+    final idx = notifications.indexWhere((n) => n.id == id);
+    if (idx == -1 || notifications[idx].isRead) return;
+    notifications[idx].isRead = true;
+    notifications.refresh();
+    if (unreadCount.value > 0) unreadCount.value--;
+
+    try {
+      await ApiClient.refreshToken();
+      await ApiClient.dio.patch('/api/notifications/$id/read');
+    } catch (_) {
+      notifications[idx].isRead = false;
+      notifications.refresh();
+      unreadCount.value++;
+    }
+  }
+
+  Future<void> markAllAsRead() async {
+    final hadUnread = notifications.any((n) => !n.isRead);
+    if (!hadUnread) return;
+    for (final n in notifications) {
       n.isRead = true;
     }
     notifications.refresh();
+    unreadCount.value = 0;
+
+    try {
+      await ApiClient.refreshToken();
+      await ApiClient.dio.patch('/api/notifications/read-all');
+    } catch (_) {
+      fetchNotifications();
+    }
   }
 
   void clearAll() {
     notifications.clear();
+    unreadCount.value = 0;
   }
 }
