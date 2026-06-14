@@ -29,4 +29,12 @@ class AppConfig {
     if (oauth.isNotEmpty) return oauth;
     return dotenv.env['WEB_CLIENT_ID']?.trim() ?? '';
   }
+
+  static String get posthogApiKey =>
+      dotenv.env['POSTHOG_API_KEY']?.trim() ?? '';
+
+  static String get posthogHost =>
+      dotenv.env['POSTHOG_HOST']?.trim().isNotEmpty == true
+          ? dotenv.env['POSTHOG_HOST']!.trim()
+          : 'https://us.i.posthog.com';
 }

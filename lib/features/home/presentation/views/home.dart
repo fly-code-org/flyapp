@@ -13,8 +13,75 @@ import 'package:fly/features/home/presentation/widgets/social_feed.dart';
 import 'package:fly/features/home/model/post_model.dart';
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
 import 'package:fly/core/services/streak_engagement_service.dart';
+import 'package:fly/core/services/analytics_service.dart';
 import 'package:fly/features/streak/presentation/streak_detail_sheet.dart';
 import 'package:fly/features/streak/presentation/streak_view_model.dart';
+
+/// New / Popular pill filter row — matches the design: icon + label, active = black, inactive = grey.
+class _FeedFilterPills extends StatelessWidget {
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  const _FeedFilterPills({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _Pill(
+          label: 'New',
+          icon: Icons.north_east,
+          isActive: selected == 'new',
+          onTap: () => onChanged('new'),
+        ),
+        const SizedBox(width: 16),
+        _Pill(
+          label: 'Popular',
+          icon: Icons.trending_up,
+          isActive: selected == 'popular',
+          onTap: () => onChanged('popular'),
+        ),
+      ],
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _Pill({
+    required this.label,
+    required this.icon,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isActive ? Colors.black : Colors.grey;
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,6 +100,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // Posts per tab: Social (0) vs Support (1)
   List<Post> socialPosts = [];
   List<Post> supportPosts = [];
+
+  // Per-tab feed filter: "new" or "popular" — independent per tab
+  final Map<int, String> _tabFilter = {0: 'new', 1: 'new'};
+
+  String get _currentFilter => _tabFilter[activeTabIndex] ?? 'new';
 
   // Pagination: only when using feed (fetchMyPosts has no pagination)
   bool _isUsingFeed = false;
@@ -68,6 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (mounted) _refreshBothTabs();
       });
       StreakEngagementService.instance.recordEngagement(reason: 'home_open');
+      AnalyticsService.homeOpened(role: 'user');
     });
 
     _scrollController.addListener(_onScroll);
@@ -104,9 +177,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       // Sequential to avoid PostController.posts race (shared state)
-      await _fetchAndSetTabPosts('social', 0);
+      await _fetchAndSetTabPosts('social', 0, sortBy: _tabFilter[0] ?? 'new');
       if (!mounted) return;
-      await _fetchAndSetTabPosts('support', 1);
+      await _fetchAndSetTabPosts('support', 1, sortBy: _tabFilter[1] ?? 'new');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -119,11 +192,12 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _fetchAndSetTabPosts(String typeFilter, int tabIndex) async {
+  Future<void> _fetchAndSetTabPosts(String typeFilter, int tabIndex, {String sortBy = 'new'}) async {
     await _postController.fetchFeed(
       limit: 20,
       offset: 0,
       typeFilter: typeFilter,
+      sortBy: sortBy,
       forceRefresh: true,
     );
     if (!mounted) return;
@@ -200,6 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
         limit: 20,
         offset: 0,
         typeFilter: typeFilter,
+        sortBy: _currentFilter,
         forceRefresh: true,
       );
       _isUsingFeed = true;
@@ -276,6 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
         limit: 20,
         offset: currentLen,
         typeFilter: typeFilter,
+        sortBy: _currentFilter,
         forceRefresh: true,
       );
 
@@ -445,6 +521,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   SocialSupportTabs(
                     key: const ValueKey("tabs"),
                     onTabChanged: (index) {
+                      final from = activeTabIndex == 0 ? 'social' : 'support';
+                      final to = index == 0 ? 'social' : 'support';
+                      AnalyticsService.tabSwitched(from: from, to: to);
                       setState(() {
                         activeTabIndex = index;
                       });
@@ -460,6 +539,31 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
 
                   const SizedBox(height: 16),
+
+                  // New / Popular filter pills
+                  _FeedFilterPills(
+                    selected: _currentFilter,
+                    onChanged: (filter) {
+                      if (filter == _currentFilter) return;
+                      final tab = activeTabIndex == 0 ? 'social' : 'support';
+                      AnalyticsService.feedFilterChanged(filter: filter, tab: tab);
+                      setState(() {
+                        _tabFilter[activeTabIndex] = filter;
+                        // Clear current tab's posts so the loader shows
+                        if (activeTabIndex == 0) {
+                          socialPosts = [];
+                        } else {
+                          supportPosts = [];
+                        }
+                        _hasReachedEnd = false;
+                      });
+                      Future.microtask(() {
+                        if (mounted) _refreshPosts();
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 8),
 
                   // Feed
                   Expanded(

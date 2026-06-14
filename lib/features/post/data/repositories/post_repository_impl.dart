@@ -64,8 +64,8 @@ class PostRepositoryImpl implements PostRepository {
   }
 
   @override
-  Future<List<Post>> getFeed({int limit = 20, int offset = 0, String? typeFilter}) async {
-    final posts = await remoteDataSource.getFeed(limit: limit, offset: offset, typeFilter: typeFilter);
+  Future<List<Post>> getFeed({int limit = 20, int offset = 0, String? typeFilter, String sortBy = 'new'}) async {
+    final posts = await remoteDataSource.getFeed(limit: limit, offset: offset, typeFilter: typeFilter, sortBy: sortBy);
     return posts;
   }
 

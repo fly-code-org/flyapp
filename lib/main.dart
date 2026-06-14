@@ -9,6 +9,8 @@ import 'package:app_links/app_links.dart';
 
 import 'core/di/service_locator.dart' as di;
 import 'core/network/api_client.dart';
+import 'core/config/config.dart';
+import 'core/services/analytics_service.dart';
 import 'firebase_options.dart'; // Generated from flutterfire configure
 import 'routes/app_routes.dart';
 import 'routes/app_pages.dart';
@@ -50,6 +52,17 @@ Future<void> main() async {
       print('⚠️ [MAIN] .env file load timeout, continuing without it');
     } catch (e) {
       print('⚠️ [MAIN] Error loading .env file: $e (continuing anyway)');
+    }
+
+    // ✅ Initialize PostHog analytics (must run before runApp so first events are captured)
+    try {
+      await AnalyticsService.initialize(
+        apiKey: AppConfig.posthogApiKey,
+        host: AppConfig.posthogHost,
+      );
+      print('✅ [MAIN] PostHog analytics initialized');
+    } catch (e) {
+      print('⚠️ [MAIN] PostHog initialization failed (non-fatal): $e');
     }
 
     // ✅ Start the app immediately to allow Dart VM Service to be discovered

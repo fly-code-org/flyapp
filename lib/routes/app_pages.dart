@@ -30,6 +30,23 @@ import 'package:fly/features/user_profile/presentation/views/user_profile_screen
 import 'package:fly/features/legal/presentation/views/privacy_policy_screen.dart';
 import 'package:fly/features/legal/presentation/views/terms_conditions_screen.dart';
 import 'package:fly/features/user_profile/presentation/views/user_settings.dart';
+import 'package:fly/features/mhp_profile/presentation/views/mhp_settings.dart';
+import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_change_password_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_update_specializations_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_availability_schedule_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_session_preferences_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_session_modes_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_payment_management_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_invoices_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_contact_us_screen.dart';
+import 'package:fly/features/user_profile/presentation/views/settings/user_edit_profile_screen.dart';
+import 'package:fly/features/user_profile/presentation/views/settings/user_manage_preferences_screen.dart';
+import 'package:fly/features/user_profile/presentation/views/settings/user_blocked_users_screen.dart';
+import 'package:fly/features/user_profile/presentation/views/settings/user_change_password_screen.dart';
+import 'package:fly/features/user_profile/presentation/views/settings/user_manage_sessions_screen.dart';
+import 'package:fly/features/user_profile/presentation/views/settings/user_payment_history_screen.dart';
+import 'package:fly/features/user_profile/presentation/views/settings/user_terms_conditions_screen.dart';
+import 'package:fly/features/user_profile/presentation/views/settings/user_contact_us_screen.dart';
 import 'package:fly/features/user_verification/presentation/views/email_verification.dart';
 import 'package:fly/features/user_verification/presentation/views/phone_verification.dart';
 import 'package:fly/routes/app_routes.dart';
@@ -130,6 +147,26 @@ class AppPages {
       name: AppRoutes.UserSettingsScreen,
       page: () => const UserSettingsScreen(),
     ),
+    GetPage(name: AppRoutes.MhpSettingsScreen, page: () => const MhpSettingsScreen()),
+    GetPage(name: AppRoutes.MhpChangePassword, page: () => const MhpChangePasswordScreen()),
+    GetPage(name: AppRoutes.MhpUpdateSpecializations, page: () => const MhpUpdateSpecializationsScreen()),
+    GetPage(name: AppRoutes.MhpAvailabilitySchedule, page: () => const MhpAvailabilityScheduleScreen()),
+    GetPage(name: AppRoutes.MhpSessionPreferences, page: () => const MhpSessionPreferencesScreen()),
+    GetPage(name: AppRoutes.MhpSessionModes, page: () => const MhpSessionModesScreen()),
+    GetPage(name: AppRoutes.MhpPaymentManagement, page: () => const MhpPaymentManagementScreen()),
+    GetPage(name: AppRoutes.MhpInvoices, page: () => const MhpInvoicesScreen()),
+    GetPage(name: AppRoutes.MhpContactUs, page: () => const MhpContactUsScreen()),
+
+    // User Settings Flow
+    GetPage(name: AppRoutes.UserEditProfile, page: () => const UserEditProfileScreen()),
+    GetPage(name: AppRoutes.UserManagePreferences, page: () => const UserManagePreferencesScreen()),
+    GetPage(name: AppRoutes.UserBlockedUsers, page: () => const UserBlockedUsersScreen()),
+    GetPage(name: AppRoutes.UserChangePassword, page: () => const UserChangePasswordScreen()),
+    GetPage(name: AppRoutes.UserManageSessions, page: () => const UserManageSessionsScreen()),
+    GetPage(name: AppRoutes.UserPaymentHistory, page: () => const UserPaymentHistoryScreen()),
+    GetPage(name: AppRoutes.UserTermsConditions, page: () => const UserTermsConditionsScreen()),
+    GetPage(name: AppRoutes.UserContactUs, page: () => const UserContactUsScreen()),
+
     GetPage(
       name: AppRoutes.termsConditions,
       page: () => const TermsConditionsScreen(),

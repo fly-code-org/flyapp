@@ -5,6 +5,7 @@ import '../domain/usecases/get_active_nira_session.dart';
 import '../domain/usecases/get_nira_messages.dart';
 import '../domain/usecases/send_nira_message.dart';
 import '../model/message_model.dart';
+import '../../../core/services/analytics_service.dart';
 
 class NiraChatController extends GetxController {
   final SendNiraMessage sendNiraMessage;
@@ -26,6 +27,9 @@ class NiraChatController extends GetxController {
   var isLoadingSession = false.obs;
   var errorMessage = Rxn<String>();
 
+  DateTime? _sessionStartTime;
+  int _userMessageCount = 0;
+
   static const String _welcomeText =
       "Hello! How are you feeling today?";
 
@@ -40,19 +44,25 @@ class NiraChatController extends GetxController {
         currentSessionId.value = session.id;
         final list = await getNiraMessages(session.id);
         messages.value = _messagesFromApi(list);
+        _userMessageCount = list.length;
         isChatStarted.value = true;
       } else {
         messages.value = [
           Message(sender: "nira", text: _welcomeText),
         ];
+        _userMessageCount = 0;
         isChatStarted.value = true;
       }
+      _sessionStartTime = DateTime.now();
+      AnalyticsService.niraSessionStarted();
     } catch (e) {
       final msg = e.toString();
       errorMessage.value = msg;
       _showError(msg);
       // Still start chat with welcome message so user can try sending
       messages.value = [Message(sender: "nira", text: _welcomeText)];
+      _userMessageCount = 0;
+      _sessionStartTime = DateTime.now();
       isChatStarted.value = true;
     } finally {
       isLoadingSession.value = false;
@@ -77,6 +87,8 @@ class NiraChatController extends GetxController {
           ? msg.niraResponse!
           : _noReplyPlaceholder;
       messages.add(Message(sender: "nira", text: niraText));
+      _userMessageCount++;
+      AnalyticsService.niraMessageSent();
     } catch (e) {
       final msg = e.toString();
       errorMessage.value = msg;
@@ -96,6 +108,15 @@ class NiraChatController extends GetxController {
         // Still clear UI
       }
     }
+    final durationSeconds = _sessionStartTime != null
+        ? DateTime.now().difference(_sessionStartTime!).inSeconds
+        : 0;
+    AnalyticsService.niraSessionEnded(
+      messageCount: _userMessageCount,
+      durationSeconds: durationSeconds,
+    );
+    _sessionStartTime = null;
+    _userMessageCount = 0;
     currentSessionId.value = null;
     messages.clear();
     isChatStarted.value = false;

@@ -11,6 +11,7 @@ import '../../domain/usecases/update_journal.dart';
 import '../../domain/usecases/get_color_templates.dart';
 import '../../domain/usecases/create_color_template.dart';
 import '../../domain/entities/update_journal_request.dart';
+import '../../../../core/services/analytics_service.dart';
 
 class JournalController extends GetxController {
   final GetJournals getJournals;
@@ -225,6 +226,7 @@ class JournalController extends GetxController {
       journals.insert(0, createdJournal);
       
       print('✅ [JOURNAL] Journal created successfully with ID: ${createdJournal.id}');
+      AnalyticsService.journalCreated(hasImage: false);
       return true;
     } on ServerException catch (e) {
       print('❌ [JOURNAL] ServerException: ${e.message}');
@@ -289,6 +291,7 @@ class JournalController extends GetxController {
       }
       
       print('✅ [JOURNAL] Journal updated successfully');
+      AnalyticsService.journalUpdated();
       return true;
     } on ServerException catch (e) {
       print('❌ [JOURNAL] ServerException: ${e.message}');

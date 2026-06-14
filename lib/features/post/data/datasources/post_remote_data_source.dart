@@ -44,8 +44,8 @@ abstract class PostRemoteDataSource {
   Future<List<PostModel>> getPostsByCommunityId(String communityId);
   Future<List<PostModel>> getPostsByTagId(int tagId);
   Future<List<PostModel>> getPostsByIds(List<String> postIds);
-  /// Feed: posts for home. typeFilter: "social" | "support" | null (all).
-  Future<List<PostModel>> getFeed({int limit = 20, int offset = 0, String? typeFilter});
+  /// Feed: posts for home. typeFilter: "social" | "support" | null (all). sortBy: "new" | "popular".
+  Future<List<PostModel>> getFeed({int limit = 20, int offset = 0, String? typeFilter, String sortBy = 'new'});
   Future<void> deletePost(String postId);
   Future<void> likePost(String postId);
   Future<void> unlikePost(String postId);
@@ -224,11 +224,15 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
   }
 
   @override
-  Future<List<PostModel>> getFeed({int limit = 20, int offset = 0, String? typeFilter}) async {
+  @override
+  Future<List<PostModel>> getFeed({int limit = 20, int offset = 0, String? typeFilter, String sortBy = 'new'}) async {
     try {
       final queryParams = <String, dynamic>{'limit': limit, 'offset': offset};
       if (typeFilter != null && typeFilter.isNotEmpty) {
         queryParams['type'] = typeFilter;
+      }
+      if (sortBy == 'popular') {
+        queryParams['sort_by'] = 'popular';
       }
 
       final response = await client.get(

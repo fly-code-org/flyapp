@@ -18,6 +18,7 @@ import '../../domain/usecases/unbookmark_post.dart';
 import '../../domain/usecases/share_post.dart';
 import '../../domain/usecases/vote_poll.dart';
 import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
+import '../../../../core/services/analytics_service.dart';
 
 class PostController extends GetxController {
   final CreatePost createPost;
@@ -101,10 +102,17 @@ class PostController extends GetxController {
 
       print('✅ [POST] Post created successfully');
       isLoading.value = false;
-      
+
+      AnalyticsService.postCreated(
+        hasImage: attachments.any((a) => a.type == 'image'),
+        hasVideo: attachments.any((a) => a.type == 'video'),
+        hasPoll: poll != null,
+        tagType: tagId.toString(),
+      );
+
       // Update streak (non-blocking, fire-and-forget)
       _updateStreakSilently();
-      
+
       return true;
     } on ServerException catch (e) {
       print('❌ [POST] ServerException: ${e.message}');
@@ -124,15 +132,15 @@ class PostController extends GetxController {
     }
   }
 
-  // Get feed posts (for home). typeFilter: "social" | "support" | null (all).
-  Future<void> fetchFeed({int limit = 20, int offset = 0, String? typeFilter, bool forceRefresh = false}) async {
+  // Get feed posts (for home). typeFilter: "social" | "support" | null (all). sortBy: "new" | "popular".
+  Future<void> fetchFeed({int limit = 20, int offset = 0, String? typeFilter, String sortBy = 'new', bool forceRefresh = false}) async {
     if (isLoading.value && !forceRefresh) return;
 
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      final fetchedPosts = await getFeedPosts.call(limit: limit, offset: offset, typeFilter: typeFilter);
+      final fetchedPosts = await getFeedPosts.call(limit: limit, offset: offset, typeFilter: typeFilter, sortBy: sortBy);
 
       posts.value = fetchedPosts;
       isLoading.value = false;
@@ -358,7 +366,8 @@ class PostController extends GetxController {
       await likePost.call(postId);
       
       print('✅ [POST CONTROLLER] Post liked successfully');
-      
+      AnalyticsService.postLiked();
+
       // Update streak (non-blocking, fire-and-forget)
       _updateStreakSilently();
       
@@ -389,6 +398,7 @@ class PostController extends GetxController {
       await unlikePost.call(postId);
       
       print('✅ [POST CONTROLLER] Post unliked successfully');
+      AnalyticsService.postUnliked();
       return true;
     } on ServerException catch (e) {
       print('❌ [POST CONTROLLER] ServerException: ${e.message}');
@@ -492,6 +502,7 @@ class PostController extends GetxController {
       await sharePost.call(postId);
 
       print('✅ [POST CONTROLLER] Post shared successfully');
+      AnalyticsService.postShared();
       return true;
     } on ServerException catch (e) {
       print('❌ [POST CONTROLLER] ServerException: ${e.message}');

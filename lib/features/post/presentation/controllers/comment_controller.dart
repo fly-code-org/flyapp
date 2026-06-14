@@ -8,6 +8,7 @@ import '../../domain/usecases/get_comments_by_post_id.dart';
 import '../../domain/usecases/get_replies_by_comment_id.dart';
 import '../../domain/usecases/create_comment.dart';
 import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
+import '../../../../core/services/analytics_service.dart';
 
 class CommentController extends GetxController {
   final GetCommentsByPostId getCommentsByPostId;
@@ -116,6 +117,7 @@ class CommentController extends GetxController {
 
       print('✅ [COMMENT] Comment created successfully');
       isLoading.value = false;
+      AnalyticsService.commentCreated();
 
       // Refresh comments for this post
       await fetchCommentsByPostId(postId, forceRefresh: true);

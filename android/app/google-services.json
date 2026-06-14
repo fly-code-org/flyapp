@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "228834943626-j88ou09cckkakc4iarsna73d839i1i7g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fly",
+            "certificate_hash": "446a05678b8d2b2e84b3cab2d10b1364d490b8d4"
+          }
+        },
+        {
           "client_id": "228834943626-qacs6kk86vdf78kmapmutabng538uvfa.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -63,6 +71,14 @@
           "android_info": {
             "package_name": "com.example.fly_fe",
             "certificate_hash": "23799a1397d2de15f3c90d8080730a3973ff9640"
+          }
+        },
+        {
+          "client_id": "228834943626-p907h03au225b7agjbjc138co5300u8r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fly_fe",
+            "certificate_hash": "446a05678b8d2b2e84b3cab2d10b1364d490b8d4"
           }
         },
         {

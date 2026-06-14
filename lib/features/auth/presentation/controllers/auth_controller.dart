@@ -17,6 +17,7 @@ import '../../../user_profile/presentation/controllers/user_profile_controller.d
 import '../../../../core/di/service_locator.dart' as sl;
 import '../../../../core/storage/pending_mhp_google_calendar_code.dart';
 import '../../../../features/interests/data/server_tag_catalog.dart';
+import '../../../../core/services/analytics_service.dart';
 
 class AuthController extends GetxController {
   final SignupUser signupUser;
@@ -70,6 +71,15 @@ class AuthController extends GetxController {
       token.value = response.token;
       message.value = response.message;
       _prefetchTagCatalog();
+
+      // Analytics
+      final userId = JwtDecoder.getUserId(response.token) ?? '';
+      AnalyticsService.identify(userId: userId, role: role);
+      AnalyticsService.signupCompleted(
+        role: role,
+        method: 'email',
+        durationSeconds: 0,
+      );
     } on ServerException catch (e) {
       errorMessage.value = e.message;
     } on NetworkException catch (e) {
@@ -166,6 +176,12 @@ class AuthController extends GetxController {
       // Prefetch user profile and canonical tag ids after successful login
       _prefetchUserProfile();
       _prefetchTagCatalog();
+
+      // Analytics
+      final userId = JwtDecoder.getUserId(response.token) ?? '';
+      final userRole = JwtDecoder.getRole(response.token) ?? 'user';
+      AnalyticsService.identify(userId: userId, role: userRole);
+      AnalyticsService.loginCompleted(role: userRole, method: 'email');
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
       errorMessage.value = e.message;
@@ -325,6 +341,19 @@ class AuthController extends GetxController {
       print('   📱 Phone verified: ${response.isPhoneVerified}');
       print('   🆕 Is new user: ${response.isNewUser}');
       print('   ✅ Ready for navigation');
+
+      // Analytics
+      final userId = JwtDecoder.getUserId(response.token) ?? '';
+      AnalyticsService.identify(userId: userId, role: role);
+      if (response.isNewUser) {
+        AnalyticsService.signupCompleted(
+          role: role,
+          method: 'google',
+          durationSeconds: 0,
+        );
+      } else {
+        AnalyticsService.loginCompleted(role: role, method: 'google');
+      }
 
       // If new user, auto-save username and picture_path immediately
       if (response.isNewUser) {

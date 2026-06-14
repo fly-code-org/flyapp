@@ -57,6 +57,27 @@ abstract class AppRoutes {
   static const CreateJournalScreen = '/create-journal-screen';
   static const UserSettingsScreen = '/user-settings-screen';
 
+  // User Settings Flow
+  static const UserEditProfile = '/user-edit-profile';
+  static const UserManagePreferences = '/user-manage-preferences';
+  static const UserBlockedUsers = '/user-blocked-users';
+  static const UserChangePassword = '/user-change-password';
+  static const UserManageSessions = '/user-manage-sessions';
+  static const UserPaymentHistory = '/user-payment-history';
+  static const UserTermsConditions = '/user-terms-conditions';
+  static const UserContactUs = '/user-contact-us';
+
+  // MHP Settings Flow
+  static const MhpSettingsScreen = '/mhp-settings-screen';
+  static const MhpChangePassword = '/mhp-change-password';
+  static const MhpUpdateSpecializations = '/mhp-update-specializations';
+  static const MhpAvailabilitySchedule = '/mhp-availability-schedule';
+  static const MhpSessionPreferences = '/mhp-session-preferences';
+  static const MhpSessionModes = '/mhp-session-modes';
+  static const MhpPaymentManagement = '/mhp-payment-management';
+  static const MhpInvoices = '/mhp-invoices';
+  static const MhpContactUs = '/mhp-contact-us';
+
   /// Legal
   static const termsConditions = '/terms-conditions';
   static const privacyPolicy = '/privacy-policy';

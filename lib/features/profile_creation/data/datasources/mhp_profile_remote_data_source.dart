@@ -23,6 +23,18 @@ abstract class MhpProfileRemoteDataSource {
   /// GET /mhp/external/v1/booked-sessions — MHP merged Connect + therapy sessions.
   Future<Map<String, dynamic>> getBookedSessions({int skip = 0, int limit = 20});
   Future<StreakPatchResult?> updateStreak();
+  // Settings
+  Future<Map<String, dynamic>> getAvailability();
+  Future<Map<String, dynamic>> getSessionPreferences();
+  Future<void> updateSessionPreferences(Map<String, dynamic> body);
+  Future<Map<String, dynamic>> getConsultationFees();
+  Future<void> updateConsultationFees(Map<String, dynamic> body);
+  Future<Map<String, dynamic>> getPaymentMethod();
+  Future<void> updatePaymentMethod(Map<String, dynamic> body);
+  Future<List<String>> searchSpecializations(String query);
+  Future<void> updateSpecializations(List<String> specializations);
+  Future<Map<String, dynamic>> getInvoices();
+  Future<void> changePassword(String currentPassword, String newPassword);
 }
 
 class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
@@ -347,6 +359,133 @@ class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
           'Failed to load sessions',
           statusCode: e.response!.statusCode,
         );
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  Future<Map<String, dynamic>> _getData(String path) async {
+    try {
+      final response = await client.get(path,
+          options: Options(headers: {'Content-Type': 'application/json'}));
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final d = response.data as Map<String, dynamic>;
+        return (d['data'] is Map<String, dynamic>)
+            ? d['data'] as Map<String, dynamic>
+            : d;
+      }
+      throw ServerException('Unexpected status: ${response.statusCode}',
+          statusCode: response.statusCode);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException('Request failed', statusCode: e.response!.statusCode);
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  Future<void> _patchData(String path, Map<String, dynamic> body) async {
+    try {
+      final response = await client.patch(path,
+          data: body,
+          options: Options(headers: {'Content-Type': 'application/json'}));
+      if (response.statusCode != 200) {
+        throw ServerException('Request failed', statusCode: response.statusCode);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException('Request failed', statusCode: e.response!.statusCode);
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getAvailability() => _getData('/mhp/external/v1/availability');
+
+  @override
+  Future<Map<String, dynamic>> getSessionPreferences() =>
+      _getData('/mhp/external/v1/session-preferences');
+
+  @override
+  Future<void> updateSessionPreferences(Map<String, dynamic> body) =>
+      _patchData('/mhp/external/v1/session-preferences', body);
+
+  @override
+  Future<Map<String, dynamic>> getConsultationFees() =>
+      _getData('/mhp/external/v1/consultation-fees');
+
+  @override
+  Future<void> updateConsultationFees(Map<String, dynamic> body) =>
+      _patchData('/mhp/external/v1/consultation-fees', body);
+
+  @override
+  Future<Map<String, dynamic>> getPaymentMethod() =>
+      _getData('/mhp/external/v1/payment-method');
+
+  @override
+  Future<void> updatePaymentMethod(Map<String, dynamic> body) =>
+      _patchData('/mhp/external/v1/payment-method', body);
+
+  @override
+  Future<List<String>> searchSpecializations(String query) async {
+    try {
+      final response = await client.get(
+        '/mhp/external/v1/specializations/search',
+        queryParameters: {'q': query},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final d = response.data as Map<String, dynamic>;
+        final data = d['data'];
+        if (data is List) return data.cast<String>();
+      }
+      return [];
+    } on DioException catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<void> updateSpecializations(List<String> specializations) =>
+      _patchData('/mhp/external/v1/specializations', {'specializations': specializations});
+
+  @override
+  Future<Map<String, dynamic>> getInvoices() async {
+    try {
+      final response = await client.get('/mhp/external/v1/invoices',
+          options: Options(headers: {'Content-Type': 'application/json'}));
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final d = response.data as Map<String, dynamic>;
+        return (d['data'] is Map<String, dynamic>)
+            ? d['data'] as Map<String, dynamic>
+            : {'total_earned_inr': 0, 'this_month_inr': 0, 'items': []};
+      }
+      return {'total_earned_inr': 0, 'this_month_inr': 0, 'items': []};
+    } on DioException catch (_) {
+      return {'total_earned_inr': 0, 'this_month_inr': 0, 'items': []};
+    }
+  }
+
+  @override
+  Future<void> changePassword(String currentPassword, String newPassword) async {
+    try {
+      final response = await client.patch(
+        '/users/external/v1/change-password',
+        data: {'current_password': currentPassword, 'new_password': newPassword},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+      if (response.statusCode != 200) {
+        throw ServerException('Failed to change password', statusCode: response.statusCode);
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final body = e.response!.data;
+        var msg = 'Failed to change password';
+        if (body is Map && body['msg'] is Map) {
+          msg = (body['msg'] as Map)['err']?.toString() ?? msg;
+        }
+        throw ServerException(msg, statusCode: e.response!.statusCode);
       }
       throw NetworkException('Network error: ${e.message}');
     }

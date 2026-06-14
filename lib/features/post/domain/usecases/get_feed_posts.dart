@@ -7,8 +7,8 @@ class GetFeedPosts {
 
   GetFeedPosts(this.repository);
 
-  /// Returns feed posts. typeFilter: "social" | "support" | null (all).
-  Future<List<Post>> call({int limit = 20, int offset = 0, String? typeFilter}) async {
-    return await repository.getFeed(limit: limit, offset: offset, typeFilter: typeFilter);
+  /// Returns feed posts. typeFilter: "social" | "support" | null (all). sortBy: "new" | "popular".
+  Future<List<Post>> call({int limit = 20, int offset = 0, String? typeFilter, String sortBy = 'new'}) async {
+    return await repository.getFeed(limit: limit, offset: offset, typeFilter: typeFilter, sortBy: sortBy);
   }
 }

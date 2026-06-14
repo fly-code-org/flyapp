@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/services/analytics_service.dart';
 import '../../domain/repositories/verification_repository.dart';
 
 class VerificationController extends GetxController {
@@ -32,6 +33,7 @@ class VerificationController extends GetxController {
       message.value = response.message;
       resendCooldown.value = 30;
       _startResendCooldown();
+      AnalyticsService.otpRequested(channel: 'email');
       return true;
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
@@ -70,10 +72,12 @@ class VerificationController extends GetxController {
 
       print('✅ Email verification successful');
       message.value = response.message;
+      AnalyticsService.otpVerified(channel: 'email');
       return true;
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
       errorMessage.value = e.message;
+      AnalyticsService.otpFailed(channel: 'email', attemptNumber: 1);
       return false;
     } on NetworkException catch (e) {
       print('❌ NetworkException: ${e.message}');
@@ -108,6 +112,7 @@ class VerificationController extends GetxController {
       message.value = response.message;
       resendCooldown.value = 30;
       _startResendCooldown();
+      AnalyticsService.otpRequested(channel: 'sms');
       return true;
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
@@ -146,10 +151,12 @@ class VerificationController extends GetxController {
 
       print('✅ Phone verification successful');
       message.value = response.message;
+      AnalyticsService.otpVerified(channel: 'sms');
       return true;
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
       errorMessage.value = e.message;
+      AnalyticsService.otpFailed(channel: 'sms', attemptNumber: 1);
       return false;
     } on NetworkException catch (e) {
       print('❌ NetworkException: ${e.message}');
@@ -190,6 +197,7 @@ class VerificationController extends GetxController {
       message.value = response.message;
       resendCooldown.value = 30;
       _startResendCooldown();
+      AnalyticsService.otpResent(channel: channel);
       return true;
     } on ServerException catch (e) {
       print('❌ ServerException: ${e.message}');
