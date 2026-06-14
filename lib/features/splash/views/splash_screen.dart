@@ -27,6 +27,16 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _bootstrap() async {
+    try {
+      await _bootstrapInner();
+    } catch (e) {
+      debugPrint('⚠️ [Splash] bootstrap error: $e — falling back to onboarding');
+      if (!mounted) return;
+      Get.off(() => const Onboarding());
+    }
+  }
+
+  Future<void> _bootstrapInner() async {
     final raw = await TokenStorage.getToken();
 
     // No token, or expired: clear everything and start from onboarding.

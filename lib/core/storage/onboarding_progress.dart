@@ -23,7 +23,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// * User: email verification + user profile created.
 /// * MHP : email verification + MHP profile created + community created.
 class OnboardingProgress {
-  static const _storage = FlutterSecureStorage();
+  static const _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
   static const String _key = 'onboarding_progress';
 
   /// Record the step the user is currently on (always marks incomplete).
