@@ -13,6 +13,7 @@ import 'package:fly/features/post/presentation/services/user_profile_service.dar
 import 'package:fly/features/home/presentation/widgets/social_feed.dart';
 import 'package:fly/features/home/model/post_model.dart';
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
+import 'package:fly/features/subscription/presentation/controllers/subscription_controller.dart';
 import 'package:fly/core/services/streak_engagement_service.dart';
 import 'package:fly/core/services/analytics_service.dart';
 import 'package:fly/features/streak/presentation/streak_detail_sheet.dart';
@@ -130,6 +131,11 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       _profileController = sl<UserProfileController>();
       Get.put(_profileController, permanent: true);
+    }
+
+    // Get or create SubscriptionController (permanent — needed by feature gates)
+    if (!Get.isRegistered<SubscriptionController>()) {
+      Get.put(sl<SubscriptionController>(), permanent: true);
     }
 
     // Fetch user profile to get streak count

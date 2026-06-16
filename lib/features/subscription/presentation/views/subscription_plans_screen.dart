@@ -1,10 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:fly/features/mhp_profile/presentation/views/connect_razorpay/connect_razorpay_checkout.dart';
 import 'package:fly/features/subscription/data/subscription_remote_data_source.dart';
+import 'package:fly/features/subscription/presentation/controllers/subscription_controller.dart';
+import 'package:get/get.dart';
 
 const _kPurple = Color(0xFF7C3AED);
 const _kDeepPurple = Color(0xFF3B1178);
 const _kOrange = Color(0xFFF97316);
+
+/// Proxy that keeps all plan metadata but overrides the charge amount for prorated upgrades.
+class _UpgradePlanProxy extends SubscriptionPlan {
+  _UpgradePlanProxy(SubscriptionPlan base, int chargeINR)
+      : super(
+          name: base.name,
+          tagline: base.tagline,
+          amountInr: chargeINR,
+          durationDays: base.durationDays,
+          streakRestores: base.streakRestores,
+          features: base.features,
+        );
+}
 
 class SubscriptionPlansScreen extends StatefulWidget {
   const SubscriptionPlansScreen({super.key});
@@ -23,6 +38,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   bool _purchasing = false;
   String? _error;
   SubscriptionPlan? _pendingPlan;
+  UpgradePreview? _upgradePreview;
+  bool _loadingUpgradePreview = false;
 
   static const _plans = [kSoulPlan, kAuraPlan];
 
@@ -44,21 +61,49 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   Future<void> _loadStatus() async {
     setState(() => _loadingStatus = true);
     final sub = await _ds.getActiveSubscription();
-    if (mounted) setState(() { _activeSub = sub; _loadingStatus = false; });
+    if (mounted) {
+      setState(() { _activeSub = sub; _loadingStatus = false; });
+      // Auto-fetch upgrade preview if user is already on Soul and Aura tab is visible
+      if (_isUpgradeScenario) _fetchUpgradePreview();
+    }
   }
+
+  Future<void> _fetchUpgradePreview() async {
+    if (_loadingUpgradePreview) return;
+    setState(() { _loadingUpgradePreview = true; _upgradePreview = null; });
+    try {
+      final preview = await _ds.getUpgradePreview();
+      if (mounted) setState(() => _upgradePreview = preview);
+    } catch (_) {
+      // Non-fatal: fall back to full price if preview fails
+      if (mounted) setState(() => _upgradePreview = null);
+    } finally {
+      if (mounted) setState(() => _loadingUpgradePreview = false);
+    }
+  }
+
+  bool get _isUpgradeScenario =>
+      _activeSub != null && _activeSub!.active && _activeSub!.planName == 'Soul' && _selectedPlanIndex == 1;
 
   Future<void> _onContinue() async {
     if (_purchasing) return;
     setState(() { _purchasing = true; _error = null; _pendingPlan = _selectedPlan; });
     try {
-      final order = await _ds.createSubscriptionOrder(_selectedPlan);
+      // For upgrades use the prorated charge; for fresh purchases use the plan price.
+      final effectivePlan = _isUpgradeScenario && _upgradePreview != null
+          ? _UpgradePlanProxy(_selectedPlan, _upgradePreview!.chargeINR)
+          : _selectedPlan;
+      final order = await _ds.createSubscriptionOrder(effectivePlan);
       if (!mounted) return;
+      final description = _isUpgradeScenario
+          ? 'Upgrade to Fly ${_selectedPlan.name} Plan'
+          : 'Fly ${_selectedPlan.name} Plan — ₹${_selectedPlan.amountInr}/month';
       _razorpay.openCheckout(
         key: order.keyId,
         amountPaise: order.amountInr * 100,
         currency: order.currency,
         orderId: order.razorpayOrderId,
-        description: 'Fly ${_selectedPlan.name} Plan — ₹${_selectedPlan.amountInr}/month',
+        description: description,
       );
     } catch (e) {
       if (mounted) {
@@ -77,9 +122,10 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       );
       await _ds.activateSubscription(plan);
       if (!mounted) return;
-      setState(() { _purchasing = false; _pendingPlan = null; });
+      setState(() { _purchasing = false; _pendingPlan = null; _upgradePreview = null; });
       _showSuccessDialog(plan);
       _loadStatus();
+      _refreshSubscriptionController();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -158,6 +204,12 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   }
 
   bool get _isSubscribed => _activeSub != null && _activeSub!.active;
+
+  void _refreshSubscriptionController() {
+    if (Get.isRegistered<SubscriptionController>()) {
+      Get.find<SubscriptionController>().fetchSubscription();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -281,7 +333,13 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final isSelected = _selectedPlanIndex == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() { _selectedPlanIndex = index; _error = null; }),
+        onTap: () {
+          setState(() { _selectedPlanIndex = index; _error = null; });
+          // Fetch upgrade preview when Soul subscriber taps Aura tab
+          if (_activeSub?.planName == 'Soul' && _activeSub!.active && index == 1 && _upgradePreview == null) {
+            _fetchUpgradePreview();
+          }
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -579,6 +637,20 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   }
 
   Widget _buildBottomButton() {
+    final alreadyOnThisPlan = (_activeSub != null && _activeSub!.active) &&
+        ((_selectedPlanIndex == 0 && _activeSub!.planName == 'Soul') ||
+         (_selectedPlanIndex == 1 && _activeSub!.planName == 'Aura'));
+
+    String buttonLabel;
+    if (alreadyOnThisPlan) {
+      buttonLabel = 'Already Subscribed';
+    } else if (_isUpgradeScenario) {
+      final charge = _upgradePreview?.chargeINR ?? kAuraPlan.amountInr;
+      buttonLabel = 'Upgrade to Aura — ₹$charge';
+    } else {
+      buttonLabel = 'Continue to Payment';
+    }
+
     return SafeArea(
       top: false,
       child: Padding(
@@ -586,24 +658,26 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (_isUpgradeScenario) _buildUpgradeBreakdown(),
+            if (_isUpgradeScenario) const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: (_purchasing || _isSubscribed) ? null : _onContinue,
+                onPressed: (alreadyOnThisPlan || _purchasing || _loadingUpgradePreview) ? null : _onContinue,
                 style: FilledButton.styleFrom(
                   backgroundColor: _kPurple,
                   disabledBackgroundColor: Colors.grey.shade300,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: const StadiumBorder(),
                 ),
-                child: _purchasing
+                child: (_purchasing || (_isUpgradeScenario && _loadingUpgradePreview))
                     ? const SizedBox(
                         height: 22,
                         width: 22,
                         child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                       )
                     : Text(
-                        _isSubscribed ? 'Already Subscribed' : 'Continue to Payment',
+                        buttonLabel,
                         style: const TextStyle(
                           fontFamily: 'Lexend',
                           fontWeight: FontWeight.w600,
@@ -621,6 +695,60 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildUpgradeBreakdown() {
+    if (_upgradePreview == null) {
+      return const SizedBox.shrink();
+    }
+    final p = _upgradePreview!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F3FF),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kPurple.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          _breakdownRow('Aura Plan (full price)', '₹${kAuraPlan.amountInr}', isTotal: false),
+          const SizedBox(height: 6),
+          _breakdownRow(
+            'Soul credit (${p.remainingDays} days remaining)',
+            '−₹${p.creditINR}',
+            isCredit: true,
+          ),
+          const Divider(height: 16),
+          _breakdownRow('You pay today', '₹${p.chargeINR}', isTotal: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _breakdownRow(String label, String amount, {bool isTotal = false, bool isCredit = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Lexend',
+            fontSize: isTotal ? 14 : 13,
+            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w400,
+            color: isCredit ? const Color(0xFF16A34A) : const Color(0xFF374151),
+          ),
+        ),
+        Text(
+          amount,
+          style: TextStyle(
+            fontFamily: 'Lexend',
+            fontSize: isTotal ? 15 : 13,
+            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
+            color: isCredit ? const Color(0xFF16A34A) : (isTotal ? _kPurple : const Color(0xFF374151)),
+          ),
+        ),
+      ],
     );
   }
 }

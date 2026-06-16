@@ -7,6 +7,7 @@ import 'package:fly/features/user_profile/presentation/widgets/user_info_card.da
 import 'package:fly/features/user_profile/presentation/widgets/journal_grid_section.dart';
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
 import 'package:fly/features/journal/presentation/controllers/journal_controller.dart';
+import 'package:fly/features/subscription/presentation/controllers/subscription_controller.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import 'create_journal_screen.dart';
@@ -387,6 +388,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               child: FloatingActionButton(
                 backgroundColor: const Color(0xFF855DFC),
                 onPressed: () async {
+                  if (Get.isRegistered<SubscriptionController>()) {
+                    if (!Get.find<SubscriptionController>().requireAuraPlan()) return;
+                  }
                   final result = await Get.to(
                     () => const CreateJournalScreen(),
                   );

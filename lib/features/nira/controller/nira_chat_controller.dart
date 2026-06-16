@@ -1,3 +1,4 @@
+import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import '../data/models/nira_message_model.dart';
 import '../domain/usecases/end_nira_session.dart';
@@ -91,11 +92,26 @@ class NiraChatController extends GetxController {
       AnalyticsService.niraMessageSent();
     } catch (e) {
       final msg = e.toString();
+      if (_isRateLimitError(msg)) {
+        isSending.value = false;
+        Get.toNamed(AppRoutes.subscriptionPlans);
+        return;
+      }
       errorMessage.value = msg;
       _showError(msg);
     } finally {
       isSending.value = false;
     }
+  }
+
+  bool _isRateLimitError(String raw) {
+    final lower = raw.toLowerCase();
+    return lower.contains('429') ||
+        lower.contains('rate limit') ||
+        lower.contains('quota') ||
+        lower.contains('daily limit') ||
+        lower.contains('limit exceeded') ||
+        lower.contains('too many');
   }
 
   /// Clear chat and end session on backend if we have an active session.

@@ -100,6 +100,38 @@ class ActiveSubscription {
   }
 }
 
+class UpgradePreview {
+  final String currentPlan;
+  final String targetPlan;
+  final int remainingDays;
+  final int creditINR;
+  final int chargeINR;
+  final DateTime currentExpiresAt;
+  final DateTime newExpiresAt;
+
+  const UpgradePreview({
+    required this.currentPlan,
+    required this.targetPlan,
+    required this.remainingDays,
+    required this.creditINR,
+    required this.chargeINR,
+    required this.currentExpiresAt,
+    required this.newExpiresAt,
+  });
+
+  factory UpgradePreview.fromJson(Map<String, dynamic> json) {
+    return UpgradePreview(
+      currentPlan: json['current_plan']?.toString() ?? '',
+      targetPlan: json['target_plan']?.toString() ?? '',
+      remainingDays: (json['remaining_days'] as num?)?.toInt() ?? 0,
+      creditINR: (json['credit_inr'] as num?)?.toInt() ?? 0,
+      chargeINR: (json['charge_inr'] as num?)?.toInt() ?? 0,
+      currentExpiresAt: DateTime.tryParse(json['current_expires_at']?.toString() ?? '') ?? DateTime.now(),
+      newExpiresAt: DateTime.tryParse(json['new_expires_at']?.toString() ?? '') ?? DateTime.now().add(const Duration(days: 30)),
+    );
+  }
+}
+
 class SubscriptionRemoteDataSource {
   final Dio _client;
   SubscriptionRemoteDataSource({Dio? dio}) : _client = dio ?? ApiClient.dio;
@@ -143,6 +175,12 @@ class SubscriptionRemoteDataSource {
       },
       options: Options(headers: {'Content-Type': 'application/json'}),
     );
+  }
+
+  Future<UpgradePreview> getUpgradePreview() async {
+    final response = await _client.get('/subscriptions/external/v1/subscription/upgrade-preview');
+    final data = (response.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
+    return UpgradePreview.fromJson(data);
   }
 
   Future<ActiveSubscription?> getActiveSubscription() async {

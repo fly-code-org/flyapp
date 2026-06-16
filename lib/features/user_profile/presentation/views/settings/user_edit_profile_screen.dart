@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
+import 'package:fly/features/subscription/presentation/controllers/subscription_controller.dart';
 import 'package:fly/features/user_profile/data/services/user_settings_remote_data_source.dart';
+import 'package:fly/routes/app_routes.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 const _purple = Color(0xFF6C4EE4);
@@ -76,6 +79,12 @@ class _UserEditProfileScreenState extends State<UserEditProfileScreen> {
   }
 
   Future<void> _pickImage() async {
+    if (Get.isRegistered<SubscriptionController>()) {
+      if (!Get.find<SubscriptionController>().requireAnyPlan()) return;
+    } else {
+      Get.toNamed(AppRoutes.subscriptionPlans);
+      return;
+    }
     final picker = ImagePicker();
     final XFile? picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked != null) {

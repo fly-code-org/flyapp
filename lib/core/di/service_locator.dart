@@ -103,6 +103,7 @@ import '../../features/nira/domain/usecases/send_nira_message.dart';
 import '../../features/nira/domain/usecases/get_nira_messages.dart';
 import '../../features/nira/domain/usecases/get_active_nira_session.dart';
 import '../../features/nira/domain/usecases/end_nira_session.dart';
+import '../../features/subscription/presentation/controllers/subscription_controller.dart';
 import '../services/s3_upload_service.dart';
 
 final sl = GetIt.instance;
@@ -262,6 +263,9 @@ Future<void> init() async {
   sl.registerLazySingleton<CommunityRemoteDataSource>(
     () => CommunityRemoteDataSourceImpl(dio: ApiClient.dio),
   );
+
+  //! Features - Subscription
+  sl.registerLazySingleton(() => SubscriptionController());
 
   //! Features - User Profile
   // Controllers
