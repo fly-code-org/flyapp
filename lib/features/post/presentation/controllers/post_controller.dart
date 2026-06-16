@@ -17,6 +17,8 @@ import '../../domain/usecases/bookmark_post.dart';
 import '../../domain/usecases/unbookmark_post.dart';
 import '../../domain/usecases/share_post.dart';
 import '../../domain/usecases/vote_poll.dart';
+import '../../domain/usecases/report_post.dart';
+import '../../domain/usecases/hide_post.dart';
 import '../../../user_profile/presentation/controllers/user_profile_controller.dart';
 import '../../../../core/services/analytics_service.dart';
 
@@ -34,6 +36,8 @@ class PostController extends GetxController {
   final UnbookmarkPost unbookmarkPost;
   final SharePost sharePost;
   final VotePoll votePoll;
+  final ReportPost reportPost;
+  final HidePost hidePost;
 
   PostController({
     CreatePost? createPost,
@@ -49,6 +53,8 @@ class PostController extends GetxController {
     UnbookmarkPost? unbookmarkPost,
     SharePost? sharePost,
     VotePoll? votePoll,
+    ReportPost? reportPost,
+    HidePost? hidePost,
   })  : createPost = createPost ?? sl<CreatePost>(),
         getPostsByAuthor = getPostsByAuthor ?? sl<GetPostsByAuthor>(),
         getPostsByCommunity = getPostsByCommunity ?? sl<GetPostsByCommunity>(),
@@ -61,7 +67,9 @@ class PostController extends GetxController {
         bookmarkPost = bookmarkPost ?? sl<BookmarkPost>(),
         unbookmarkPost = unbookmarkPost ?? sl<UnbookmarkPost>(),
         sharePost = sharePost ?? sl<SharePost>(),
-        votePoll = votePoll ?? sl<VotePoll>();
+        votePoll = votePoll ?? sl<VotePoll>(),
+        reportPost = reportPost ?? sl<ReportPost>(),
+        hidePost = hidePost ?? sl<HidePost>();
 
   // State
   var isLoading = false.obs;
@@ -517,6 +525,39 @@ class PostController extends GetxController {
       print('❌ [POST CONTROLLER] Unexpected error: $e');
       print('❌ [POST CONTROLLER] Stack trace: $stackTrace');
       errorMessage.value = 'Failed to share post: ${e.toString()}';
+      return false;
+    }
+  }
+
+  Future<bool> reportPostEntry(String postId, String reason) async {
+    try {
+      await reportPost.call(postId, reason);
+      return true;
+    } on ServerException catch (e) {
+      errorMessage.value = e.message;
+      return false;
+    } on NetworkException catch (e) {
+      errorMessage.value = e.message;
+      return false;
+    } catch (e) {
+      errorMessage.value = 'Failed to report post';
+      return false;
+    }
+  }
+
+  Future<bool> hidePostEntry(String postId) async {
+    try {
+      await hidePost.call(postId);
+      posts.removeWhere((p) => p.id == postId);
+      return true;
+    } on ServerException catch (e) {
+      errorMessage.value = e.message;
+      return false;
+    } on NetworkException catch (e) {
+      errorMessage.value = e.message;
+      return false;
+    } catch (e) {
+      errorMessage.value = 'Failed to hide post';
       return false;
     }
   }

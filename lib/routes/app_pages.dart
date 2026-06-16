@@ -1,4 +1,5 @@
 import 'package:fly/features/create_community/presentation/views/community_guidelines.dart';
+import 'package:fly/features/subscription/presentation/views/subscription_plans_screen.dart';
 import 'package:fly/features/create_community/presentation/views/community_profile_screen.dart';
 import 'package:fly/features/create_community/presentation/views/create_support_community.dart';
 import 'package:fly/features/create_community/presentation/views/edit_community_details.dart';
@@ -192,6 +193,8 @@ class AppPages {
       name: AppRoutes.connectPaymentSuccess,
       page: () => const ConnectPaymentSuccessScreen(),
     ),
+
+    GetPage(name: AppRoutes.subscriptionPlans, page: () => const SubscriptionPlansScreen()),
 
     // Bottom Nav
     GetPage(name: AppRoutes.Home, page: () => const HomeScreen()),

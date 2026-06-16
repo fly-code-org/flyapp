@@ -94,6 +94,7 @@ class PostConverter {
     return ui_model.Post(
       id: apiPost.id,
       authorId: apiPost.authorId,
+      communityId: apiPost.communityId,
       profileUrl: finalProfileUrl,
       username: finalUsername,
       timestamp: timestamp,

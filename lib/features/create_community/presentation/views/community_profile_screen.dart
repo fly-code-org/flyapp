@@ -115,7 +115,10 @@ class _CommunitySupportProfileState extends State<CommunitySupportProfile> {
                   context: context,
                   backgroundColor: Colors.transparent,
                   isScrollControlled: true,
-                  builder: (_) => const CommunityMenuSheet(),
+                  builder: (_) => CommunityMenuSheet(
+                    communityId: _community?.id ?? _passedCommunityId ?? '',
+                    communityName: _community?.name ?? '',
+                  ),
                 );
               },
             ),

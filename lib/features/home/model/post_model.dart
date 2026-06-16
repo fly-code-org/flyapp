@@ -7,6 +7,8 @@ class Post {
   final String id;
   /// Post author id (for avatars / fallbacks; same as API `author_id`).
   final String authorId;
+  /// Community associated with this post (present for MHP posts).
+  final String? communityId;
   final String profileUrl;
   final String username;
   final String timestamp;
@@ -47,6 +49,7 @@ class Post {
   const Post({
     required this.id,
     required this.authorId,
+    this.communityId,
     required this.profileUrl,
     required this.username,
     required this.timestamp,
@@ -71,6 +74,7 @@ class Post {
   factory Post.fromMap(Map<String, dynamic> m) => Post(
     id: m['id'] as String? ?? '',
     authorId: m['authorId'] as String? ?? '',
+    communityId: m['communityId'] as String?,
     profileUrl: m['profileUrl'] as String? ?? '',
     username: m['username'] as String? ?? '',
     timestamp: m['timestamp'] as String? ?? '',
@@ -94,6 +98,7 @@ class Post {
   Map<String, dynamic> toMap() => {
     'id': id,
     'authorId': authorId,
+    'communityId': communityId,
     'profileUrl': profileUrl,
     'username': username,
     'timestamp': timestamp,
@@ -118,6 +123,7 @@ class Post {
   Post copyWith({
     String? id,
     String? authorId,
+    String? communityId,
     String? profileUrl,
     String? username,
     String? timestamp,
@@ -140,6 +146,7 @@ class Post {
     return Post(
       id: id ?? this.id,
       authorId: authorId ?? this.authorId,
+      communityId: communityId ?? this.communityId,
       profileUrl: profileUrl ?? this.profileUrl,
       username: username ?? this.username,
       timestamp: timestamp ?? this.timestamp,

@@ -54,6 +54,8 @@ abstract class PostRemoteDataSource {
   Future<void> sharePost(String postId);
 
   Future<void> votePoll(String postId, String optionId);
+  Future<void> reportPost(String postId, String reason);
+  Future<void> hidePost(String postId);
 }
 
 class PostRemoteDataSourceImpl implements PostRemoteDataSource {
@@ -952,6 +954,49 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
       if (e is ServerException || e is NetworkException) {
         rethrow;
       }
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> reportPost(String postId, String reason) async {
+    try {
+      final response = await client.post(
+        '/post/external/v1/$postId/report',
+        data: {'reason': reason},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+      final code = response.statusCode;
+      if (code != null && code >= 200 && code < 300) return;
+      throw ServerException(_messageFromPostApiResponse(response.data), statusCode: code);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException(_messageFromPostApiResponse(e.response!.data), statusCode: e.response!.statusCode);
+      }
+      throw NetworkException('Network error: ${e.message}');
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) rethrow;
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> hidePost(String postId) async {
+    try {
+      final response = await client.post(
+        '/post/external/v1/$postId/hide',
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+      final code = response.statusCode;
+      if (code != null && code >= 200 && code < 300) return;
+      throw ServerException(_messageFromPostApiResponse(response.data), statusCode: code);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException(_messageFromPostApiResponse(e.response!.data), statusCode: e.response!.statusCode);
+      }
+      throw NetworkException('Network error: ${e.message}');
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) rethrow;
       throw ServerException('Unexpected error: ${e.toString()}');
     }
   }

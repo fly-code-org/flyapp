@@ -52,6 +52,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   @override
   void initState() {
     super.initState();
+    _textController.addListener(() => setState(() {}));
   }
 
   @override
@@ -640,16 +641,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       appBar: AppBar(
         title: const Text("Create Post"),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.close),
           onPressed: () => popOrGoHome(context),
         ),
         actions: [
-          // Only observe loading state, not rebuild on every keystroke
           Obx(() {
             final isLoading = _postController.isLoading.value || _isUploading;
             if (isLoading) {
               return const Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: SizedBox(
                   width: 20,
                   height: 20,
@@ -657,11 +657,27 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
               );
             }
-            return TextButton(
-              onPressed: _submitPost,
-              child: const Text(
-                "Post",
-                style: TextStyle(color: Colors.blue, fontSize: 16),
+            final hasContent = _textController.text.trim().isNotEmpty ||
+                _selectedImageFiles.isNotEmpty ||
+                _selectedVideoFile != null ||
+                _showPollSection;
+            return Padding(
+              padding: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+              child: ElevatedButton(
+                onPressed: hasContent ? _submitPost : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: hasContent ? Colors.black : Colors.grey.shade300,
+                  foregroundColor: hasContent ? Colors.white : Colors.grey.shade500,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                ),
+                child: const Text(
+                  "Post",
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                ),
               ),
             );
           }),
@@ -710,8 +726,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 borderRadius: BorderRadius.circular(10.5),
                               ),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
+                                horizontal: 12,
+                                vertical: 8,
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -810,7 +826,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     maxLength,
                   }) => null, // Hide counter
               decoration: const InputDecoration(
-                hintText: "What's on your mind?",
+                hintText: "Feel free to share your thought. You can add images, videos, or a poll.",
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 8.0),
               ),
@@ -819,82 +835,102 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             // Poll Section (Inline)
             if (_showPollSection) ...[
               const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Poll',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 20),
-                          onPressed: _togglePollSection,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Poll Question
-                    TextField(
-                      controller: _pollQuestionController,
-                      decoration: const InputDecoration(
-                        hintText: 'Ask a question...',
-                        border: OutlineInputBorder(),
-                        isDense: true,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Poll Question
+                  TextField(
+                    controller: _pollQuestionController,
+                    decoration: InputDecoration(
+                      hintText: 'Ask a question...',
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
                       ),
-                      maxLength: 500,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Color(0xFF855DFC), width: 1.5),
+                      ),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
-                    const SizedBox(height: 16),
-                    // Poll Options
-                    ...List.generate(
-                      _pollOptionControllers.length,
-                      (index) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _pollOptionControllers[index],
-                                decoration: InputDecoration(
-                                  hintText: 'Option ${index + 1}',
-                                  border: const OutlineInputBorder(),
-                                  isDense: true,
+                    maxLength: 500,
+                    buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+                  ),
+                  const SizedBox(height: 12),
+                  // Poll Options
+                  ...List.generate(
+                    _pollOptionControllers.length,
+                    (index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _pollOptionControllers[index],
+                              decoration: InputDecoration(
+                                hintText: 'Option ${index + 1}',
+                                filled: true,
+                                fillColor: Colors.grey.shade100,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide.none,
                                 ),
-                                maxLength: 100,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide.none,
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(color: Color(0xFF855DFC), width: 1.5),
+                                ),
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              ),
+                              maxLength: 100,
+                              buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+                            ),
+                          ),
+                          if (_pollOptionControllers.length > 2)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: GestureDetector(
+                                onTap: () => _removePollOption(index),
+                                child: Icon(Icons.delete_outline, size: 22, color: Colors.grey.shade600),
                               ),
                             ),
-                            if (_pollOptionControllers.length > 2)
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 20),
-                                onPressed: () => _removePollOption(index),
-                                padding: const EdgeInsets.only(left: 8),
-                              ),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
-                    // Add Option Button
-                    if (_pollOptionControllers.length < 6)
-                      TextButton.icon(
-                        onPressed: _addPollOption,
-                        icon: const Icon(Icons.add, size: 20),
-                        label: const Text('Add Option'),
+                  ),
+                  // Add Option Button
+                  if (_pollOptionControllers.length < 6)
+                    GestureDetector(
+                      onTap: _addPollOption,
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add, size: 18, color: Color(0xFF855DFC)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Add option',
+                            style: TextStyle(
+                              color: Color(0xFF855DFC),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
             ],
 

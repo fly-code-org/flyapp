@@ -78,6 +78,9 @@ abstract class AppRoutes {
   static const MhpInvoices = '/mhp-invoices';
   static const MhpContactUs = '/mhp-contact-us';
 
+  /// Subscription
+  static const subscriptionPlans = '/subscription-plans';
+
   /// Legal
   static const termsConditions = '/terms-conditions';
   static const privacyPolicy = '/privacy-policy';

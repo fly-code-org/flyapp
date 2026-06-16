@@ -5,6 +5,7 @@ import 'package:fly/core/utils/jwt_decoder.dart';
 import 'package:fly/core/utils/avatar_generator.dart';
 import 'package:fly/core/network/api_client.dart';
 import '../controllers/comment_controller.dart';
+import '../services/user_profile_service.dart';
 import '../../domain/entities/comment.dart';
 import 'package:intl/intl.dart';
 
@@ -25,13 +26,16 @@ class CommentBottomSheet extends StatefulWidget {
 
 class _CommentBottomSheetState extends State<CommentBottomSheet> {
   final CommentController _commentController = sl<CommentController>();
+  final UserProfileService _userProfileService = UserProfileService();
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  String? _replyingToCommentId; // Track which comment we're replying to
-  String? _replyingToUserId; // Track the user ID we're replying to
+  String? _replyingToCommentId;
+  String? _replyingToUserId;
+  String? _replyingToUsername;
 
   bool _isLoading = false;
   List<Comment> _comments = [];
+  Map<String, String> _usernames = {};
 
   @override
   void initState() {
@@ -52,10 +56,25 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
 
     try {
       await _commentController.fetchCommentsByPostId(widget.postId);
+      if (!mounted) return;
+      final comments = _commentController.getCommentsForPost(widget.postId);
+
+      // Fetch usernames for all unique commenter user IDs
+      final uniqueUserIds = comments.map((c) => c.userId).toSet().toList();
+      final profiles = await _userProfileService.getUserProfiles(uniqueUserIds);
+      final usernames = <String, String>{};
+      for (final entry in profiles.entries) {
+        final name = entry.value['username'];
+        if (name != null && name.isNotEmpty) {
+          usernames[entry.key] = name;
+        }
+      }
+
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _comments = _commentController.getCommentsForPost(widget.postId);
+          _comments = comments;
+          _usernames = usernames;
         });
       }
     } catch (e) {
@@ -109,6 +128,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     setState(() {
       _replyingToCommentId = commentId;
       _replyingToUserId = userId;
+      _replyingToUsername = _usernames[userId] ?? userId.substring(0, 8);
     });
     _focusNode.requestFocus();
   }
@@ -117,6 +137,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
     setState(() {
       _replyingToCommentId = null;
       _replyingToUserId = null;
+      _replyingToUsername = null;
     });
   }
 
@@ -268,7 +289,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                         child: Row(
                           children: [
                             Text(
-                              'Replying to ${_replyingToUserId!.substring(0, 8)}...',
+                              'Replying to ${_replyingToUsername ?? _replyingToUserId!.substring(0, 8)}',
                               style: TextStyle(
                                 color: Colors.grey.shade700,
                                 fontSize: 14,
@@ -409,7 +430,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                         ),
                         children: [
                           TextSpan(
-                            text: '${comment.userId.substring(0, 8)}... ',
+                            text: '${_usernames[comment.userId] ?? comment.userId.substring(0, 8)} ',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           TextSpan(text: comment.text),

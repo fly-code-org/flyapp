@@ -21,8 +21,8 @@ class _SocialSupportTabsState extends State<SocialSupportTabs> {
         ),
         Expanded(
           child: _buildTab(
-            icon: Icons.support_agent,
-            label: "Support",
+            icon: Icons.self_improvement,
+            label: "Wellness",
             index: 1,
           ),
         ),

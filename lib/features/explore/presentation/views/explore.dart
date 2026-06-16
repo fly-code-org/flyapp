@@ -430,21 +430,28 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 200,
-          child: _isLoadingDiscoverMhps
-              ? const Center(child: CircularProgressIndicator())
-              : ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _discoverMhps.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    return MhpDiscoverCard(
-                      mhp: _discoverMhps[index],
-                      width: 150,
-                    );
-                  },
-                ),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 200,
+                child: _isLoadingDiscoverMhps
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.only(right: 16),
+                        itemCount: _discoverMhps.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        itemBuilder: (context, index) {
+                          return MhpDiscoverCard(
+                            mhp: _discoverMhps[index],
+                            width: 160,
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
         ),
       ],
     );

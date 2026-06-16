@@ -13,6 +13,8 @@ import 'package:fly/core/network/api_client.dart';
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
 import 'package:fly/features/post/presentation/widgets/comment_bottom_sheet.dart';
 import 'package:fly/core/services/share_service.dart';
+import 'package:fly/routes/app_routes.dart';
+import 'package:fly/features/user_profile/data/services/user_settings_remote_data_source.dart';
 
 class SocialPost extends StatefulWidget {
   final Post post;
@@ -44,7 +46,8 @@ class _SocialPostState extends State<SocialPost> {
   bool _isSharing = false;
   late PostController _postController;
   UserProfileController? _userProfileController;
-  late int _commentCount; // Local comment count for optimistic updates
+  late int _commentCount;
+  late int _likeCount;
 
   /// Local poll state after voting (optimistic) until feed refresh.
   UiPoll? _pollLocal;
@@ -54,8 +57,8 @@ class _SocialPostState extends State<SocialPost> {
   void initState() {
     super.initState();
 
-    // Initialize local comment count from widget.post.comments
     _commentCount = widget.post.comments;
+    _likeCount = widget.post.likes;
     _pollLocal = widget.post.poll;
     
     // Check if current user has already liked this post
@@ -112,9 +115,11 @@ class _SocialPostState extends State<SocialPost> {
   @override
   void didUpdateWidget(SocialPost oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Sync local comment count with widget.post.comments when post is updated from server
     if (oldWidget.post.comments != widget.post.comments) {
       _commentCount = widget.post.comments;
+    }
+    if (oldWidget.post.likes != widget.post.likes) {
+      _likeCount = widget.post.likes;
     }
     if (oldWidget.post.id == widget.post.id &&
         oldWidget.post.poll != widget.post.poll) {
@@ -457,11 +462,15 @@ class _SocialPostState extends State<SocialPost> {
       return;
     }
 
-    // Update UI state optimistically (just the heart icon, not the count)
-    // This will trigger the animation
+    // Update UI optimistically — icon and count
     if (mounted) {
       setState(() {
         isLiked = !isLiked;
+        if (!wasLiked) {
+          _likeCount++;
+        } else if (_likeCount > 0) {
+          _likeCount--;
+        }
       });
     }
 
@@ -486,20 +495,20 @@ class _SocialPostState extends State<SocialPost> {
         }
       } else {
         print('❌ [SOCIAL POST] Like/unlike API call failed, reverting');
-        // Revert the optimistic update if API call failed
         if (mounted) {
           setState(() {
             isLiked = wasLiked;
+            _likeCount = widget.post.likes;
           });
         }
       }
     } catch (e, stackTrace) {
       print('❌ [SOCIAL POST] Error toggling like: $e');
       print('📚 [SOCIAL POST] Stack trace: $stackTrace');
-      // Revert the like state on error
       if (mounted) {
         setState(() {
           isLiked = wasLiked;
+          _likeCount = widget.post.likes;
         });
       }
     } finally {
@@ -704,6 +713,251 @@ class _SocialPostState extends State<SocialPost> {
     }
   }
 
+  void _handleProfileTap() {
+    final token = ApiClient.getAuthToken();
+    final currentUserId = token != null && token.isNotEmpty
+        ? JwtDecoder.getUserId(token)
+        : null;
+
+    // Own post → own profile
+    if (currentUserId != null && widget.post.authorId == currentUserId) {
+      Get.toNamed(AppRoutes.userProfile);
+      return;
+    }
+
+    // MHP post with community → their community support profile
+    if (widget.post.isSupportContext && widget.post.communityId != null) {
+      Get.toNamed(
+        AppRoutes.CommunitySupportProfile,
+        arguments: {'communityId': widget.post.communityId},
+      );
+      return;
+    }
+
+    // Normal user post — skip for now
+  }
+
+  void _showPostOptions() {
+    final token = ApiClient.getAuthToken();
+    final currentUserId = token != null && token.isNotEmpty
+        ? JwtDecoder.getUserId(token)
+        : null;
+    final isOwnPost =
+        currentUserId != null && widget.post.authorId == currentUserId;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.thumb_down_outlined),
+              title: const Text('Not interested'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final success = await _postController.hidePostEntry(widget.post.id);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(success ? 'Post hidden' : 'Failed to hide post'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined),
+              title: const Text('Report'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showReportDialog();
+              },
+            ),
+            if (!isOwnPost)
+              ListTile(
+                leading: const Icon(Icons.block, color: Colors.red),
+                title: const Text('Block user', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showBlockDialog();
+                },
+              ),
+            if (isOwnPost)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: const Text(
+                  'Delete post',
+                  style: TextStyle(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showDeleteDialog();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showReportDialog() {
+    const reasons = [
+      'Spam',
+      'Harmful or dangerous content',
+      'Harassment or bullying',
+      'Misinformation',
+      'Inappropriate content',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8, left: 0),
+              alignment: Alignment.center,
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                'Report post',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+            ),
+            ...reasons.map(
+              (reason) => ListTile(
+                title: Text(reason),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final success = await _postController.reportPostEntry(widget.post.id, reason);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? 'Post reported. Thank you for your feedback.'
+                              : 'Failed to report post. Please try again.',
+                        ),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete post'),
+        content: const Text('This will permanently delete your post.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final success =
+                  await _postController.deletePostEntry(widget.post.id);
+              if (success && mounted) {
+                widget.onRefreshNeeded?.call();
+              } else if (!success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Failed to delete post. Please try again.'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBlockDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Block user'),
+        content: Text(
+          'Block ${widget.post.username}? They won\'t be able to see your posts and you won\'t see theirs.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await UserSettingsRemoteDataSource().blockUser(widget.post.authorId);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${widget.post.username} blocked.'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                  widget.onRefreshNeeded?.call();
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to block user. Please try again.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Block', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProfilePicture() {
     final useSquare = widget.post.isSupportContext || !widget.isSocialTab;
     return ProfileAvatar(
@@ -853,30 +1107,35 @@ class _SocialPostState extends State<SocialPost> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                _buildProfilePicture(),
+                GestureDetector(
+                  onTap: _handleProfileTap,
+                  child: _buildProfilePicture(),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.post.username,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                  child: GestureDetector(
+                    onTap: _handleProfileTap,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.post.username,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                      Text(
-                        widget.post.timestamp,
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
+                        Text(
+                          widget.post.timestamp,
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-                // Display tag icon if available (with safe async loading)
                 if (widget.post.tagIconUrl.isNotEmpty)
                   SizedBox(
                     height: 20,
@@ -884,7 +1143,10 @@ class _SocialPostState extends State<SocialPost> {
                     child: _buildTagIcon(widget.post.tagIconUrl),
                   ),
                 const SizedBox(width: 8),
-                const Icon(Icons.more_horiz),
+                GestureDetector(
+                  onTap: _showPostOptions,
+                  child: const Icon(Icons.more_horiz),
+                ),
               ],
             ),
           ),
@@ -988,7 +1250,7 @@ class _SocialPostState extends State<SocialPost> {
                           ),
                       ),
                       const SizedBox(width: 4),
-                      Text("${widget.post.likes}"),
+                      Text("$_likeCount"),
                     ],
                   ),
                 ),

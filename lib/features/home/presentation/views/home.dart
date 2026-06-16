@@ -3,6 +3,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
+import 'package:fly/routes/app_routes.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/features/home/presentation/widgets/community_tabs.dart';
 import 'package:fly/features/post/presentation/views/create_post_screen.dart';
@@ -502,7 +503,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         semanticsLabel: 'Fly logo',
                       ),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () => Get.toNamed(AppRoutes.subscriptionPlans),
                         child: const Text(
                           "Upgrade",
                           style: TextStyle(
