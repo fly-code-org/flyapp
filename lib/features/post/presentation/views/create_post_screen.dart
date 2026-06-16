@@ -775,10 +775,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                         tagIconPath,
                                         width: 20,
                                         height: 20,
-                                        colorFilter: const ColorFilter.mode(
-                                          Color(0xFF855DFC),
-                                          BlendMode.srcIn,
-                                        ),
                                       )
                                     else
                                       const Icon(

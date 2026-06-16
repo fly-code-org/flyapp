@@ -725,11 +725,11 @@ class _SocialPostState extends State<SocialPost> {
       return;
     }
 
-    // MHP post with community → their community support profile
-    if (widget.post.isSupportContext && widget.post.communityId != null) {
+    // MHP post → MHP profile (where user can book a session)
+    if (widget.post.isSupportContext) {
       Get.toNamed(
-        AppRoutes.CommunitySupportProfile,
-        arguments: {'communityId': widget.post.communityId},
+        AppRoutes.mhpProfile,
+        arguments: {'userId': widget.post.authorId},
       );
       return;
     }
