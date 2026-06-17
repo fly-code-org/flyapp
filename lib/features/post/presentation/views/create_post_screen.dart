@@ -683,7 +683,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           }),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Column(
+        children: [
+          Expanded(child: SingleChildScrollView(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1075,50 +1077,49 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ),
           ],
         ),
-      ),
+      )),
 
-      // Bottom bar to attach media
-      bottomNavigationBar: SafeArea(
-        child: Row(
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.image,
-                color: _showPollSection ? Colors.grey : null,
-              ),
-              onPressed: _isUploading || _showPollSection
-                  ? null
-                  : _pickImage,
-              tooltip: _showPollSection ? 'Disable poll to add images' : 'Add Image',
+          // Media toolbar — lives in the body Column so it rises above the keyboard
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.grey.shade200)),
             ),
-            IconButton(
-              icon: Icon(
-                Icons.videocam,
-                color: _showPollSection ? Colors.grey : null,
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.image, color: _showPollSection ? Colors.grey : null),
+                    onPressed: _isUploading || _showPollSection ? null : _pickImage,
+                    tooltip: _showPollSection ? 'Disable poll to add images' : 'Add Image',
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.videocam, color: _showPollSection ? Colors.grey : null),
+                    onPressed: _isUploading || _showPollSection ? null : _showVideoSourceDialog,
+                    tooltip: _showPollSection ? 'Disable poll to add video' : 'Add Video',
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      Icons.poll,
+                      color: (_selectedImageFiles.isNotEmpty || _selectedVideoFile != null)
+                          ? Colors.grey
+                          : (_showPollSection ? Colors.blue : null),
+                    ),
+                    onPressed: _isUploading ||
+                            _selectedImageFiles.isNotEmpty ||
+                            _selectedVideoFile != null
+                        ? null
+                        : _togglePollSection,
+                    tooltip: (_selectedImageFiles.isNotEmpty || _selectedVideoFile != null)
+                        ? 'Remove media to add poll'
+                        : (_showPollSection ? 'Remove Poll' : 'Add Poll'),
+                  ),
+                ],
               ),
-              onPressed: _isUploading || _showPollSection
-                  ? null
-                  : _showVideoSourceDialog,
-              tooltip: _showPollSection ? 'Disable poll to add video' : 'Add Video',
             ),
-            IconButton(
-              icon: Icon(
-                Icons.poll,
-                color: (_selectedImageFiles.isNotEmpty || _selectedVideoFile != null)
-                    ? Colors.grey
-                    : (_showPollSection ? Colors.blue : null),
-              ),
-              onPressed: _isUploading ||
-                      _selectedImageFiles.isNotEmpty ||
-                      _selectedVideoFile != null
-                  ? null
-                  : _togglePollSection,
-              tooltip: (_selectedImageFiles.isNotEmpty || _selectedVideoFile != null)
-                  ? 'Remove media to add poll'
-                  : (_showPollSection ? 'Remove Poll' : 'Add Poll'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     ),
     );

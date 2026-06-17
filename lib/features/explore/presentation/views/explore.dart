@@ -25,6 +25,7 @@ import 'package:fly/features/community/domain/entities/community.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_mhp_profile.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_user_profile.dart';
 import 'package:fly/core/services/streak_engagement_service.dart';
+import 'package:fly/core/controllers/nav_controller.dart';
 import 'package:fly/features/streak/presentation/streak_detail_sheet.dart';
 import 'package:fly/features/streak/presentation/streak_view_model.dart';
 
@@ -37,6 +38,7 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   late final TextEditingController _searchController;
+  final ScrollController _scrollController = ScrollController();
   Timer? _searchDebounce;
   bool _searchLoading = false;
   ExploreSearchResult? _searchResults;
@@ -113,6 +115,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     _searchController = TextEditingController();
     _initRole();
     _startExploreLoads();
+    if (Get.isRegistered<NavController>()) {
+      Get.find<NavController>().register(1, _scrollController);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       StreakEngagementService.instance.recordEngagement(reason: 'explore_open');
     });
@@ -128,6 +133,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    _scrollController.dispose();
+    if (Get.isRegistered<NavController>()) {
+      Get.find<NavController>().unregister(1);
+    }
     super.dispose();
   }
 
@@ -844,6 +853,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             const SizedBox(height: 12),
             Expanded(
               child: SingleChildScrollView(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

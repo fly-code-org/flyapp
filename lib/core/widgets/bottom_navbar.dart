@@ -1,5 +1,6 @@
 // core/widgets/bottom_navbar.dart
 import 'package:flutter/material.dart';
+import 'package:fly/core/controllers/nav_controller.dart';
 import 'package:fly/core/storage/token_storage.dart';
 import 'package:fly/core/utils/jwt_decoder.dart';
 import 'package:fly/features/notifications/controller/notification_controller.dart';
@@ -43,6 +44,13 @@ class BottomNavBar extends StatelessWidget {
       unselectedItemColor: Colors.black,
       currentIndex: currentIndex,
       onTap: (index) async {
+        // Same tab tapped — scroll to top instead of reloading
+        if (index == currentIndex) {
+          if (Get.isRegistered<NavController>()) {
+            Get.find<NavController>().scrollToTop(index);
+          }
+          return;
+        }
         switch (index) {
           case 0:
             Get.offAllNamed(AppRoutes.Home);

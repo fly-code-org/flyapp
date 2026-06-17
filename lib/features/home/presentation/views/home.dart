@@ -14,6 +14,8 @@ import 'package:fly/features/home/presentation/widgets/social_feed.dart';
 import 'package:fly/features/home/model/post_model.dart';
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
 import 'package:fly/features/subscription/presentation/controllers/subscription_controller.dart';
+import 'package:fly/features/notifications/controller/notification_controller.dart';
+import 'package:fly/core/controllers/nav_controller.dart';
 import 'package:fly/core/services/streak_engagement_service.dart';
 import 'package:fly/core/services/analytics_service.dart';
 import 'package:fly/features/streak/presentation/streak_detail_sheet.dart';
@@ -138,6 +140,17 @@ class _HomeScreenState extends State<HomeScreen> {
       Get.put(sl<SubscriptionController>(), permanent: true);
     }
 
+    // NotificationController — permanent so badge persists across all screens
+    if (!Get.isRegistered<NotificationController>()) {
+      Get.put(NotificationController(), permanent: true);
+    }
+
+    // NavController — permanent, used by BottomNavBar for scroll-to-top
+    if (!Get.isRegistered<NavController>()) {
+      Get.put(NavController(), permanent: true);
+    }
+    Get.find<NavController>().register(0, _scrollController);
+
     // Fetch user profile to get streak count
     _profileController.fetchUserProfile(forceRefresh: false);
 
@@ -157,6 +170,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    if (Get.isRegistered<NavController>()) {
+      Get.find<NavController>().unregister(0);
+    }
     super.dispose();
   }
 

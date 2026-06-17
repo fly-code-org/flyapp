@@ -6,7 +6,10 @@ import '../../controller/notification_controller.dart';
 import '../widget/notification_card.dart';
 
 class NotificationScreen extends StatelessWidget {
-  final NotificationController controller = Get.put(NotificationController());
+  // Reuse the permanent controller initialised in home.dart; fall back to creating one if needed.
+  final NotificationController controller = Get.isRegistered<NotificationController>()
+      ? Get.find<NotificationController>()
+      : Get.put(NotificationController(), permanent: true);
 
   NotificationScreen({super.key});
 
