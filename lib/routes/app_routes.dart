@@ -68,6 +68,7 @@ abstract class AppRoutes {
   static const UserContactUs = '/user-contact-us';
 
   // MHP Settings Flow
+  static const MhpEditProfile = '/mhp-edit-profile';
   static const MhpSettingsScreen = '/mhp-settings-screen';
   static const MhpChangePassword = '/mhp-change-password';
   static const MhpUpdateSpecializations = '/mhp-update-specializations';

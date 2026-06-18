@@ -33,6 +33,7 @@ import 'package:fly/features/legal/presentation/views/terms_conditions_screen.da
 import 'package:fly/features/user_profile/presentation/views/user_settings.dart';
 import 'package:fly/features/mhp_profile/presentation/views/mhp_settings.dart';
 import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_change_password_screen.dart';
+import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_edit_profile_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_update_specializations_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_availability_schedule_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/views/settings/mhp_session_preferences_screen.dart';
@@ -148,6 +149,7 @@ class AppPages {
       name: AppRoutes.UserSettingsScreen,
       page: () => const UserSettingsScreen(),
     ),
+    GetPage(name: AppRoutes.MhpEditProfile, page: () => const MhpEditProfileScreen()),
     GetPage(name: AppRoutes.MhpSettingsScreen, page: () => const MhpSettingsScreen()),
     GetPage(name: AppRoutes.MhpChangePassword, page: () => const MhpChangePasswordScreen()),
     GetPage(name: AppRoutes.MhpUpdateSpecializations, page: () => const MhpUpdateSpecializationsScreen()),

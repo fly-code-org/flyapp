@@ -443,7 +443,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                                 if (!_viewingOther) ...[
                                   EditProfileButton(
                                     onPressed: () {
-                                      Get.toNamed('/edit-community');
+                                      Get.toNamed(AppRoutes.MhpEditProfile);
                                     },
                                   ),
                                   const SizedBox(width: 20),

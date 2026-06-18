@@ -35,6 +35,7 @@ abstract class MhpProfileRemoteDataSource {
   Future<void> updateSpecializations(List<String> specializations);
   Future<Map<String, dynamic>> getInvoices();
   Future<void> changePassword(String currentPassword, String newPassword);
+  Future<void> updateProfile(Map<String, dynamic> body);
 }
 
 class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
@@ -485,6 +486,25 @@ class MhpProfileRemoteDataSourceImpl implements MhpProfileRemoteDataSource {
         if (body is Map && body['msg'] is Map) {
           msg = (body['msg'] as Map)['err']?.toString() ?? msg;
         }
+        throw ServerException(msg, statusCode: e.response!.statusCode);
+      }
+      throw NetworkException('Network error: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> updateProfile(Map<String, dynamic> body) async {
+    try {
+      await client.patch(
+        '/mhp/external/v1/profile',
+        data: body,
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final b = e.response!.data;
+        var msg = 'Failed to update profile';
+        if (b is Map && b['msg'] is String) msg = b['msg'] as String;
         throw ServerException(msg, statusCode: e.response!.statusCode);
       }
       throw NetworkException('Network error: ${e.message}');
