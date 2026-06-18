@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fly/features/post/presentation/controllers/post_controller.dart';
 import 'package:fly/features/post/domain/entities/post.dart';
+import 'package:fly/features/post/presentation/utils/post_converter.dart';
+import 'package:fly/features/home/model/post_model.dart' as home_model;
+import 'package:fly/features/home/presentation/views/post_detail_screen.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -175,6 +178,7 @@ class _CommunityMediaSectionState extends State<CommunityMediaSection> {
             "url": mediaUrl,
             "post_id": post.id,
             "content": post.content,
+            "homePost": PostConverter.toUIPost(post),
           });
         }
         
@@ -303,30 +307,41 @@ class _CommunityMediaSectionState extends State<CommunityMediaSection> {
             );
           }
 
-          return Stack(
-            children: [
-              Positioned.fill(child: child),
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Icon(
-                  mediaType == "image"
-                      ? Icons.photo
-                      : mediaType == "video"
-                      ? Icons.videocam
-                      : Icons.text_snippet,
-                  color: Colors.white,
-                  size: 18,
-                  shadows: [
-                    Shadow(
-                      offset: const Offset(0, 1),
-                      blurRadius: 3,
-                      color: Colors.black.withOpacity(0.5),
-                    ),
-                  ],
+          final homePost = post['homePost'] as home_model.Post?;
+
+          return GestureDetector(
+            onTap: homePost != null
+                ? () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PostDetailScreen(post: homePost),
+                      ),
+                    )
+                : null,
+            child: Stack(
+              children: [
+                Positioned.fill(child: child),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Icon(
+                    mediaType == "image"
+                        ? Icons.photo
+                        : mediaType == "video"
+                        ? Icons.videocam
+                        : Icons.text_snippet,
+                    color: Colors.white,
+                    size: 18,
+                    shadows: [
+                      Shadow(
+                        offset: const Offset(0, 1),
+                        blurRadius: 3,
+                        color: Colors.black.withOpacity(0.5),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       );

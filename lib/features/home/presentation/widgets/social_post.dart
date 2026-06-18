@@ -15,12 +15,17 @@ import 'package:fly/features/post/presentation/widgets/comment_bottom_sheet.dart
 import 'package:fly/core/services/share_service.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:fly/features/user_profile/data/services/user_settings_remote_data_source.dart';
+import 'package:fly/core/widgets/full_screen_image_viewer.dart';
+import 'package:fly/core/widgets/full_screen_video_player.dart';
+import 'package:fly/features/home/presentation/views/post_detail_screen.dart';
 
 class SocialPost extends StatefulWidget {
   final Post post;
   final bool isSocialTab;
   final Function(Post)? onPostUpdated;
   final VoidCallback? onRefreshNeeded;
+  final bool isDetailView;
+  final VoidCallback? onCommentButtonTap;
 
   const SocialPost({
     super.key,
@@ -28,6 +33,8 @@ class SocialPost extends StatefulWidget {
     this.isSocialTab = true,
     this.onPostUpdated,
     this.onRefreshNeeded,
+    this.isDetailView = false,
+    this.onCommentButtonTap,
   });
 
   @override
@@ -985,87 +992,106 @@ class _SocialPostState extends State<SocialPost> {
     );
   }
 
+  void _openImageViewer(List<String> urls, int startIndex) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FullScreenImageViewer(
+          imageUrls: urls,
+          initialIndex: startIndex,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToDetail() {
+    if (widget.isDetailView) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PostDetailScreen(post: widget.post),
+      ),
+    );
+  }
+
   Widget _buildImageCarousel(List<String> mediaUrls) {
-    // If single image, no need for PageView
+    // Single image — natural aspect ratio, no crop
     if (mediaUrls.length == 1) {
       return RepaintBoundary(
-        child: CachedNetworkImage(
-          imageUrl: mediaUrls[0],
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: 300,
-          placeholder: (context, url) => Container(
-            height: 300,
-            color: Colors.grey[200],
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
+        child: GestureDetector(
+          onTap: widget.isDetailView
+              ? () => _openImageViewer(mediaUrls, 0)
+              : _navigateToDetail,
+          child: CachedNetworkImage(
+            imageUrl: mediaUrls[0],
+            fit: BoxFit.fitWidth,
+            width: double.infinity,
+            placeholder: (context, url) => Container(
+              height: 240,
+              color: Colors.grey[200],
+              child: const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             ),
-          ),
-          errorWidget: (context, url, error) => Container(
-            height: 300,
-            color: Colors.grey[200],
-            child: const Center(
-              child: Icon(Icons.broken_image, color: Colors.grey, size: 48),
+            errorWidget: (context, url, error) => Container(
+              height: 200,
+              color: Colors.grey[200],
+              child: const Center(
+                child: Icon(Icons.broken_image, color: Colors.grey, size: 48),
+              ),
             ),
+            fadeInDuration: const Duration(milliseconds: 200),
+            fadeOutDuration: const Duration(milliseconds: 100),
+            maxWidthDiskCache: 1200,
+            maxHeightDiskCache: 1600,
+            memCacheWidth: 1200,
           ),
-          fadeInDuration: const Duration(milliseconds: 200),
-          fadeOutDuration: const Duration(milliseconds: 100),
-          // Limit image resolution to prevent memory issues
-          maxWidthDiskCache: 800,
-          maxHeightDiskCache: 800,
-          memCacheWidth: 800,
-          memCacheHeight: 800,
         ),
       );
     }
-    
-    // Multiple images - use PageView
+
+    // Multiple images — 4:3 container with contain fit (no crop)
     return Column(
       children: [
-        SizedBox(
-          height: 300,
+        AspectRatio(
+          aspectRatio: 4 / 3,
           child: PageView.builder(
             controller: _pageController ?? PageController(),
             itemCount: mediaUrls.length,
             onPageChanged: (index) {
-              if (mounted) {
-                setState(() {
-                  _currentPage = index;
-                });
-              }
+              if (mounted) setState(() => _currentPage = index);
             },
             itemBuilder: (context, index) {
               return RepaintBoundary(
                 key: ValueKey('image_$index'),
-                child: CachedNetworkImage(
-                  imageUrl: mediaUrls[index],
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  placeholder: (context, url) => Container(
-                    height: 300,
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    height: 300,
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: Icon(
-                        Icons.broken_image,
-                        color: Colors.grey,
-                        size: 48,
+                child: GestureDetector(
+                  onTap: widget.isDetailView
+                      ? () => _openImageViewer(mediaUrls, index)
+                      : _navigateToDetail,
+                  child: CachedNetworkImage(
+                    imageUrl: mediaUrls[index],
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey[200],
+                      child: const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[200],
+                      child: const Center(
+                        child: Icon(
+                          Icons.broken_image,
+                          color: Colors.grey,
+                          size: 48,
+                        ),
+                      ),
+                    ),
+                    fadeInDuration: const Duration(milliseconds: 200),
+                    fadeOutDuration: const Duration(milliseconds: 100),
+                    maxWidthDiskCache: 1200,
+                    maxHeightDiskCache: 1600,
+                    memCacheWidth: 1200,
                   ),
-                  fadeInDuration: const Duration(milliseconds: 200),
-                  fadeOutDuration: const Duration(milliseconds: 100),
-                  // Limit image resolution to prevent memory issues
-                  maxWidthDiskCache: 800,
-                  maxHeightDiskCache: 800,
-                  memCacheWidth: 800,
-                  memCacheHeight: 800,
                 ),
               );
             },
@@ -1153,71 +1179,115 @@ class _SocialPostState extends State<SocialPost> {
 
           // Post Text
           if (widget.post.text.trim().isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: LayoutBuilder(
-                builder: (context, size) {
-                  final textSpan = TextSpan(
-                    text: widget.post.text,
-                    style: const TextStyle(color: Colors.black, fontSize: 14),
-                  );
-                  final textPainter = TextPainter(
-                    text: textSpan,
-                    maxLines: isTextExpanded ? null : 2,
-                    textDirection: TextDirection.ltr,
-                  )..layout(maxWidth: size.maxWidth);
-                  final isOverflow = textPainter.didExceedMaxLines;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.post.text,
-                        maxLines: isTextExpanded ? null : 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (isOverflow)
-                        GestureDetector(
-                          onTap: () =>
-                              setState(() => isTextExpanded = !isTextExpanded),
-                          child: Text(
-                            isTextExpanded ? "See less" : "See more",
+            GestureDetector(
+              onTap: widget.isDetailView ? null : _navigateToDetail,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: widget.isDetailView
+                    ? Text(widget.post.text)
+                    : LayoutBuilder(
+                        builder: (context, size) {
+                          final textSpan = TextSpan(
+                            text: widget.post.text,
                             style: const TextStyle(
-                              color: Colors.blue,
-                              fontWeight: FontWeight.w600,
+                              color: Colors.black,
+                              fontSize: 14,
                             ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
+                          );
+                          final textPainter = TextPainter(
+                            text: textSpan,
+                            maxLines: isTextExpanded ? null : 2,
+                            textDirection: TextDirection.ltr,
+                          )..layout(maxWidth: size.maxWidth);
+                          final isOverflow = textPainter.didExceedMaxLines;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.post.text,
+                                maxLines: isTextExpanded ? null : 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (isOverflow)
+                                GestureDetector(
+                                  onTap: () => setState(
+                                    () => isTextExpanded = !isTextExpanded,
+                                  ),
+                                  child: Text(
+                                    isTextExpanded ? "See less" : "See more",
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
               ),
             ),
 
           if (_effectivePoll != null) _buildPollSection(_effectivePoll!),
 
           // Media
-          if (widget.post.isVideo && _videoController != null)
-            _videoController!.value.isInitialized
+          if (widget.post.isVideo && widget.post.mediaUrl != null)
+            _videoController != null && _videoController!.value.isInitialized
                 ? GestureDetector(
                     onTap: () {
-                      setState(() {
-                        if (_videoController!.value.volume == 0) {
-                          _videoController!.setVolume(1);
-                        } else {
-                          _videoController!.setVolume(0);
-                        }
-                      });
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => FullScreenVideoPlayer(
+                            videoUrl: widget.post.mediaUrl!,
+                          ),
+                        ),
+                      );
                     },
-                    child: AspectRatio(
-                      aspectRatio: _videoController!.value.aspectRatio,
-                      child: VideoPlayer(_videoController!),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        AspectRatio(
+                          aspectRatio: _videoController!.value.aspectRatio,
+                          child: VideoPlayer(_videoController!),
+                        ),
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black45,
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                        ),
+                      ],
                     ),
                   )
-                : Container(
-                    height: 200,
-                    color: Colors.black12,
-                    child: const Center(child: CircularProgressIndicator()),
+                : GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => FullScreenVideoPlayer(
+                            videoUrl: widget.post.mediaUrl!,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      height: 200,
+                      color: Colors.black12,
+                      child: const Center(
+                        child: Icon(
+                          Icons.play_circle_outline,
+                          size: 56,
+                          color: Colors.black45,
+                        ),
+                      ),
+                    ),
                   )
           else if (widget.post.mediaUrls != null &&
               widget.post.mediaUrls!.isNotEmpty)
@@ -1257,24 +1327,28 @@ class _SocialPostState extends State<SocialPost> {
                 const SizedBox(width: 16),
                   GestureDetector(
                     onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => CommentBottomSheet(
-                          postId: widget.post.id,
-                          onCommentAdded: _handleCommentAdded,
-                        ),
-                      );
+                      if (widget.isDetailView && widget.onCommentButtonTap != null) {
+                        widget.onCommentButtonTap!();
+                      } else {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => CommentBottomSheet(
+                            postId: widget.post.id,
+                            onCommentAdded: _handleCommentAdded,
+                          ),
+                        );
+                      }
                     },
                     child: Row(
-                  children: [
-                    const Icon(Icons.comment_outlined, color: Colors.grey),
-                    const SizedBox(width: 4),
+                      children: [
+                        const Icon(Icons.comment_outlined, color: Colors.grey),
+                        const SizedBox(width: 4),
                         Text("$_commentCount"),
-                  ],
+                      ],
                     ),
-                ),
+                  ),
                 const SizedBox(width: 16),
                 Builder(
                   builder: (shareIconContext) => GestureDetector(
