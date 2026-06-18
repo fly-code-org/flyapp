@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../model/notification_model.dart';
 
 class NotificationCard extends StatelessWidget {
@@ -96,6 +97,11 @@ class NotificationCard extends StatelessWidget {
                       height: 1.3,
                     ),
                   ),
+                  if (_isSessionType(notification.type) &&
+                      notification.meetLink.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _JoinMeetChip(meetLink: notification.meetLink),
+                  ],
                 ],
               ),
             ),
@@ -126,6 +132,9 @@ class NotificationCard extends StatelessWidget {
     );
   }
 
+  bool _isSessionType(String type) =>
+      type == 'session_booked' || type == 'session_reminder';
+
   String _formatTime(DateTime time) {
     final diff = DateTime.now().difference(time);
     if (diff.inMinutes < 1) return 'Just now';
@@ -133,5 +142,48 @@ class NotificationCard extends StatelessWidget {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${time.day}/${time.month}/${time.year}';
+  }
+}
+
+class _JoinMeetChip extends StatelessWidget {
+  final String meetLink;
+  const _JoinMeetChip({required this.meetLink});
+
+  Future<void> _launch() async {
+    final uri = Uri.tryParse(meetLink);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _launch,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFF855DFC),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.videocam_outlined, size: 14, color: Colors.white),
+            SizedBox(width: 5),
+            Text(
+              'Join Session',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                fontFamily: 'Lexend',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

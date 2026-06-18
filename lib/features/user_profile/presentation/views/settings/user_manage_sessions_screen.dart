@@ -3,6 +3,7 @@ import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/features/user_profile/data/services/user_settings_remote_data_source.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const _purple = Color(0xFF6C4EE4);
 
@@ -204,6 +205,14 @@ class _UserManageSessionsScreenState extends State<UserManageSessionsScreen>
     );
   }
 
+  Future<void> _launchMeet(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   Widget _sessionCard(_Session s, String tab) {
     final statusColor = tab == 'upcoming'
         ? _purple
@@ -355,38 +364,10 @@ class _UserManageSessionsScreenState extends State<UserManageSessionsScreen>
           const Divider(height: 1, color: Color(0xFFEEEEEE)),
           const SizedBox(height: 12),
           if (tab == 'upcoming')
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _cancel(s),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
-                      side: const BorderSide(color: Color(0xFFDDDDDD)),
-                    ),
-                    child: const Text('Cancel',
-                        style: TextStyle(color: Colors.black87)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Get.toNamed(AppRoutes.bookSession),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black87,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        side: const BorderSide(color: _purple),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text('Reschedule',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ],
+            _UpcomingSessionActions(
+              session: s,
+              onCancel: () => _cancel(s),
+              onJoin: s.meetLink.isNotEmpty ? () => _launchMeet(s.meetLink) : null,
             )
           else if (tab == 'completed')
             SizedBox(
@@ -442,6 +423,135 @@ class _UserManageSessionsScreenState extends State<UserManageSessionsScreen>
             ),
         ],
       ),
+    );
+  }
+}
+
+class _UpcomingSessionActions extends StatelessWidget {
+  final _Session session;
+  final VoidCallback onCancel;
+  final VoidCallback? onJoin;
+
+  const _UpcomingSessionActions({
+    required this.session,
+    required this.onCancel,
+    this.onJoin,
+  });
+
+  bool get _isImminent {
+    final diff = session.startAt.difference(DateTime.now());
+    return diff.inMinutes >= 0 && diff.inMinutes <= 60;
+  }
+
+  bool get _isStartingSoon {
+    final diff = session.startAt.difference(DateTime.now());
+    return diff.inMinutes >= 0 && diff.inMinutes <= 15;
+  }
+
+  String get _countdownLabel {
+    final diff = session.startAt.difference(DateTime.now());
+    if (diff.inMinutes <= 0) return 'Starting now';
+    if (diff.inMinutes < 60) return 'Starts in ${diff.inMinutes}m';
+    return '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLink = onJoin != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_isImminent && hasLink) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: _isStartingSoon
+                  ? const Color(0xFFFFF3E0)
+                  : const Color(0xFFEDE9FB),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _isStartingSoon ? Icons.alarm_on : Icons.access_time,
+                  size: 16,
+                  color: _isStartingSoon ? Colors.orange.shade700 : _purple,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _countdownLabel,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color:
+                        _isStartingSoon ? Colors.orange.shade700 : _purple,
+                    fontFamily: 'Lexend',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (hasLink) ...[
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: onJoin,
+              icon: const Icon(Icons.videocam_outlined,
+                  size: 18, color: Colors.white),
+              label: const Text(
+                'Join Session',
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: Colors.white,
+                    fontFamily: 'Lexend'),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _purple,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30)),
+                elevation: 0,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: onCancel,
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
+                  side: const BorderSide(color: Color(0xFFDDDDDD)),
+                ),
+                child: const Text('Cancel',
+                    style: TextStyle(color: Colors.black87)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Get.toNamed(AppRoutes.bookSession),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    side: const BorderSide(color: _purple),
+                  ),
+                ),
+                child: const Text('Reschedule',
+                    style: TextStyle(
+                        color: _purple, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

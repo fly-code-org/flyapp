@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
@@ -21,6 +22,7 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
   final _bioCtrl = TextEditingController();
 
   String? _currentPictureUrl;
+  String _displayName = '';
   File? _pickedImage;
   bool _loading = true;
   bool _saving = false;
@@ -42,13 +44,24 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
       final data = await _ds.getMhpProfile();
       _bioCtrl.text = data['bio']?.toString() ?? '';
       _currentPictureUrl = data['picture_path']?.toString();
+      _displayName = data['display_name']?.toString() ??
+          data['username']?.toString() ??
+          '';
     } catch (_) {}
     setState(() => _loading = false);
   }
 
+  String get _initials {
+    final parts = _displayName.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return 'M';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final XFile? picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final XFile? picked =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (picked != null) {
       setState(() => _pickedImage = File(picked.path));
     }
@@ -75,19 +88,122 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
       await _ds.updateProfile(body);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated'), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text('Profile updated'),
+              backgroundColor: Colors.green),
         );
         popOrGoHome(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text(e.toString()), backgroundColor: Colors.red),
         );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Widget _buildAvatar() {
+    const double radius = 56;
+
+    // Local picked image takes priority
+    if (_pickedImage != null) {
+      return _avatarShell(
+        radius: radius,
+        child: ClipOval(
+          child: Image.file(_pickedImage!,
+              width: radius * 2, height: radius * 2, fit: BoxFit.cover),
+        ),
+      );
+    }
+
+    final url = _currentPictureUrl != null && _currentPictureUrl!.isNotEmpty
+        ? ProfilePictureHelper.getProfilePictureUrl(_currentPictureUrl!)
+        : '';
+
+    if (url.isNotEmpty) {
+      return _avatarShell(
+        radius: radius,
+        child: CachedNetworkImage(
+          imageUrl: url,
+          width: radius * 2,
+          height: radius * 2,
+          fit: BoxFit.cover,
+          imageBuilder: (_, imageProvider) => ClipOval(
+            child: Image(
+                image: imageProvider,
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover),
+          ),
+          placeholder: (_, __) => _initialsCircle(radius),
+          errorWidget: (_, __, ___) => _initialsCircle(radius),
+        ),
+      );
+    }
+
+    return _avatarShell(radius: radius, child: _initialsCircle(radius));
+  }
+
+  // Wraps the image with a camera-icon overlay to signal tappability
+  Widget _avatarShell({required double radius, required Widget child}) {
+    return Stack(
+      children: [
+        SizedBox(width: radius * 2, height: radius * 2, child: child),
+        Positioned.fill(
+          child: ClipOval(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.45),
+                  ],
+                  stops: const [0.45, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 8,
+          left: 0,
+          right: 0,
+          child: const Icon(Icons.camera_alt, size: 20, color: Colors.white),
+        ),
+      ],
+    );
+  }
+
+  Widget _initialsCircle(double radius) {
+    return Container(
+      width: radius * 2,
+      height: radius * 2,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [Color(0xFF855DFC), Color(0xFF6C4EE4)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          _initials,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Lexend',
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -116,7 +232,10 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
           ),
           title: const Text(
             'Edit Profile',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20, color: Colors.black),
+            style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 20,
+                color: Colors.black),
           ),
         ),
         body: _loading
@@ -129,50 +248,26 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
                     Center(
                       child: GestureDetector(
                         onTap: _pickImage,
-                        child: Stack(
-                          children: [
-                            CircleAvatar(
-                              radius: 56,
-                              backgroundColor: const Color(0xFFEDE9FB),
-                              backgroundImage: _pickedImage != null
-                                  ? FileImage(_pickedImage!) as ImageProvider
-                                  : (_currentPictureUrl != null && _currentPictureUrl!.isNotEmpty
-                                      ? NetworkImage(
-                                          ProfilePictureHelper.getProfilePictureUrl(_currentPictureUrl!),
-                                        )
-                                      : null),
-                              child: (_pickedImage == null &&
-                                      (_currentPictureUrl == null || _currentPictureUrl!.isEmpty))
-                                  ? const Icon(Icons.person, size: 48, color: _purple)
-                                  : null,
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _purple,
-                                ),
-                                child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: _buildAvatar(),
                       ),
                     ),
                     const SizedBox(height: 8),
                     const Center(
                       child: Text(
                         'Tap to change profile picture',
-                        style: TextStyle(fontSize: 13, color: Colors.grey, fontFamily: 'Lexend'),
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
+                            fontFamily: 'Lexend'),
                       ),
                     ),
                     const SizedBox(height: 32),
                     const Text(
                       'Bio',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, fontFamily: 'Lexend'),
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Lexend'),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -181,7 +276,8 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
                       decoration: InputDecoration(
                         hintText: 'Tell users about yourself...',
                         hintStyle: const TextStyle(fontFamily: 'Lexend'),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(color: _purple),
@@ -195,8 +291,10 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
                         onPressed: _saving ? null : _save,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _purple,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(
                           _saving ? 'Saving...' : 'Save Changes',
