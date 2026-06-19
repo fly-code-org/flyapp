@@ -53,7 +53,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs access to your camera to take profile pictures.</string>
+	<string>This app needs access to your camera to take photos and record videos for posts.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to your microphone to record videos for posts.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app saves your profile pictures to your library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

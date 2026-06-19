@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:fly/routes/app_routes.dart';
 
 class ConversationCard extends StatelessWidget {
   final String backgroundImagePath;
@@ -48,7 +50,7 @@ class ConversationCard extends StatelessWidget {
               height: 45,
               child: ElevatedButton(
                 onPressed: () {
-                  // handle button tap
+                  Get.toNamed(AppRoutes.Nira);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/di/service_locator.dart';
@@ -185,6 +186,53 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
+  Future<bool> _requestCameraAndMicPermissions() async {
+    final cameraStatus = await Permission.camera.request();
+    final micStatus = await Permission.microphone.request();
+
+    final denied = cameraStatus.isPermanentlyDenied || micStatus.isPermanentlyDenied;
+    if (denied && mounted) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Permission Required'),
+          content: const Text(
+            'Camera and microphone access are required to record videos. '
+            'Please enable them in Settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                openAppSettings();
+              },
+              child: const Text('Open Settings'),
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
+
+    if (!cameraStatus.isGranted || !micStatus.isGranted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Camera and microphone permissions are required'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return false;
+    }
+
+    return true;
+  }
+
   Future<void> _showVideoSourceDialog() async {
     if (_showPollSection) {
       _showMediaPollConflictDialog(isPollActive: true);
@@ -209,9 +257,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             ListTile(
               leading: const Icon(Icons.videocam),
               title: const Text('Camera'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                _pickVideo(source: ImageSource.camera);
+                final hasPermission = await _requestCameraAndMicPermissions();
+                if (hasPermission) {
+                  _pickVideo(source: ImageSource.camera);
+                }
               },
             ),
           ],

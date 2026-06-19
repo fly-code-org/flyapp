@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fly/features/home/model/post_model.dart';
@@ -59,6 +60,10 @@ class _SocialPostState extends State<SocialPost> {
   /// Local poll state after voting (optimistic) until feed refresh.
   UiPoll? _pollLocal;
   bool _voteSubmitting = false;
+
+  // Video overlay state
+  bool _showVideoOverlay = false;
+  Timer? _overlayTimer;
 
   @override
   void initState() {
@@ -331,9 +336,36 @@ class _SocialPostState extends State<SocialPost> {
 
   @override
   void dispose() {
+    _overlayTimer?.cancel();
     _videoController?.dispose();
     _pageController?.dispose();
     super.dispose();
+  }
+
+  void _toggleVideoPlayback() {
+    if (_videoController == null || !_videoController!.value.isInitialized) {
+      _openFullscreenVideo();
+      return;
+    }
+    final isPlaying = _videoController!.value.isPlaying;
+    if (isPlaying) {
+      _videoController!.pause();
+    } else {
+      _videoController!.play();
+    }
+    setState(() => _showVideoOverlay = true);
+    _overlayTimer?.cancel();
+    _overlayTimer = Timer(const Duration(milliseconds: 1200), () {
+      if (mounted) setState(() => _showVideoOverlay = false);
+    });
+  }
+
+  void _openFullscreenVideo() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FullScreenVideoPlayer(videoUrl: widget.post.mediaUrl!),
+      ),
+    );
   }
 
   /// Handles optimistic comment count update when a comment is added
@@ -1233,62 +1265,47 @@ class _SocialPostState extends State<SocialPost> {
 
           // Media
           if (widget.post.isVideo && widget.post.mediaUrl != null)
-            _videoController != null && _videoController!.value.isInitialized
-                ? GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => FullScreenVideoPlayer(
-                            videoUrl: widget.post.mediaUrl!,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        AspectRatio(
+            GestureDetector(
+              onTap: _toggleVideoPlayback,
+              onLongPress: _openFullscreenVideo,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  _videoController != null && _videoController!.value.isInitialized
+                      ? AspectRatio(
                           aspectRatio: _videoController!.value.aspectRatio,
                           child: VideoPlayer(_videoController!),
-                        ),
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.black45,
-                          ),
-                          child: const Icon(
-                            Icons.play_arrow,
-                            color: Colors.white,
-                            size: 32,
+                        )
+                      : Container(
+                          height: 200,
+                          color: Colors.black12,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         ),
-                      ],
-                    ),
-                  )
-                : GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => FullScreenVideoPlayer(
-                            videoUrl: widget.post.mediaUrl!,
-                          ),
-                        ),
-                      );
-                    },
+                  // Overlay icon: only visible briefly after a tap
+                  AnimatedOpacity(
+                    opacity: _showVideoOverlay ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
                     child: Container(
-                      height: 200,
-                      color: Colors.black12,
-                      child: const Center(
-                        child: Icon(
-                          Icons.play_circle_outline,
-                          size: 56,
-                          color: Colors.black45,
-                        ),
+                      width: 56,
+                      height: 56,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black45,
+                      ),
+                      child: Icon(
+                        _videoController?.value.isPlaying == true
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                        color: Colors.white,
+                        size: 32,
                       ),
                     ),
-                  )
+                  ),
+                ],
+              ),
+            )
           else if (widget.post.mediaUrls != null &&
               widget.post.mediaUrls!.isNotEmpty)
             _buildImageCarousel(widget.post.mediaUrls!)
