@@ -186,19 +186,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  Future<bool> _requestCameraAndMicPermissions() async {
-    final cameraStatus = await Permission.camera.request();
-    final micStatus = await Permission.microphone.request();
+  Future<bool> _requestCameraPermission() async {
+    final status = await Permission.camera.request();
 
-    final denied = cameraStatus.isPermanentlyDenied || micStatus.isPermanentlyDenied;
-    if (denied && mounted) {
+    if (status.isPermanentlyDenied && mounted) {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Permission Required'),
+          title: const Text('Camera Access Required'),
           content: const Text(
-            'Camera and microphone access are required to record videos. '
-            'Please enable them in Settings.',
+            'Camera access is required to record videos. '
+            'Please enable it in Settings.',
           ),
           actions: [
             TextButton(
@@ -218,15 +216,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       return false;
     }
 
-    if (!cameraStatus.isGranted || !micStatus.isGranted) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Camera and microphone permissions are required'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (!status.isGranted && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Camera permission is required to record videos'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return false;
     }
 
@@ -259,7 +255,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               title: const Text('Camera'),
               onTap: () async {
                 Navigator.pop(context);
-                final hasPermission = await _requestCameraAndMicPermissions();
+                final hasPermission = await _requestCameraPermission();
                 if (hasPermission) {
                   _pickVideo(source: ImageSource.camera);
                 }
