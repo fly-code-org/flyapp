@@ -76,6 +76,13 @@ class PostController extends GetxController {
   var errorMessage = ''.obs;
   var posts = <Post>[].obs;
 
+  // Cross-screen like state cache: postId -> isLiked
+  final likeStateCache = <String, bool>{}.obs;
+
+  void updateLikeStateCache(String postId, bool liked) {
+    likeStateCache[postId] = liked;
+  }
+
   // Create post
   /// [communityId] When provided (e.g. MHP's community), the post is associated with that community so it appears in community feed and MHP Activities.
   Future<bool> createPostEntry({

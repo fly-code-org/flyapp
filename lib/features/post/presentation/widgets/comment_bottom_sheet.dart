@@ -483,7 +483,11 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
         ),
         // Replies (flattened with indent)
         ...replies.map(
-          (reply) => _buildCommentItem(reply, [], indentLevel + 1),
+          (reply) => _buildCommentItem(
+            reply,
+            _comments.where((c) => c.parentCommentId == reply.id).toList(),
+            indentLevel + 1,
+          ),
         ),
       ],
     );

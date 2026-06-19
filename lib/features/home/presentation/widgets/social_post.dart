@@ -72,19 +72,25 @@ class _SocialPostState extends State<SocialPost> {
     _commentCount = widget.post.comments;
     _likeCount = widget.post.likes;
     _pollLocal = widget.post.poll;
-    
-    // Check if current user has already liked this post
-    isLiked = _checkIfUserLikedPost();
 
-    // Check if current user has already bookmarked this post
-    isBookmarked = _checkIfUserBookmarkedPost();
-    
-    // Get PostController
+    // Get PostController first so we can read the like state cache
     if (Get.isRegistered<PostController>()) {
       _postController = Get.find<PostController>();
     } else {
       _postController = sl<PostController>();
       Get.put(_postController);
+    }
+
+    // Seed like state from cross-screen cache; fall back to widget data
+    final cachedLiked = _postController.likeStateCache[widget.post.id];
+    if (cachedLiked != null) {
+      isLiked = cachedLiked;
+      final fromWidget = _checkIfUserLikedPost();
+      if (cachedLiked != fromWidget) {
+        _likeCount += cachedLiked ? 1 : -1;
+      }
+    } else {
+      isLiked = _checkIfUserLikedPost();
     }
 
     // Get UserProfileController to check bookmarked posts
@@ -94,6 +100,9 @@ class _SocialPostState extends State<SocialPost> {
       _userProfileController = sl<UserProfileController>();
       Get.put(_userProfileController, permanent: true);
     }
+
+    // Check if current user has already bookmarked this post
+    isBookmarked = _checkIfUserBookmarkedPost();
     
     // Only create PageController if there are multiple images
     if (widget.post.mediaUrls != null && widget.post.mediaUrls!.length > 1) {
@@ -527,6 +536,8 @@ class _SocialPostState extends State<SocialPost> {
 
       if (success) {
         print('✅ [SOCIAL POST] Like/unlike API call succeeded');
+        // Update cross-screen cache so other screens reflect the new state
+        _postController.updateLikeStateCache(widget.post.id, !wasLiked);
         // API call succeeded - refresh posts from server to get actual like count from database
         // This ensures we have the correct count and likedBy list from the database
         if (widget.onRefreshNeeded != null) {
@@ -1326,30 +1337,45 @@ class _SocialPostState extends State<SocialPost> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                GestureDetector(
-                  onTap: _isLiking ? null : _handleLikeToggle,
-                  child: Row(
-                    children: [
+                Obx(() {
+                  final cachedLiked = _postController.likeStateCache[widget.post.id];
+                  final displayLiked = cachedLiked ?? isLiked;
+                  final fromWidget = widget.post.likedBy?.contains(
+                        (() {
+                          try {
+                            final token = ApiClient.getAuthToken();
+                            return token != null ? JwtDecoder.getUserId(token) : null;
+                          } catch (_) {
+                            return null;
+                          }
+                        })(),
+                      ) ??
+                      false;
+                  final displayCount = cachedLiked != null && cachedLiked != fromWidget
+                      ? widget.post.likes + (cachedLiked ? 1 : -1)
+                      : _likeCount;
+                  return GestureDetector(
+                    onTap: _isLiking ? null : _handleLikeToggle,
+                    child: Row(
+                      children: [
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 200),
                           transitionBuilder: (child, animation) {
-                            return ScaleTransition(
-                              scale: animation,
-                              child: child,
-                            );
+                            return ScaleTransition(scale: animation, child: child);
                           },
                           child: Icon(
-                        Icons.favorite,
-                            key: ValueKey(isLiked),
-                        color: isLiked ? Colors.red : Colors.grey,
+                            Icons.favorite,
+                            key: ValueKey(displayLiked),
+                            color: displayLiked ? Colors.red : Colors.grey,
                             size: 24,
                           ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text("$_likeCount"),
-                    ],
-                  ),
-                ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text("$displayCount"),
+                      ],
+                    ),
+                  );
+                }),
                 const SizedBox(width: 16),
                   GestureDetector(
                     onTap: () {

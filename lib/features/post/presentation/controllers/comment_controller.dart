@@ -54,21 +54,12 @@ class CommentController extends GetxController {
       // Store top-level comments
       commentsByPostId[postId] = fetchedComments;
 
-      // Build flattened list with replies (fetch replies for each comment)
+      // Build flattened list with replies (fetch replies recursively)
       final allComments = <Comment>[];
       for (var comment in fetchedComments) {
         allComments.add(comment);
-        // Fetch replies for this comment
         if (comment.replyCount > 0) {
-          try {
-            final replies = await getRepliesByCommentId.call(comment.id);
-            allComments.addAll(replies);
-          } catch (e) {
-            print(
-              '⚠️ [COMMENT] Error fetching replies for comment ${comment.id}: $e',
-            );
-            // Continue even if replies fail
-          }
+          await _fetchRepliesRecursively(allComments, comment.id);
         }
       }
 
@@ -89,6 +80,23 @@ class CommentController extends GetxController {
       print('❌ [COMMENT] Unexpected error: $e');
       errorMessage.value = 'Failed to fetch comments: ${e.toString()}';
       isLoading.value = false;
+    }
+  }
+
+  Future<void> _fetchRepliesRecursively(
+    List<Comment> allComments,
+    String commentId,
+  ) async {
+    try {
+      final replies = await getRepliesByCommentId.call(commentId);
+      allComments.addAll(replies);
+      for (final reply in replies) {
+        if (reply.replyCount > 0) {
+          await _fetchRepliesRecursively(allComments, reply.id);
+        }
+      }
+    } catch (e) {
+      print('⚠️ [COMMENT] Error fetching replies for $commentId: $e');
     }
   }
 
