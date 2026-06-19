@@ -9,6 +9,24 @@ import 'package:intl/intl.dart';
 const _purple = Color(0xFF855DFC);
 const _titleSize = 22.24;
 
+/// State snapshot exposed to the host when the booking tab is embedded.
+/// The host renders the sticky "Let's connect" bar using this.
+class ConnectBookingBarState {
+  final bool canConnect;
+  final bool busy;
+  final String summaryLine1;
+  final String summaryLine2;
+  final Future<void> Function()? onConnect;
+
+  const ConnectBookingBarState({
+    this.canConnect = false,
+    this.busy = false,
+    this.summaryLine1 = '',
+    this.summaryLine2 = 'Pick a time slot',
+    this.onConnect,
+  });
+}
+
 /// Maps Connect tab UI labels to fly-be `preference` values.
 String connectPreferenceUiToApi(String ui) {
   switch (ui.trim()) {
@@ -35,17 +53,25 @@ List<int> _durationsForOffer(ConnectOfferOption? offer, String preferenceUi) {
 }
 
 /// Connect tab when a **visitor** views another MHP's profile (not shown for MHP viewing self).
+///
+/// When [barNotifier] is provided the widget runs in **embedded mode**:
+///   - no inner scroll (the host's outer ListView handles scrolling)
+///   - no sticky bar (the host renders it via [barNotifier])
 class MhpVisitorConnectBookingTab extends StatefulWidget {
   final String mhpUserId;
   final String? mhpDisplayName;
   /// Raw `picture_path` from MHP profile (CDN path or URL); optional for checkout avatar.
   final String? mhpPicturePath;
+  /// Provide to enable embedded mode. The widget will push bar state updates
+  /// into this notifier so the host can render the sticky "Let's connect" bar.
+  final ValueNotifier<ConnectBookingBarState>? barNotifier;
 
   const MhpVisitorConnectBookingTab({
     super.key,
     required this.mhpUserId,
     this.mhpDisplayName,
     this.mhpPicturePath,
+    this.barNotifier,
   });
 
   @override
@@ -75,6 +101,29 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
 
   ConnectBookingRemoteDataSource get _api => sl<ConnectBookingRemoteDataSource>();
 
+  bool get _canConnect {
+    if (_selectedSlot == null || _isPastDay(_selectedDate) || _submittingHold) return false;
+    return _durationsForOffer(_selectedOffer, _preference).isNotEmpty;
+  }
+
+  void _notifyBar() {
+    final notifier = widget.barNotifier;
+    if (notifier == null) return;
+    notifier.value = ConnectBookingBarState(
+      canConnect: _canConnect,
+      busy: _submittingHold,
+      summaryLine1: _summaryLine1(),
+      summaryLine2: _summaryLine2(),
+      onConnect: _canConnect && !_submittingHold ? _onLetsConnect : null,
+    );
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    if (widget.barNotifier != null) _notifyBar();
+  }
+
   ConnectOfferOption? get _selectedOffer {
     final id = _selectedOfferId;
     if (id == null) return null;
@@ -90,7 +139,10 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
     _weekStartIstYmd = connectIstWeekStartSundayYmdFromLocalDay(_selectedDate);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadOffers());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadOffers();
+      _notifyBar();
+    });
   }
 
   List<DateTime> _daysInVisibleWeek() {
@@ -351,11 +403,22 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
 
     final slots = _slotsForSelectedDay();
     final durs = _durationsForOffer(_selectedOffer, _preference);
-    final canConnect = _selectedSlot != null &&
-        !_isPastDay(_selectedDate) &&
-        !_submittingHold &&
-        durs.isNotEmpty;
+    final canConnect = _canConnect;
 
+    // ── Embedded mode: no inner scroll, no sticky bar ──────────────────────
+    // The host (MhpProfileScreen) provides the outer scroll and renders the
+    // sticky bar via barNotifier.
+    if (widget.barNotifier != null) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: _buildFormChildren(durs: durs, slots: slots),
+        ),
+      );
+    }
+
+    // ── Standalone mode: self-contained scroll + sticky bar ─────────────────
     return Column(
       children: [
         Expanded(
@@ -363,84 +426,91 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _dateHeaderRow(),
-                const SizedBox(height: 12),
-                _weekStrip(),
-                const SizedBox(height: 28),
-                _sectionTitle('Therapy type'),
-                const SizedBox(height: 8),
-                Text(
-                  'Choose the session package. Duration and fees follow the offer.',
-                  style: TextStyle(
-                    fontFamily: 'Lexend',
-                    fontSize: 12,
-                    height: 1.35,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _therapyOffersWrap(),
-                const SizedBox(height: 28),
-                _sectionTitle('Preference'),
-                const SizedBox(height: 6),
-                Text(
-                  _preference == 'Video'
-                      ? 'You’ll get a link or details before your video session.'
-                      : _preference == 'Call'
-                          ? 'You’ll receive call details before your session.'
-                          : 'Meeting location or address will be shared after booking.',
-                  style: TextStyle(
-                    fontFamily: 'Lexend',
-                    fontSize: 12,
-                    height: 1.35,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _preferenceRow(),
-                const SizedBox(height: 28),
-                _sectionTitle('Duration'),
-                const SizedBox(height: 12),
-                if (durs.isEmpty)
-                  Text(
-                    'No ${_preference.toLowerCase()} slots in this offer. Try another therapy type or preference.',
-                    style: TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 13,
-                      color: Colors.orange.shade800,
-                    ),
-                  )
-                else
-                  _durationWrap(durs),
-                const SizedBox(height: 28),
-                _sectionTitle('Available slots'),
-                const SizedBox(height: 8),
-                if (_loadingAvailability)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: _purple),
-                      ),
-                    ),
-                  )
-                else if (durs.isEmpty)
-                  const SizedBox.shrink()
-                else if (slots.isEmpty)
-                  _emptySlotsState()
-                else
-                  _slotsWrap(slots),
-                const SizedBox(height: 24),
-              ],
+              children: _buildFormChildren(durs: durs, slots: slots),
             ),
           ),
         ),
         _stickySummaryBar(enabled: canConnect),
       ],
     );
+  }
+
+  List<Widget> _buildFormChildren({
+    required List<int> durs,
+    required List<ConnectSlotOption> slots,
+  }) {
+    return [
+      _dateHeaderRow(),
+      const SizedBox(height: 12),
+      _weekStrip(),
+      const SizedBox(height: 28),
+      _sectionTitle('Therapy type'),
+      const SizedBox(height: 8),
+      Text(
+        'Choose the session package. Duration and fees follow the offer.',
+        style: TextStyle(
+          fontFamily: 'Lexend',
+          fontSize: 12,
+          height: 1.35,
+          color: Colors.grey.shade600,
+        ),
+      ),
+      const SizedBox(height: 12),
+      _therapyOffersWrap(),
+      const SizedBox(height: 28),
+      _sectionTitle('Preference'),
+      const SizedBox(height: 6),
+      Text(
+        _preference == 'Video'
+            ? 'You\'ll get a link or details before your video session.'
+            : _preference == 'Call'
+                ? 'You\'ll receive call details before your session.'
+                : 'Meeting location or address will be shared after booking.',
+        style: TextStyle(
+          fontFamily: 'Lexend',
+          fontSize: 12,
+          height: 1.35,
+          color: Colors.grey.shade600,
+        ),
+      ),
+      const SizedBox(height: 12),
+      _preferenceRow(),
+      const SizedBox(height: 28),
+      _sectionTitle('Duration'),
+      const SizedBox(height: 12),
+      if (durs.isEmpty)
+        Text(
+          'No ${_preference.toLowerCase()} slots in this offer. Try another therapy type or preference.',
+          style: TextStyle(
+            fontFamily: 'Lexend',
+            fontSize: 13,
+            color: Colors.orange.shade800,
+          ),
+        )
+      else
+        _durationWrap(durs),
+      const SizedBox(height: 28),
+      _sectionTitle('Available slots'),
+      const SizedBox(height: 8),
+      if (_loadingAvailability)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Center(
+            child: SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 2, color: _purple),
+            ),
+          ),
+        )
+      else if (durs.isEmpty)
+        const SizedBox.shrink()
+      else if (slots.isEmpty)
+        _emptySlotsState()
+      else
+        _slotsWrap(slots),
+      const SizedBox(height: 24),
+    ];
   }
 
   Widget _therapyOffersWrap() {

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/utils/profile_picture_helper.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/features/user_profile/data/services/user_settings_remote_data_source.dart';
+import 'package:fly/features/user_profile/presentation/widgets/profile_card.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -235,14 +237,11 @@ class _UserManageSessionsScreenState extends State<UserManageSessionsScreen>
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: const Color(0xFFE0E0E0),
-                backgroundImage:
-                    s.mhpPicture.isNotEmpty ? NetworkImage(s.mhpPicture) : null,
-                child: s.mhpPicture.isEmpty
-                    ? const Icon(Icons.person, color: Colors.white)
-                    : null,
+              ProfileAvatar(
+                imagePath: ProfilePictureHelper.getProfilePictureUrl(
+                    s.mhpPicture),
+                size: 56,
+                dense: true,
               ),
               const SizedBox(width: 12),
               Expanded(

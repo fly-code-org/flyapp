@@ -5,6 +5,7 @@ import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/features/subscription/presentation/controllers/subscription_controller.dart';
 import 'package:fly/features/user_profile/data/services/user_settings_remote_data_source.dart';
+import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -116,6 +117,11 @@ class _UserEditProfileScreenState extends State<UserEditProfileScreen> {
       if (uploadedPath != null) body['picture_path'] = uploadedPath;
 
       await _ds.updateProfile(body);
+      // Refresh the profile controller so the profile screen shows updated data
+      if (Get.isRegistered<UserProfileController>()) {
+        await Get.find<UserProfileController>()
+            .fetchUserProfile(forceRefresh: true);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profile updated')));

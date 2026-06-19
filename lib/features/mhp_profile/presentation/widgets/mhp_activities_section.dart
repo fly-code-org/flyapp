@@ -1,9 +1,12 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/features/home/presentation/views/post_detail_screen.dart';
 import 'package:fly/features/post/domain/entities/post.dart';
 import 'package:fly/features/post/domain/usecases/get_posts_by_community.dart';
+import 'package:fly/features/post/presentation/utils/post_converter.dart';
 
-/// Activities tab: posts in MHP's community.
+/// Activities tab: posts in MHP's community, tappable to full post detail.
 class MhpActivitiesSection extends StatefulWidget {
   final String? communityId;
 
@@ -58,6 +61,15 @@ class _MhpActivitiesSectionState extends State<MhpActivitiesSection> {
     }
   }
 
+  void _openDetail(Post domainPost) {
+    final uiPost = PostConverter.toUIPost(domainPost);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PostDetailScreen(post: uiPost),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -69,7 +81,9 @@ class _MhpActivitiesSectionState extends State<MhpActivitiesSection> {
     if (_error != null) {
       return Padding(
         padding: const EdgeInsets.all(24),
-        child: Center(child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 12))),
+        child: Center(
+            child: Text(_error!,
+                style: const TextStyle(color: Colors.red, fontSize: 12))),
       );
     }
     if (_posts.isEmpty) {
@@ -96,22 +110,66 @@ class _MhpActivitiesSectionState extends State<MhpActivitiesSection> {
       ),
       itemBuilder: (context, index) {
         final post = _posts[index];
-        final url = post.attachments.isNotEmpty ? post.attachments.first.url : null;
-        return Container(
-          color: Colors.grey[200],
-          child: url != null && url.isNotEmpty
-              ? Image.network(
-                  url.startsWith('http') ? url : 'https://cdn.flyapp.in$url',
-                  fit: BoxFit.cover,
-                )
-              : Center(
-                  child: Text(
-                    post.content ?? '',
-                    style: const TextStyle(fontSize: 10),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+        final attachment = post.attachments.isNotEmpty ? post.attachments.first : null;
+        final url = attachment?.url;
+        final isVideo = attachment?.type == 'video';
+
+        Widget thumb;
+        if (url != null && url.isNotEmpty) {
+          final fullUrl = url.startsWith('http') ? url : 'https://cdn.flyapp.in$url';
+          thumb = Stack(
+            fit: StackFit.expand,
+            children: [
+              CachedNetworkImage(
+                imageUrl: fullUrl,
+                fit: BoxFit.cover,
+                placeholder: (_, __) =>
+                    Container(color: Colors.grey[200]),
+                errorWidget: (_, __, ___) =>
+                    Container(color: Colors.grey[200],
+                        child: const Icon(Icons.broken_image, color: Colors.grey)),
+              ),
+              if (isVideo)
+                const Center(
+                  child: Icon(Icons.play_circle_fill,
+                      color: Colors.white, size: 28),
                 ),
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Icon(
+                  isVideo ? Icons.videocam : Icons.photo,
+                  color: Colors.white,
+                  size: 16,
+                  shadows: const [
+                    Shadow(offset: Offset(0, 1), blurRadius: 3,
+                        color: Colors.black45)
+                  ],
+                ),
+              ),
+            ],
+          );
+        } else {
+          thumb = Container(
+            color: Colors.grey[200],
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Text(
+                  post.content ?? '',
+                  style: const TextStyle(fontSize: 10, color: Colors.black87),
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return GestureDetector(
+          onTap: () => _openDetail(post),
+          child: thumb,
         );
       },
     );

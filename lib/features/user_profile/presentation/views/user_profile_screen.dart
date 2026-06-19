@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
+import 'package:fly/features/home/presentation/widgets/upcoming_session_banner.dart';
+import 'package:fly/features/user_profile/data/services/user_settings_remote_data_source.dart';
 import 'package:fly/features/user_profile/presentation/widgets/community_post_grid.dart';
 import 'package:fly/features/user_profile/presentation/widgets/profile_card.dart';
 import 'package:fly/features/user_profile/presentation/widgets/user_info_card.dart';
@@ -23,6 +25,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     with SingleTickerProviderStateMixin {
   late final UserProfileController _profileController;
   int _selectedTab = 0;
+  Map<String, dynamic>? _nextSession;
 
   @override
   void initState() {
@@ -43,6 +46,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     // Initialize and prefetch journal data (color templates + journals)
     // This ensures data is ready when user clicks on "My Journal" tab
     _initializeJournalData();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadNextSession();
+    });
   }
 
   void _initializeJournalData() {
@@ -81,6 +88,27 @@ class _UserProfileScreenState extends State<UserProfileScreen>
             journalController.fetchJournals();
           }
         });
+  }
+
+  Future<void> _loadNextSession() async {
+    try {
+      final sessions = await UserSettingsRemoteDataSource().getSessions(status: 'upcoming');
+      if (!mounted || sessions.isEmpty) return;
+      final now = DateTime.now();
+      Map<String, dynamic>? next;
+      DateTime? nextStart;
+      for (final s in sessions) {
+        final start = DateTime.tryParse(s['start_at']?.toString() ?? '');
+        if (start == null || start.isBefore(now)) continue;
+        if (nextStart == null || start.isBefore(nextStart)) {
+          next = s;
+          nextStart = start;
+        }
+      }
+      if (mounted) setState(() => _nextSession = next);
+    } catch (_) {
+      // Non-critical: silently ignore
+    }
   }
 
   void _onTabSelected(int index) {
@@ -304,7 +332,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                                       date: _profileController.createdAt.value,
                                     ),
                                   ),
-                                  const SizedBox(height: 40),
+                                  const SizedBox(height: 20),
+                                  if (_nextSession != null)
+                                    UpcomingSessionBanner(session: _nextSession!),
+                                  const SizedBox(height: 20),
                                   // Tabs Row
                                   Row(
                                     mainAxisAlignment:

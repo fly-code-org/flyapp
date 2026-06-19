@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
+import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import '../../controller/notification_controller.dart';
 import '../widget/notification_card.dart';
@@ -96,7 +97,14 @@ class NotificationScreen extends StatelessWidget {
                 final notif = controller.notifications[index];
                 return NotificationCard(
                   notification: notif,
-                  onTap: () => controller.markAsRead(notif.id),
+                  onTap: () {
+                    controller.markAsRead(notif.id);
+                    if (notif.type == 'payment_success' ||
+                        notif.type == 'session_reminder' ||
+                        notif.type == 'session_booked') {
+                      Get.toNamed(AppRoutes.UserManageSessions);
+                    }
+                  },
                 );
               },
             ),

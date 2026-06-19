@@ -20,6 +20,7 @@ import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/about_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/connect_tab_content.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/mhp_visitor_connect_booking_tab.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/connect_booking_sticky_bar.dart';
 import 'package:fly/features/mhp_profile/mhp_profile_strings.dart';
 import 'package:fly/features/streak/presentation/streak_view_model.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/mhp_activities_section.dart';
@@ -33,6 +34,35 @@ class MhpProfileScreen extends StatefulWidget {
   State<MhpProfileScreen> createState() => _MhpProfileScreenState();
 }
 
+class _BookSessionChip extends StatelessWidget {
+  final VoidCallback onPressed;
+  const _BookSessionChip({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.calendar_month_outlined, size: 16),
+      label: const Text(
+        'Book Session',
+        style: TextStyle(
+          fontFamily: 'Lexend',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFF855DFC),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+}
+
 class _MhpProfileScreenState extends State<MhpProfileScreen>
     with SingleTickerProviderStateMixin {
   int _selectedTab = 0;
@@ -42,6 +72,11 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
   String? _error;
   /// When non-null, we are viewing another MHP (Explore / deep link).
   String? _viewedUserId;
+
+  // Embedded connect booking support
+  ValueNotifier<ConnectBookingBarState>? _connectBarNotifier;
+  final _tabsRowKey = GlobalKey();
+  ScrollController? _sheetScrollController;
 
   bool get _viewingOther =>
       _viewedUserId != null && _viewedUserId!.trim().isNotEmpty;
@@ -264,6 +299,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
             mhpUserId: uid,
             mhpDisplayName: _profile?.userName,
             mhpPicturePath: _profile?.picturePath,
+            barNotifier: _connectBarNotifier,
           );
         }
         return ConnectTabContent(
@@ -283,7 +319,31 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
     super.initState();
     final args = Get.arguments as Map<String, dynamic>?;
     _viewedUserId = args?['userId'] as String?;
+    if (_viewingOther) {
+      _connectBarNotifier = ValueNotifier(const ConnectBookingBarState());
+    }
     _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    _connectBarNotifier?.dispose();
+    super.dispose();
+  }
+
+  void _jumpToConnectTab() {
+    setState(() => _selectedTab = 2);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _tabsRowKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOut,
+          alignment: 0.0,
+        );
+      }
+    });
   }
 
   @override
@@ -293,8 +353,15 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
       backgroundColor: Colors.black,
 
       // Bottom nav bar
-      bottomNavigationBar:
-          _viewingOther ? null : BottomNavBar(currentIndex: 4),
+      bottomNavigationBar: _viewingOther
+          ? (_selectedTab == 2 && _connectBarNotifier != null
+              ? ValueListenableBuilder<ConnectBookingBarState>(
+                  valueListenable: _connectBarNotifier!,
+                  builder: (_, state, __) =>
+                      ConnectBookingStickyBar(state: state),
+                )
+              : null)
+          : BottomNavBar(currentIndex: 4),
 
       body: Stack(
         clipBehavior: Clip.none,
@@ -366,7 +433,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                   size: 30,
                 ),
                 onPressed: () {
-                  Get.toNamed(AppRoutes.UserSettingsScreen);
+                  Get.toNamed(AppRoutes.MhpSettingsScreen);
                 },
               ),
             ),
@@ -377,11 +444,9 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
             minChildSize: 0.8,
             maxChildSize: 0.8,
             builder: (context, scrollController) {
+              _sheetScrollController = scrollController;
               return NotificationListener<DraggableScrollableNotification>(
                 onNotification: (notification) {
-                  // setState(() {
-                  //   _dragPosition = notification.extent;
-                  // });
                   return true;
                 },
                 child: Stack(
@@ -442,11 +507,17 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                               children: [
                                 if (!_viewingOther) ...[
                                   EditProfileButton(
-                                    onPressed: () {
-                                      Get.toNamed(AppRoutes.MhpEditProfile);
+                                    onPressed: () async {
+                                      final updated = await Get.toNamed(
+                                          AppRoutes.MhpEditProfile);
+                                      if (updated == true) _loadProfile();
                                     },
                                   ),
                                   const SizedBox(width: 20),
+                                ],
+                                if (_viewingOther) ...[
+                                  _BookSessionChip(onPressed: _jumpToConnectTab),
+                                  const SizedBox(width: 12),
                                 ],
                                 ShareProfile(
                                   onPressed: () async {
@@ -469,16 +540,20 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                                 ),
                               ],
                             ),
-                          const SizedBox(height: 20),
-                          // Scrollable: from "MHP's Square" row downward
+                          const SizedBox(height: 16),
+                          // Community banner — pinned, never scrolls
+                          if (!_loading && _error == null)
+                            MHPSquare(community: _community),
+                          const SizedBox(height: 16),
+                          // Scrollable: tabs + tab content
                           Expanded(
                             child: ListView(
                               controller: scrollController,
                               padding: EdgeInsets.zero,
                               children: [
-                                MHPSquare(community: _community),
-                                const SizedBox(height: 40),
+                                // Tabs row — anchored for scroll-to via _tabsRowKey
                                 Row(
+                                  key: _tabsRowKey,
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
@@ -506,7 +581,20 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 600, child: _buildBody()),
+                                // Visitor Connect tab: no fixed height — embedded
+                                // booking form flows into the outer ListView.
+                                // Own Connect tab: tall SizedBox so the inner
+                                // SingleChildScrollView is never clipped.
+                                // Other tabs: fixed 600 with their own inner scroll.
+                                if (_viewingOther && _selectedTab == 2)
+                                  _buildBody()
+                                else if (!_viewingOther && _selectedTab == 2)
+                                  SizedBox(
+                                    height: MediaQuery.of(context).size.height,
+                                    child: _buildBody(),
+                                  )
+                                else
+                                  SizedBox(height: 600, child: _buildBody()),
                               ],
                             ),
                           ),

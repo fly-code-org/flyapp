@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fly/features/community/domain/entities/community.dart';
 import 'package:fly/core/utils/profile_picture_helper.dart';
-import 'package:fly/core/widgets/square_entity_avatar.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
+
+const _purple = Color(0xFF855DFC);
 
 class MHPSquare extends StatelessWidget {
   final Community? community;
@@ -13,111 +14,166 @@ class MHPSquare extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasCommunity = community != null;
-    final title = hasCommunity ? community!.name : 'Create your community';
-    final imagePath = hasCommunity && community!.logoPath.isNotEmpty
-        ? ProfilePictureHelper.getProfilePictureUrl(community!.logoPath)
-        : 'assets/images/community_demo.png';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 8),
+    return GestureDetector(
+      onTap: () {
+        if (hasCommunity) {
+          Get.toNamed(AppRoutes.CommunitySupportProfile,
+              arguments: {'communityId': community!.id});
+        } else {
+          Get.toNamed(AppRoutes.CreateSupportCommunity);
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 0),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [_purple, Color(0xFF6A3DE8)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: _purple.withValues(alpha: 0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           child: Row(
             children: [
+              // Community logo or placeholder icon
+              _CommunityLogo(community: community),
+              const SizedBox(width: 12),
+              // Name + member count
               Expanded(
-                child: Divider(
-                  thickness: 1,
-                  color: Colors.grey[400],
-                  endIndent: 10,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "MHP's Square",
+                      style: TextStyle(
+                        fontFamily: 'Lexend',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.85),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      hasCommunity ? community!.name : 'No community yet',
+                      style: const TextStyle(
+                        fontFamily: 'Lexend',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (hasCommunity &&
+                        community!.members != null &&
+                        community!.members!.isNotEmpty) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        '${community!.members!.length} members',
+                        style: TextStyle(
+                          fontFamily: 'Lexend',
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-              const Text(
-                "MHP's Square",
-                style: TextStyle(
-                  fontWeight: FontWeight.normal,
-                  fontSize: 18,
-                  fontFamily: 'Lexend',
-                  color: Colors.black,
-                ),
-              ),
-              Expanded(
-                child: Divider(
-                  thickness: 1,
-                  color: Colors.grey[400],
-                  indent: 10,
-                ),
-              ),
+              const SizedBox(width: 10),
+              // Action chip
+              _Chip(label: hasCommunity ? 'Visit' : 'Create'),
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () {
-            if (hasCommunity) {
-              Get.toNamed(AppRoutes.CommunitySupportProfile, arguments: {'communityId': community!.id});
-            } else {
-              Get.toNamed(AppRoutes.CreateSupportCommunity);
-            }
-          },
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(kSquareEntityAvatarRadius),
-                  child: SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: imagePath.startsWith('http')
-                        ? Image.network(
-                            imagePath,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => ColoredBox(
-                              color: Colors.grey.shade300,
-                              child: Icon(
-                                Icons.groups_outlined,
-                                color: Colors.grey.shade600,
-                                size: 26,
-                              ),
-                            ),
-                          )
-                        : Image.asset(
-                            imagePath,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => ColoredBox(
-                              color: Colors.grey.shade300,
-                              child: Icon(
-                                Icons.groups_outlined,
-                                color: Colors.grey.shade600,
-                                size: 26,
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: 'Lexend',
-                      color: Colors.black87,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+      ),
+    );
+  }
+}
+
+class _CommunityLogo extends StatelessWidget {
+  final Community? community;
+  const _CommunityLogo({this.community});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCommunity = community != null;
+
+    if (!hasCommunity || community!.logoPath.isEmpty) {
+      return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          shape: BoxShape.circle,
         ),
-      ],
+        child: const Icon(Icons.groups_outlined, color: Colors.white, size: 22),
+      );
+    }
+
+    final url = ProfilePictureHelper.getProfilePictureUrl(community!.logoPath);
+
+    return ClipOval(
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: url.startsWith('http')
+            ? Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  child: const Icon(Icons.groups_outlined,
+                      color: Colors.white, size: 22),
+                ),
+              )
+            : Image.asset(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  child: const Icon(Icons.groups_outlined,
+                      color: Colors.white, size: 22),
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+  const _Chip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: 'Lexend',
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: _purple,
+        ),
+      ),
     );
   }
 }

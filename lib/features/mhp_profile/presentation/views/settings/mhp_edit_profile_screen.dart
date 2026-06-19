@@ -20,9 +20,13 @@ class MhpEditProfileScreen extends StatefulWidget {
 class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
   final _ds = MhpProfileRemoteDataSourceImpl();
   final _bioCtrl = TextEditingController();
+  final _displayNameCtrl = TextEditingController();
+  final _universityCtrl = TextEditingController();
+  final _degreeCtrl = TextEditingController();
+  final _workLocationCtrl = TextEditingController();
+  final _yearsCtrl = TextEditingController();
 
   String? _currentPictureUrl;
-  String _displayName = '';
   File? _pickedImage;
   bool _loading = true;
   bool _saving = false;
@@ -36,6 +40,11 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
   @override
   void dispose() {
     _bioCtrl.dispose();
+    _displayNameCtrl.dispose();
+    _universityCtrl.dispose();
+    _degreeCtrl.dispose();
+    _workLocationCtrl.dispose();
+    _yearsCtrl.dispose();
     super.dispose();
   }
 
@@ -43,16 +52,22 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
     try {
       final data = await _ds.getMhpProfile();
       _bioCtrl.text = data['bio']?.toString() ?? '';
-      _currentPictureUrl = data['picture_path']?.toString();
-      _displayName = data['display_name']?.toString() ??
+      _displayNameCtrl.text = data['display_name']?.toString() ??
           data['username']?.toString() ??
           '';
+      _universityCtrl.text = data['university']?.toString() ?? '';
+      _degreeCtrl.text = data['degree']?.toString() ?? '';
+      _workLocationCtrl.text = data['work_location']?.toString() ?? '';
+      final yoe = data['years_of_experience'];
+      if (yoe != null) _yearsCtrl.text = yoe.toString();
+      _currentPictureUrl = data['picture_path']?.toString();
     } catch (_) {}
     setState(() => _loading = false);
   }
 
   String get _initials {
-    final parts = _displayName.trim().split(RegExp(r'\s+'));
+    final name = _displayNameCtrl.text.trim();
+    final parts = name.split(RegExp(r'\s+'));
     if (parts.isEmpty || parts.first.isEmpty) return 'M';
     if (parts.length == 1) return parts.first[0].toUpperCase();
     return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
@@ -82,7 +97,13 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
 
       final body = <String, dynamic>{
         'bio': _bioCtrl.text.trim(),
+        'display_name': _displayNameCtrl.text.trim(),
+        'university': _universityCtrl.text.trim(),
+        'degree': _degreeCtrl.text.trim(),
+        'work_location': _workLocationCtrl.text.trim(),
       };
+      final yoe = int.tryParse(_yearsCtrl.text.trim());
+      if (yoe != null) body['years_of_experience'] = yoe;
       if (uploadedPath != null) body['picture_path'] = uploadedPath;
 
       await _ds.updateProfile(body);
@@ -92,7 +113,8 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
               content: Text('Profile updated'),
               backgroundColor: Colors.green),
         );
-        popOrGoHome(context);
+        // Return true so callers can reload the profile
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -109,7 +131,6 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
   Widget _buildAvatar() {
     const double radius = 56;
 
-    // Local picked image takes priority
     if (_pickedImage != null) {
       return _avatarShell(
         radius: radius,
@@ -148,7 +169,6 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
     return _avatarShell(radius: radius, child: _initialsCircle(radius));
   }
 
-  // Wraps the image with a camera-icon overlay to signal tappability
   Widget _avatarShell({required double radius, required Widget child}) {
     return Stack(
       children: [
@@ -240,59 +260,102 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
         ),
         body: _loading
             ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: GestureDetector(
-                        onTap: _pickImage,
-                        child: _buildAvatar(),
+            : Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: GestureDetector(
+                              onTap: _pickImage,
+                              child: _buildAvatar(),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Center(
+                            child: Text(
+                              'Tap to change profile picture',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                  fontFamily: 'Lexend'),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          _label('Display Name'),
+                          const SizedBox(height: 8),
+                          _textField(_displayNameCtrl, 'Your name as shown to clients'),
+                          const SizedBox(height: 20),
+                          _label('Bio'),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _bioCtrl,
+                            maxLines: 4,
+                            decoration: InputDecoration(
+                              hintText: 'Tell clients about yourself...',
+                              hintStyle: const TextStyle(fontFamily: 'Lexend'),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      const BorderSide(color: Color(0xFFE0E0E0))),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: _purple),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          _label('University / Institution'),
+                          const SizedBox(height: 8),
+                          _textField(_universityCtrl, 'e.g. Delhi University'),
+                          const SizedBox(height: 20),
+                          _label('Degree'),
+                          const SizedBox(height: 8),
+                          _textField(_degreeCtrl, 'e.g. M.Sc. Clinical Psychology'),
+                          const SizedBox(height: 20),
+                          _label('Work Location'),
+                          const SizedBox(height: 8),
+                          _textField(_workLocationCtrl, 'City, Country'),
+                          const SizedBox(height: 20),
+                          _label('Years of Experience'),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _yearsCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                              hintText: 'e.g. 5',
+                              hintStyle: const TextStyle(fontFamily: 'Lexend'),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      const BorderSide(color: Color(0xFFE0E0E0))),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: _purple),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Center(
-                      child: Text(
-                        'Tap to change profile picture',
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey,
-                            fontFamily: 'Lexend'),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    const Text(
-                      'Bio',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Lexend'),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _bioCtrl,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        hintText: 'Tell users about yourself...',
-                        hintStyle: const TextStyle(fontFamily: 'Lexend'),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _purple),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                    child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: _saving ? null : _save,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _purple,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12)),
                         ),
@@ -307,10 +370,35 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
       ),
     );
   }
+
+  Widget _label(String text) => Text(
+        text,
+        style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Lexend',
+            color: Colors.black87),
+      );
+
+  Widget _textField(TextEditingController ctrl, String hint) => TextField(
+        controller: ctrl,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(fontFamily: 'Lexend', color: Colors.black38),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0))),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: _purple),
+          ),
+        ),
+      );
 }
