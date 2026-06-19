@@ -1195,10 +1195,19 @@ class _SocialPostState extends State<SocialPost> {
                   ),
                 ),
                 if (widget.post.tagIconUrl.isNotEmpty)
-                  SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: _buildTagIcon(widget.post.tagIconUrl),
+                  GestureDetector(
+                    onTap: () => Get.toNamed(
+                      AppRoutes.exploreTag,
+                      arguments: {
+                        'tagId': widget.post.tagId,
+                        'tagIconUrl': widget.post.tagIconUrl,
+                      },
+                    ),
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: _buildTagIcon(widget.post.tagIconUrl),
+                    ),
                   ),
                 const SizedBox(width: 8),
                 GestureDetector(

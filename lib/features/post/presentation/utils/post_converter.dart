@@ -99,6 +99,7 @@ class PostConverter {
       username: finalUsername,
       timestamp: timestamp,
       tagIconUrl: tagIconUrl,
+      tagId: apiPost.tagId,
       text: apiPost.content ?? '',
       mediaUrl: hasVideo ? videoUrl : (imageUrls.isNotEmpty ? imageUrls[0] : null),
       mediaUrls: imageUrls.isNotEmpty ? imageUrls : null,

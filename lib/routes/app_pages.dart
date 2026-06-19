@@ -5,6 +5,7 @@ import 'package:fly/features/create_community/presentation/views/create_support_
 import 'package:fly/features/create_community/presentation/views/edit_community_details.dart';
 import 'package:fly/features/explore/presentation/views/explore.dart';
 import 'package:fly/features/explore/presentation/views/discover_mhps_screen.dart';
+import 'package:fly/features/explore/presentation/views/explore_tag_screen.dart';
 import 'package:fly/features/home/presentation/views/home.dart';
 import 'package:fly/features/mhp_profile/presentation/views/book_session_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/views/mhp_profile_screen.dart';
@@ -203,6 +204,7 @@ class AppPages {
     GetPage(name: AppRoutes.Explore, page: () => ExploreScreen()),
     GetPage(
         name: AppRoutes.discoverMhps, page: () => const DiscoverMhpsScreen()),
+    GetPage(name: AppRoutes.exploreTag, page: () => const ExploreTagScreen()),
     GetPage(name: AppRoutes.Nira, page: () => NiraChatScreen()),
     GetPage(
       name: AppRoutes.NotificationScreen,

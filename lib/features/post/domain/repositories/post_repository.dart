@@ -7,7 +7,7 @@ abstract class PostRepository {
   // Backend gets authorId from JWT token, so no parameter needed
   Future<List<Post>> getPostsByAuthorId();
   Future<List<Post>> getPostsByCommunityId(String communityId);
-  Future<List<Post>> getPostsByTagId(int tagId);
+  Future<List<Post>> getPostsByTagId(int tagId, {String postType = 'all'});
   Future<List<Post>> getPostsByIds(List<String> postIds);
   /// Feed: posts for home. typeFilter: "social" | "support" | null (all). sortBy: "new" | "popular".
   Future<List<Post>> getFeed({int limit = 20, int offset = 0, String? typeFilter, String sortBy = 'new'});

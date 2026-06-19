@@ -42,7 +42,7 @@ abstract class PostRemoteDataSource {
   // Backend gets authorId from JWT token, so no parameter needed
   Future<List<PostModel>> getPostsByAuthorId();
   Future<List<PostModel>> getPostsByCommunityId(String communityId);
-  Future<List<PostModel>> getPostsByTagId(int tagId);
+  Future<List<PostModel>> getPostsByTagId(int tagId, {String postType = 'all'});
   Future<List<PostModel>> getPostsByIds(List<String> postIds);
   /// Feed: posts for home. typeFilter: "social" | "support" | null (all). sortBy: "new" | "popular".
   Future<List<PostModel>> getFeed({int limit = 20, int offset = 0, String? typeFilter, String sortBy = 'new'});
@@ -419,13 +419,15 @@ class PostRemoteDataSourceImpl implements PostRemoteDataSource {
   }
 
   @override
-  Future<List<PostModel>> getPostsByTagId(int tagId) async {
+  Future<List<PostModel>> getPostsByTagId(int tagId, {String postType = 'all'}) async {
     try {
       print('🔍 [POST API] Fetching posts by tag ID...');
-      print('   - Tag ID: $tagId');
+      print('   - Tag ID: $tagId, Type: $postType');
 
+      final queryParams = postType != 'all' && postType.isNotEmpty ? {'type': postType} : null;
       final response = await client.get(
         '/post/external/v1/tag/$tagId',
+        queryParameters: queryParams,
         options: Options(headers: {"Content-Type": "application/json"}),
       );
 

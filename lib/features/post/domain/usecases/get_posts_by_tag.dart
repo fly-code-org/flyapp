@@ -7,8 +7,8 @@ class GetPostsByTag {
 
   GetPostsByTag(this.repository);
 
-  Future<List<Post>> call(int tagId) async {
-    return await repository.getPostsByTagId(tagId);
+  Future<List<Post>> call(int tagId, {String postType = 'all'}) async {
+    return await repository.getPostsByTagId(tagId, postType: postType);
   }
 }
 

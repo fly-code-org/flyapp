@@ -52,8 +52,8 @@ class PostRepositoryImpl implements PostRepository {
   }
 
   @override
-  Future<List<Post>> getPostsByTagId(int tagId) async {
-    final posts = await remoteDataSource.getPostsByTagId(tagId);
+  Future<List<Post>> getPostsByTagId(int tagId, {String postType = 'all'}) async {
+    final posts = await remoteDataSource.getPostsByTagId(tagId, postType: postType);
     return posts;
   }
 

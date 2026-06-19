@@ -46,6 +46,9 @@ abstract class AppRoutes {
   /// Explore "See All" — full Discover Mental Health Professionals grid.
   static const discoverMhps = '/discover-mhps';
 
+  /// Explore Tags — posts filtered by a single tag.
+  static const exploreTag = '/explore-tag';
+
   // bottom nav
   static const Home = '/home';
   static const Explore = '/explore';

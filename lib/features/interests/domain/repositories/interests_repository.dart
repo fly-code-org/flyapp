@@ -5,5 +5,6 @@ abstract class InterestsRepository {
   Future<void> saveInterests(Interests interests);
   Future<void> followTag(int tagId, String tagName);
   Future<void> unfollowTag(int tagId);
+  Future<Map<String, dynamic>> getTagInfo(int tagId);
 }
 

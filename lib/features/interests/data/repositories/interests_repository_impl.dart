@@ -32,5 +32,10 @@ class InterestsRepositoryImpl implements InterestsRepository {
   Future<void> unfollowTag(int tagId) async {
     await remoteDataSource.unfollowTag(tagId);
   }
+
+  @override
+  Future<Map<String, dynamic>> getTagInfo(int tagId) async {
+    return await remoteDataSource.getTagInfo(tagId);
+  }
 }
 

@@ -45,6 +45,7 @@ import '../../features/interests/data/datasources/interests_remote_data_source.d
 import '../../features/interests/data/repositories/interests_repository_impl.dart';
 import '../../features/interests/domain/repositories/interests_repository.dart';
 import '../../features/interests/domain/usecases/follow_tag.dart';
+import '../../features/interests/domain/usecases/get_tag_info.dart';
 import '../../features/interests/domain/usecases/save_interests.dart';
 import '../../features/interests/domain/usecases/unfollow_tag.dart';
 import '../../features/interests/data/server_tag_catalog.dart';
@@ -229,6 +230,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SaveInterests(sl()));
   sl.registerLazySingleton(() => FollowTag(sl()));
   sl.registerLazySingleton(() => UnfollowTag(sl()));
+  sl.registerLazySingleton(() => GetTagInfo(sl()));
 
   // Repository
   sl.registerLazySingleton<InterestsRepository>(

@@ -11,6 +11,7 @@ abstract class InterestsRemoteDataSource {
   });
   Future<void> followTag(int tagId, String tagName);
   Future<void> unfollowTag(int tagId);
+  Future<Map<String, dynamic>> getTagInfo(int tagId);
 }
 
 class InterestsRemoteDataSourceImpl implements InterestsRemoteDataSource {
@@ -198,6 +199,29 @@ class InterestsRemoteDataSourceImpl implements InterestsRemoteDataSource {
         throw NetworkException('Network error: ${e.message}');
       }
     } catch (e) {
+      throw ServerException('Unexpected error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getTagInfo(int tagId) async {
+    try {
+      final response = await client.get(
+        '/community/external/v1/tag/$tagId',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        return data['data'] as Map<String, dynamic>? ?? {};
+      }
+      throw ServerException('Unexpected status: ${response.statusCode}');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw ServerException('Error fetching tag info', statusCode: e.response!.statusCode);
+      }
+      throw NetworkException('Network error: ${e.message}');
+    } catch (e) {
+      if (e is ServerException || e is NetworkException) rethrow;
       throw ServerException('Unexpected error: ${e.toString()}');
     }
   }

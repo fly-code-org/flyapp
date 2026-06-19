@@ -13,6 +13,7 @@ class Post {
   final String username;
   final String timestamp;
   final String tagIconUrl;
+  final int tagId;
   final String text;
 
   /// For backwards compatibility you can keep a single mediaUrl (first media)
@@ -54,6 +55,7 @@ class Post {
     required this.username,
     required this.timestamp,
     required this.tagIconUrl,
+    this.tagId = 0,
     required this.text,
     this.mediaUrl,
     this.mediaUrls,
@@ -79,6 +81,7 @@ class Post {
     username: m['username'] as String? ?? '',
     timestamp: m['timestamp'] as String? ?? '',
     tagIconUrl: m['tagIconUrl'] as String? ?? '',
+    tagId: m['tagId'] as int? ?? 0,
     text: m['text'] as String? ?? '',
     mediaUrl: m['mediaUrl'] as String?,
     mediaUrls: (m['mediaUrls'] as List<dynamic>?)?.cast<String>(),
@@ -103,6 +106,7 @@ class Post {
     'username': username,
     'timestamp': timestamp,
     'tagIconUrl': tagIconUrl,
+    'tagId': tagId,
     'text': text,
     'mediaUrl': mediaUrl,
     'mediaUrls': mediaUrls,
@@ -128,6 +132,7 @@ class Post {
     String? username,
     String? timestamp,
     String? tagIconUrl,
+    int? tagId,
     String? text,
     String? mediaUrl,
     List<String>? mediaUrls,
@@ -151,6 +156,7 @@ class Post {
       username: username ?? this.username,
       timestamp: timestamp ?? this.timestamp,
       tagIconUrl: tagIconUrl ?? this.tagIconUrl,
+      tagId: tagId ?? this.tagId,
       text: text ?? this.text,
       mediaUrl: mediaUrl ?? this.mediaUrl,
       mediaUrls: mediaUrls ?? this.mediaUrls,
