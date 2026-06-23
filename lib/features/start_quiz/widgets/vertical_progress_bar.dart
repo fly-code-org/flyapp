@@ -1,85 +1,15 @@
 import 'package:flutter/material.dart';
 
-class VerticalProgressBar extends StatelessWidget {
-  final int selectedIndex; // 0 = bottom, totalOptions-1 = top
-  final int totalOptions;
-  final ValueChanged<int> onOptionSelected;
-
-  const VerticalProgressBar({
-    super.key,
-    required this.selectedIndex,
-    required this.totalOptions,
-    required this.onOptionSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final barHeight = constraints.maxHeight;
-        final stepHeight = barHeight / (totalOptions - 1);
-
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // Grey background bar
-            Container(
-              width: 8,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-
-            // Purple gradient fill from bottom to selected
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                height: stepHeight * selectedIndex,
-                width: 8,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF9C27B0), Color(0xFFBA68C8)],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                  ),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-
-            // Circular button at selected step
-            Positioned(
-              bottom: stepHeight * selectedIndex - 16,
-              child: GestureDetector(
-                onTap: () {
-                  onOptionSelected(selectedIndex);
-                },
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(color: Colors.black26, blurRadius: 4),
-                    ],
-                  ),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.circle,
-                    size: 12,
-                    color: Colors.purple,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
+const _kOptionHeight = 88.0;
+const _kKnobSize = 48.0;
+const _kBarWidth = 6.0;
+const _kKnobColor = Color(0xFF7B68D9);
+const _kFillColorBottom = Color(0xFF6B5BD6);
+const _kFillColorTop = Color(0xFF9B8FE8);
+const _kBarGray = Color(0xFFE0E0E0);
+const _kSelectedLabelColor = Color(0xFF7B68D9);
+const _kUnselectedLabelColor = Color(0xFF9E9E9E);
+const _kAnimDuration = Duration(milliseconds: 150);
 
 class VerticalOptionsSelector extends StatefulWidget {
   final List<String> leftLabels;
@@ -99,82 +29,194 @@ class VerticalOptionsSelector extends StatefulWidget {
 }
 
 class _VerticalOptionsSelectorState extends State<VerticalOptionsSelector> {
-  int selectedIndex = 0; // 0 = bottom, length-1 = top
+  // 0 = bottom option, length-1 = top option
+  int selectedIndex = 0;
 
-  void _handleOptionTap(int visualIndex) {
-    setState(() {
-      selectedIndex = (widget.leftLabels.length - 1) - visualIndex;
-    });
-    if (widget.onOptionSelected != null && widget.leftLabels.isNotEmpty) {
-      widget.onOptionSelected!(selectedIndex, selectedIndex.toString());
-    }
+  int get _numOptions => widget.leftLabels.length;
+  double get _totalHeight => _numOptions * _kOptionHeight;
+
+  // selectedIndex (0=bottom) → visual row index (0=top)
+  int _visualIndex(int sIdx) => _numOptions - 1 - sIdx;
+
+  void _updateIndex(int newIndex) {
+    if (newIndex == selectedIndex) return;
+    setState(() => selectedIndex = newIndex);
+    widget.onOptionSelected?.call(selectedIndex, selectedIndex.toString());
   }
+
+  int _indexFromLocalY(double localY) {
+    // Option at selectedIndex has its center at:
+    //   (numOptions - 0.5 - selectedIndex) * optionHeight from top
+    // Inverting: selectedIndex = numOptions - 0.5 - localY/optionHeight
+    return (((_totalHeight - localY) / _kOptionHeight) - 0.5)
+        .round()
+        .clamp(0, _numOptions - 1);
+  }
+
+  // ── bar geometry ──────────────────────────────────────────────────────────
+  // Bar spans from center of top option to center of bottom option.
+  //   barTopInset    = optionHeight/2  (from top of Stack)
+  //   barBottomInset = optionHeight/2  (from bottom of Stack)
+  //   barHeight      = (numOptions-1) * optionHeight
+  //
+  // Knob: center aligns with the center of the selected option row.
+  //   knob center from bottom of Stack = (selectedIndex + 0.5) * optionHeight
+  //   knob bottom edge (Positioned.bottom) = knob_center - knobSize/2
+  //
+  // Fill: from bottom of bar up to knob center.
+  //   fill bottom (Positioned.bottom) = optionHeight/2
+  //   fill height = selectedIndex * optionHeight
+
+  double get _knobBottom =>
+      (selectedIndex + 0.5) * _kOptionHeight - _kKnobSize / 2;
+  double get _fillHeight => selectedIndex * _kOptionHeight;
+  double get _barHeight => (_numOptions - 1) * _kOptionHeight;
+  double get _barTopInset => _kOptionHeight / 2;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 320,
+      height: _totalHeight,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Left labels
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(widget.leftLabels.length, (i) {
-              return GestureDetector(
-                onTap: () => _handleOptionTap(i),
-                child: SizedBox(
-                  height: 320 / widget.leftLabels.length,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 16),
+          // ── Left labels ──────────────────────────────────────────────────
+          Expanded(
+            child: Column(
+              children: List.generate(_numOptions, (visualIdx) {
+                final isSelected = _visualIndex(selectedIndex) == visualIdx;
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _updateIndex(_numOptions - 1 - visualIdx),
+                  child: SizedBox(
+                    height: _kOptionHeight,
                     child: Align(
                       alignment: Alignment.centerRight,
-                      child: Text(
-                        widget.leftLabels[i],
-                        style: const TextStyle(fontSize: 14),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Text(
+                          widget.leftLabels[visualIdx],
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected
+                                ? _kSelectedLabelColor
+                                : _kUnselectedLabelColor,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(width: 12),
-
-          // Progress bar
-          SizedBox(
-            height: 320,
-            child: VerticalProgressBar(
-              selectedIndex: selectedIndex,
-              totalOptions: widget.leftLabels.length,
-              onOptionSelected: (index) {
-                setState(() => selectedIndex = index);
-              },
+                );
+              }),
             ),
           ),
-          const SizedBox(width: 12),
 
-          // Right labels
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(widget.rightLabels.length, (i) {
-              return GestureDetector(
-                onTap: () => _handleOptionTap(i),
-                child: SizedBox(
-                  height: 320 / widget.rightLabels.length,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        widget.rightLabels[i],
-                        style: const TextStyle(fontSize: 35),
+          // ── Bar + knob ────────────────────────────────────────────────────
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: (d) => _updateIndex(_indexFromLocalY(d.localPosition.dy)),
+            onVerticalDragUpdate: (d) {
+              final box = context.findRenderObject() as RenderBox?;
+              if (box == null) return;
+              final localY = box.globalToLocal(d.globalPosition).dy;
+              _updateIndex(_indexFromLocalY(localY));
+            },
+            child: SizedBox(
+              width: _kKnobSize + 8,
+              child: Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.topCenter,
+                children: [
+                  // Gray background bar
+                  Positioned(
+                    top: _barTopInset,
+                    child: Container(
+                      width: _kBarWidth,
+                      height: _barHeight,
+                      decoration: BoxDecoration(
+                        color: _kBarGray,
+                        borderRadius: BorderRadius.circular(_kBarWidth / 2),
                       ),
                     ),
                   ),
-                ),
-              );
-            }),
+
+                  // Purple fill (bottom of bar → knob center)
+                  Positioned(
+                    bottom: _kOptionHeight / 2,
+                    child: AnimatedContainer(
+                      duration: _kAnimDuration,
+                      curve: Curves.easeOut,
+                      width: _kBarWidth,
+                      height: _fillHeight,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [_kFillColorBottom, _kFillColorTop],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(_kBarWidth / 2),
+                      ),
+                    ),
+                  ),
+
+                  // Knob
+                  AnimatedPositioned(
+                    duration: _kAnimDuration,
+                    curve: Curves.easeOut,
+                    bottom: _knobBottom,
+                    child: Container(
+                      width: _kKnobSize,
+                      height: _kKnobSize,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _kKnobColor,
+                        boxShadow: [
+                          BoxShadow(
+                            color: _kKnobColor.withValues(alpha: 0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.unfold_more,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Right labels (emojis) ─────────────────────────────────────────
+          Expanded(
+            child: Column(
+              children: List.generate(_numOptions, (visualIdx) {
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _updateIndex(_numOptions - 1 - visualIdx),
+                  child: SizedBox(
+                    height: _kOptionHeight,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 16),
+                        child: Text(
+                          widget.rightLabels[visualIdx],
+                          style: const TextStyle(fontSize: 35),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
           ),
         ],
       ),
@@ -182,32 +224,28 @@ class _VerticalOptionsSelectorState extends State<VerticalOptionsSelector> {
   }
 }
 
+// ── Standalone test ──────────────────────────────────────────────────────────
+
 class TestScreen extends StatelessWidget {
   const TestScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final leftLabels = [
-      "1:1 Sessions",
-      "Interactive Workshops",
-      "Group Discussions",
-      "Content Sharing",
-      "Self-Help Resources",
-    ];
-
-    final rightLabels = ["🤩", "😀", "😊", "😐", "😟"];
-
     return Scaffold(
       body: Center(
         child: VerticalOptionsSelector(
-          leftLabels: leftLabels,
-          rightLabels: rightLabels,
+          leftLabels: const [
+            "Top priority",
+            "Really matters",
+            "Somewhat important",
+            "Nice to have",
+            "Doesn't matter",
+          ],
+          rightLabels: const ["🤩", "😀", "😊", "😐", "😟"],
         ),
       ),
     );
   }
 }
 
-void main() {
-  runApp(const MaterialApp(home: TestScreen()));
-}
+void main() => runApp(const MaterialApp(home: TestScreen()));

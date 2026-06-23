@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
+import 'package:fly/core/widgets/safe_svg_icon.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
 import 'package:fly/core/storage/onboarding_progress.dart';
 import 'package:fly/features/community/domain/usecases/create_community.dart';
@@ -15,8 +16,8 @@ import 'package:get/get.dart';
 /// Model for a tag
 class SupportCommunity {
   final String name;
-  final IconData icon; // Placeholder for now, replace with assets later
-  SupportCommunity({required this.name, required this.icon});
+  final String svgPath;
+  SupportCommunity({required this.name, required this.svgPath});
 }
 
 /// Base widget for tag picker
@@ -67,14 +68,12 @@ class _SupportCommunityPickerState extends State<SupportCommunityPicker> {
         ),
         child: Row(
           children: [
-            if (_selectedTag != null)
-              Icon(_selectedTag!.icon, size: 28)
-            else
-              const Icon(
-                Icons.tag,
-                size: 28,
-                color: Colors.grey,
-              ), // placeholder
+            SafeSvgIcon(
+              assetPath: _selectedTag?.svgPath ?? '',
+              width: 28,
+              height: 28,
+              fallback: const Icon(Icons.tag, size: 28, color: Colors.grey),
+            ),
 
             const SizedBox(width: 10),
             Expanded(
@@ -113,20 +112,21 @@ class _SupportCommunityPickerState extends State<SupportCommunityPicker> {
               itemBuilder: (context, index) {
                 final tag = widget.tags[index];
                 return ListTile(
-                  leading: widget.isSocial
-                      ? CircleAvatar(
-                          radius: 18,
-                          child: Icon(tag.icon, size: 20),
-                        )
-                      : Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(6),
-                            color: Colors.deepPurple.shade50,
-                          ),
-                          child: Icon(tag.icon, size: 20),
-                        ),
+                  leading: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(widget.isSocial ? 18 : 6),
+                      color: Colors.deepPurple.shade50,
+                    ),
+                    padding: const EdgeInsets.all(6),
+                    child: SafeSvgIcon(
+                      assetPath: tag.svgPath,
+                      width: 20,
+                      height: 20,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                   title: Text(tag.name),
                   onTap: () {
                     setState(() => _selectedTag = tag);
@@ -165,26 +165,23 @@ class _CreateSupportCommunityScreenState
 
   // Hardcoded lists
   final supportedTags = [
-    SupportCommunity(name: "Emotional Healing", icon: Icons.healing),
-    SupportCommunity(
-      name: "Anxiety & Stress",
-      icon: Icons.sentiment_dissatisfied,
-    ),
-    SupportCommunity(name: "Grief & Heartbreak", icon: Icons.heart_broken),
-    SupportCommunity(name: "Work & Career", icon: Icons.work),
-    SupportCommunity(name: "Trauma", icon: Icons.local_hospital),
-    SupportCommunity(name: "Family & Relations", icon: Icons.family_restroom),
-    SupportCommunity(name: "Self-Worth & Identity", icon: Icons.person),
+    SupportCommunity(name: "Emotional Healing",    svgPath: 'assets/icon/support-tags/emotionalHealing.svg'),
+    SupportCommunity(name: "Anxiety & Stress",     svgPath: 'assets/icon/support-tags/anxietyAndStress.svg'),
+    SupportCommunity(name: "Grief & Heartbreak",   svgPath: 'assets/icon/support-tags/griefAndHeartbreak.svg'),
+    SupportCommunity(name: "Work & Career",        svgPath: 'assets/icon/support-tags/workAndCareer.svg'),
+    SupportCommunity(name: "Trauma",               svgPath: 'assets/icon/support-tags/traumaAndHealing.svg'),
+    SupportCommunity(name: "Family & Relations",   svgPath: 'assets/icon/support-tags/familyAndRelationship.svg'),
+    SupportCommunity(name: "Self-Worth & Identity",svgPath: 'assets/icon/support-tags/selfWorthAndIdentity.svg'),
   ];
 
   final socialTags = [
-    SupportCommunity(name: "Motivational", icon: Icons.lightbulb),
-    SupportCommunity(name: "Awwdorable", icon: Icons.pets),
-    SupportCommunity(name: "Fun & Humour", icon: Icons.emoji_emotions),
-    SupportCommunity(name: "Peace", icon: Icons.spa),
-    SupportCommunity(name: "Words Of Wisdom", icon: Icons.menu_book),
-    SupportCommunity(name: "News & Insights", icon: Icons.article),
-    SupportCommunity(name: "Movies & Shows", icon: Icons.movie),
+    SupportCommunity(name: "Motivational",     svgPath: 'assets/icon/social-tags/motivational.svg'),
+    SupportCommunity(name: "Awwdorable",       svgPath: 'assets/icon/social-tags/awdorable.svg'),
+    SupportCommunity(name: "Fun & Humour",     svgPath: 'assets/icon/social-tags/funAndHumor.svg'),
+    SupportCommunity(name: "Peace",            svgPath: 'assets/icon/social-tags/peace.svg'),
+    SupportCommunity(name: "Words Of Wisdom",  svgPath: 'assets/icon/social-tags/wordsOfWisdom.svg'),
+    SupportCommunity(name: "News & Insights",  svgPath: 'assets/icon/social-tags/newsAndInsights.svg'),
+    SupportCommunity(name: "Movies & Shows",   svgPath: 'assets/icon/social-tags/moviesAndShows.svg'),
   ];
 
   @override
@@ -369,7 +366,6 @@ class _CreateSupportCommunityScreenState
 
                       /// Profile Image Picker
                       ProfileImagePicker(
-                        role: "mhp", // 👈 send role down
                         onImagePicked: (file) {
                           controller.selectedImage.value = file;
                         },

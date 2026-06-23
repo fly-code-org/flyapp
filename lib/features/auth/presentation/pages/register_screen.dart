@@ -18,7 +18,8 @@ import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final bool startInLoginMode;
+  const RegisterScreen({super.key, this.startInLoginMode = false});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -29,7 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   final GoogleSignIn _googleSignIn = createFlyAuthGoogleSignIn();
   String _status = "";
-  bool _isLogin = false;
+  late bool _isLogin;
   String selectedRole = 'User';
   bool _isGoogleLogin = false;
   bool _passwordFocused = false;
@@ -44,6 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
+    _isLogin = widget.startInLoginMode;
     _authController = sl<AuthController>();
     _passwordFocusNode.addListener(() {
       if (mounted) setState(() => _passwordFocused = _passwordFocusNode.hasFocus);

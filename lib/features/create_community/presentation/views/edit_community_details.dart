@@ -29,13 +29,13 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
   bool _saving = false;
 
   static final supportedTags = [
-    SupportCommunity(name: "Emotional Healing", icon: Icons.healing),
-    SupportCommunity(name: "Anxiety & Stress", icon: Icons.sentiment_dissatisfied),
-    SupportCommunity(name: "Grief & Heartbreak", icon: Icons.heart_broken),
-    SupportCommunity(name: "Work & Career", icon: Icons.work),
-    SupportCommunity(name: "Trauma", icon: Icons.local_hospital),
-    SupportCommunity(name: "Family & Relations", icon: Icons.family_restroom),
-    SupportCommunity(name: "Self-Worth & Identity", icon: Icons.person),
+    SupportCommunity(name: "Emotional Healing",    svgPath: 'assets/icon/support-tags/emotionalHealing.svg'),
+    SupportCommunity(name: "Anxiety & Stress",     svgPath: 'assets/icon/support-tags/anxietyAndStress.svg'),
+    SupportCommunity(name: "Grief & Heartbreak",   svgPath: 'assets/icon/support-tags/griefAndHeartbreak.svg'),
+    SupportCommunity(name: "Work & Career",        svgPath: 'assets/icon/support-tags/workAndCareer.svg'),
+    SupportCommunity(name: "Trauma",               svgPath: 'assets/icon/support-tags/traumaAndHealing.svg'),
+    SupportCommunity(name: "Family & Relations",   svgPath: 'assets/icon/support-tags/familyAndRelationship.svg'),
+    SupportCommunity(name: "Self-Worth & Identity",svgPath: 'assets/icon/support-tags/selfWorthAndIdentity.svg'),
   ];
 
   @override
@@ -148,22 +148,9 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
             ),
             const SizedBox(height: 20),
             Center(
-              child: Stack(
-                children: [
-                  ProfileImagePicker(
-                    role: "mhp",
-                    onImagePicked: (file) => setState(() => _selectedImage = file),
-                  ),
-                  Positioned(
-                    bottom: 4,
-                    right: 4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black),
-                      child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
-                    ),
-                  ),
-                ],
+              child: ProfileImagePicker(
+                currentImageUrl: _community?.logoPath,
+                onImagePicked: (file) => setState(() => _selectedImage = file),
               ),
             ),
             const SizedBox(height: 20),
