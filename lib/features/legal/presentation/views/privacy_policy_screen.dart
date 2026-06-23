@@ -46,7 +46,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             children: [
               legalH1('fly — First Love Yourself'),
               legalP('PRIVACY POLICY'),
-              legalP('Effective date: 29 March 2026'),
+              legalP('Effective Date: June 24, 2026'),
               legalP('Company name: first love yourself'),
               legalP(
                 'Registered address: [To be completed — correspondence: support@flyapp.in]',
