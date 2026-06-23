@@ -111,17 +111,55 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       _textController.clear();
       _replyingToCommentId = null;
       _replyingToUserId = null;
-      // Notify parent widget that a comment was added (for optimistic count update)
       if (widget.onCommentAdded != null) {
         widget.onCommentAdded!();
       }
-      // Reload comments to show the new one
       await _loadComments();
     } else if (mounted) {
       setState(() {
         _isLoading = false;
       });
+      final error = _commentController.errorMessage.value;
+      if (error.contains('insufficient reputation')) {
+        _showRepGateDialog();
+      }
     }
+  }
+
+  void _showRepGateDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.lock_outline, color: Color(0xFF855DFC)),
+            SizedBox(width: 8),
+            Text(
+              'Reputation Required',
+              style: TextStyle(fontSize: 16, fontFamily: 'Lexend'),
+            ),
+          ],
+        ),
+        content: const Text(
+          'You need 50 reputation to comment.\n\nEarn reputation by posting content and receiving upvotes.',
+          style: TextStyle(fontFamily: 'Lexend', fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Got it',
+              style: TextStyle(
+                color: Color(0xFF855DFC),
+                fontFamily: 'Lexend',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _handleReplyToComment(String commentId, String userId) {
