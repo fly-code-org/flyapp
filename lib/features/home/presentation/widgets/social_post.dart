@@ -810,39 +810,6 @@ class _SocialPostState extends State<SocialPost> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.thumb_down_outlined),
-              title: const Text('Not interested'),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final success = await _postController.hidePostEntry(widget.post.id);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(success ? 'Post hidden' : 'Failed to hide post'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.flag_outlined),
-              title: const Text('Report'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _showReportDialog();
-              },
-            ),
-            if (!isOwnPost)
-              ListTile(
-                leading: const Icon(Icons.block, color: Colors.red),
-                title: const Text('Block user', style: TextStyle(color: Colors.red)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showBlockDialog();
-                },
-              ),
             if (isOwnPost)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
@@ -855,6 +822,40 @@ class _SocialPostState extends State<SocialPost> {
                   _showDeleteDialog();
                 },
               ),
+            if (!isOwnPost) ...[
+              ListTile(
+                leading: const Icon(Icons.thumb_down_outlined),
+                title: const Text('Not interested'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final success = await _postController.hidePostEntry(widget.post.id);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(success ? 'Post hidden' : 'Failed to hide post'),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.flag_outlined),
+                title: const Text('Report'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showReportDialog();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.block, color: Colors.red),
+                title: const Text('Block user', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showBlockDialog();
+                },
+              ),
+            ],
           ],
         ),
       ),
