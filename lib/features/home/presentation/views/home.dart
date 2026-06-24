@@ -742,8 +742,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   },
                   borderRadius: BorderRadius.circular(30),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
