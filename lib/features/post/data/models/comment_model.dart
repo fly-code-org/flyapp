@@ -6,6 +6,7 @@ class CommentModel extends Comment {
     required super.id,
     required super.postId,
     super.parentCommentId,
+    super.mentionedUserId,
     required super.userId,
     required super.text,
     super.likeCount,
@@ -82,6 +83,9 @@ class CommentModel extends Comment {
       parentCommentId: json['parent_comment_id'] != null
           ? parseId(json['parent_comment_id'])
           : null,
+      mentionedUserId: json['mentioned_user_id'] != null
+          ? parseId(json['mentioned_user_id'])
+          : null,
       userId: parseId(json['user_id']),
       text: json['text'] as String? ?? '',
       likeCount: parseLikeCount(json['like_count'] ?? 0),
@@ -97,6 +101,7 @@ class CommentModel extends Comment {
       'id': id,
       'post_id': postId,
       'parent_comment_id': parentCommentId,
+      if (mentionedUserId != null) 'mentioned_user_id': mentionedUserId,
       'user_id': userId,
       'text': text,
       'like_count': likeCount,

@@ -4,7 +4,8 @@ import 'package:equatable/equatable.dart';
 class Comment extends Equatable {
   final String id;
   final String postId;
-  final String? parentCommentId; // null = top-level comment; otherwise it's a reply
+  final String? parentCommentId; // null = top-level; always points to root (max 1 level deep)
+  final String? mentionedUserId; // user being @mentioned in this reply
   final String userId;
   final String text;
   final int likeCount;
@@ -17,6 +18,7 @@ class Comment extends Equatable {
     required this.id,
     required this.postId,
     this.parentCommentId,
+    this.mentionedUserId,
     required this.userId,
     required this.text,
     this.likeCount = 0,
@@ -31,6 +33,7 @@ class Comment extends Equatable {
         id,
         postId,
         parentCommentId,
+        mentionedUserId,
         userId,
         text,
         likeCount,

@@ -51,22 +51,10 @@ class CommentController extends GetxController {
         '📦 [COMMENT] Fetched ${fetchedComments.length} top-level comments',
       );
 
-      // Store top-level comments
       commentsByPostId[postId] = fetchedComments;
+      comments.value = List<Comment>.from(fetchedComments);
 
-      // Build flattened list with replies (fetch replies recursively)
-      final allComments = <Comment>[];
-      for (var comment in fetchedComments) {
-        allComments.add(comment);
-        if (comment.replyCount > 0) {
-          await _fetchRepliesRecursively(allComments, comment.id);
-        }
-      }
-
-      comments.value = allComments;
-      print(
-        '✅ [COMMENT] Total comments (including replies): ${allComments.length}',
-      );
+      print('✅ [COMMENT] Comments loaded: ${fetchedComments.length}');
       isLoading.value = false;
     } on ServerException catch (e) {
       print('❌ [COMMENT] ServerException: ${e.message}');
@@ -83,20 +71,19 @@ class CommentController extends GetxController {
     }
   }
 
-  Future<void> _fetchRepliesRecursively(
-    List<Comment> allComments,
-    String commentId,
-  ) async {
+  Future<List<Comment>> fetchRepliesForComment(String commentId) async {
     try {
       final replies = await getRepliesByCommentId.call(commentId);
-      allComments.addAll(replies);
-      for (final reply in replies) {
-        if (reply.replyCount > 0) {
-          await _fetchRepliesRecursively(allComments, reply.id);
-        }
+      // Merge fetched replies into the flat comments list (avoid duplicates)
+      final existingIds = comments.map((c) => c.id).toSet();
+      final newReplies = replies.where((r) => !existingIds.contains(r.id)).toList();
+      if (newReplies.isNotEmpty) {
+        comments.addAll(newReplies);
       }
+      return replies;
     } catch (e) {
       print('⚠️ [COMMENT] Error fetching replies for $commentId: $e');
+      return [];
     }
   }
 
