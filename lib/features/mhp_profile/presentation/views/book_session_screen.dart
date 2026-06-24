@@ -97,7 +97,7 @@ class _BookSessionScreenState extends State<BookSessionScreen> {
               }).toList(),
             ),
             const SizedBox(height: 20),
-            const Text('Dur', style: TextStyle(fontFamily: 'Lexend', fontSize: 16, fontWeight: FontWeight.w500)),
+            const Text('Duration', style: TextStyle(fontFamily: 'Lexend', fontSize: 16, fontWeight: FontWeight.w500)),
             const SizedBox(height: 10),
             Row(
               children: _durations.map((d) {
