@@ -747,7 +747,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.edit, color: Colors.white),
+                        SvgPicture.asset(
+                          'assets/icon/edit.svg',
+                          width: 20,
+                          height: 20,
+                        ),
                         SizedBox(width: 8),
                         Text(
                           "Create Post",
