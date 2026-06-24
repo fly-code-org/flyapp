@@ -33,7 +33,6 @@ class UserProfileController extends GetxController {
   var streakLastEngagedAt = Rxn<DateTime>();
   var activities = <String>[].obs;
   var bookmarkedPosts = <Map<String, dynamic>>[].obs;
-  var reputation = 1.obs;
 
   // Cache timestamp to avoid unnecessary refetches
   DateTime? _lastFetchTime;
@@ -278,15 +277,6 @@ class UserProfileController extends GetxController {
       }
     }
 
-    // Reputation
-    final repValue = data['reputation'];
-    if (repValue != null) {
-      final rep = (repValue as num).toInt();
-      reputation.value = rep < 1 ? 1 : rep;
-    } else {
-      reputation.value = 1;
-    }
-
     // Bookmarked posts
     bookmarkedPosts.clear();
     if (data.containsKey('bookmarked_posts') &&
@@ -375,7 +365,6 @@ class UserProfileController extends GetxController {
     streakLastEngagedAt.value = null;
     activities.clear();
     bookmarkedPosts.clear();
-    reputation.value = 1;
     errorMessage.value = '';
   }
 }
