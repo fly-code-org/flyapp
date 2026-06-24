@@ -1,5 +1,6 @@
 // core/widgets/bottom_navbar.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fly/core/controllers/nav_controller.dart';
 import 'package:fly/core/storage/token_storage.dart';
 import 'package:fly/core/utils/jwt_decoder.dart';
@@ -71,8 +72,16 @@ class BottomNavBar extends StatelessWidget {
         }
       },
       items: [
-        const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        const BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),
+        BottomNavigationBarItem(
+          icon: SvgPicture.asset('assets/icon/navbar/home.svg', width: 24, height: 24),
+          activeIcon: SvgPicture.asset('assets/icon/navbar/home-OnTap.svg', width: 24, height: 24),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: SvgPicture.asset('assets/icon/navbar/explore.svg', width: 24, height: 24),
+          activeIcon: SvgPicture.asset('assets/icon/navbar/explore-OnTap.svg', width: 24, height: 24),
+          label: 'Explore',
+        ),
         BottomNavigationBarItem(
           icon: SizedBox(
             width: 24,
@@ -82,52 +91,101 @@ class BottomNavBar extends StatelessWidget {
           label: 'Nira',
         ),
         BottomNavigationBarItem(
-          icon: SizedBox(
-            width: 24,
-            height: 24,
-            child: Builder(
-              builder: (context) {
-                final controller = _notifController;
-                if (controller == null) {
-                  return const Icon(Icons.notifications_outlined);
-                }
-                return Obx(() {
-                  final count = controller.unreadCount.value;
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(Icons.notifications_outlined),
-                      if (count > 0)
-                        Positioned(
-                          right: -4,
-                          top: -4,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFE53935),
-                              shape: BoxShape.circle,
+          icon: Builder(
+            builder: (context) {
+              final controller = _notifController;
+              if (controller == null) {
+                return SvgPicture.asset('assets/icon/navbar/notification.svg', width: 24, height: 24);
+              }
+              return Obx(() {
+                final count = controller.unreadCount.value;
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    SvgPicture.asset('assets/icon/navbar/notification.svg', width: 24, height: 24),
+                    if (count > 0)
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE53935),
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                          child: Text(
+                            count > 99 ? '99+' : '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
                             ),
-                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                            child: Text(
-                              count > 99 ? '99+' : '$count',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
-                    ],
-                  );
-                });
-              },
-            ),
+                      ),
+                  ],
+                );
+              });
+            },
+          ),
+          activeIcon: Builder(
+            builder: (context) {
+              final controller = _notifController;
+              if (controller == null) {
+                return SvgPicture.asset('assets/icon/navbar/notification-OnTap.svg', width: 24, height: 24);
+              }
+              return Obx(() {
+                final count = controller.unreadCount.value;
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    SvgPicture.asset('assets/icon/navbar/notification-OnTap.svg', width: 24, height: 24),
+                    if (count > 0)
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFE53935),
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                          child: Text(
+                            count > 99 ? '99+' : '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              });
+            },
           ),
           label: 'Notifications',
         ),
-        const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        BottomNavigationBarItem(
+          icon: SvgPicture.asset(
+            'assets/icon/navbar/profile-circle.svg',
+            width: 24,
+            height: 24,
+            colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+          ),
+          activeIcon: SvgPicture.asset(
+            'assets/icon/navbar/profile-circle.svg',
+            width: 24,
+            height: 24,
+            colorFilter: const ColorFilter.mode(Color(0xFF855DFC), BlendMode.srcIn),
+          ),
+          label: 'Profile',
+        ),
       ],
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SocialSupportTabs extends StatefulWidget {
   final Function(int)? onTabChanged;
@@ -17,12 +18,16 @@ class _SocialSupportTabsState extends State<SocialSupportTabs> {
     return Row(
       children: [
         Expanded(
-          child: _buildTab(icon: Icons.people, label: "Social", index: 0),
+          child: _buildTab(
+            svgPath: 'assets/icon/social.svg',
+            label: 'Social',
+            index: 0,
+          ),
         ),
         Expanded(
           child: _buildTab(
-            icon: Icons.self_improvement,
-            label: "Wellness",
+            svgPath: 'assets/icon/wellness.svg',
+            label: 'Wellness',
             index: 1,
           ),
         ),
@@ -31,16 +36,15 @@ class _SocialSupportTabsState extends State<SocialSupportTabs> {
   }
 
   Widget _buildTab({
-    required IconData icon,
+    required String svgPath,
     required String label,
     required int index,
   }) {
     final bool isActive = activeIndex == index;
+    final color = isActive ? Colors.black : Colors.grey;
     return GestureDetector(
       onTap: () {
-        setState(() {
-          activeIndex = index;
-        });
+        setState(() => activeIndex = index);
         if (widget.onTabChanged != null) widget.onTabChanged!(index);
       },
       child: Column(
@@ -49,12 +53,17 @@ class _SocialSupportTabsState extends State<SocialSupportTabs> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: isActive ? Colors.black : Colors.grey),
+              SvgPicture.asset(
+                svgPath,
+                width: 20,
+                height: 20,
+                colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
-                  color: isActive ? Colors.black : Colors.grey,
+                  color: color,
                   fontWeight: FontWeight.w600,
                 ),
               ),
