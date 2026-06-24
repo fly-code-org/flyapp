@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/utils/profile_picture_helper.dart';
 import 'package:fly/features/community/domain/entities/explore_search_result.dart';
@@ -28,6 +29,7 @@ import 'package:fly/core/services/streak_engagement_service.dart';
 import 'package:fly/core/controllers/nav_controller.dart';
 import 'package:fly/features/streak/presentation/streak_detail_sheet.dart';
 import 'package:fly/features/streak/presentation/streak_view_model.dart';
+import 'package:fly/features/post/presentation/views/create_post_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -764,6 +766,21 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: BottomNavBar(currentIndex: _currentIndex),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreatePostScreen()),
+          );
+        },
+        backgroundColor: Colors.black,
+        shape: const CircleBorder(),
+        child: SvgPicture.asset(
+          'assets/icon/edit.svg',
+          width: 24,
+          height: 24,
+        ),
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
