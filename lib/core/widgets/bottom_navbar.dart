@@ -43,6 +43,8 @@ class BottomNavBar extends StatelessWidget {
       backgroundColor: Colors.white,
       selectedItemColor: const Color(0xFF855DFC),
       unselectedItemColor: Colors.black,
+      showSelectedLabels: false,
+      showUnselectedLabels: false,
       currentIndex: currentIndex,
       onTap: (index) async {
         // Same tab tapped — scroll to top instead of reloading
@@ -172,18 +174,7 @@ class BottomNavBar extends StatelessWidget {
           label: 'Notifications',
         ),
         BottomNavigationBarItem(
-          icon: SvgPicture.asset(
-            'assets/icon/navbar/profile-circle.svg',
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
-          ),
-          activeIcon: SvgPicture.asset(
-            'assets/icon/navbar/profile-circle.svg',
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(Color(0xFF855DFC), BlendMode.srcIn),
-          ),
+          icon: SvgPicture.asset('assets/icon/navbar/profile-circle.svg', width: 24, height: 24),
           label: 'Profile',
         ),
       ],

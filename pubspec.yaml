@@ -106,6 +106,8 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/icon/google.png
+    - assets/icon/social.svg
+    - assets/icon/wellness.svg
     - assets/images/
     - assets/icon/social-tags/
     - assets/icon/support-tags/
