@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:fly/core/utils/number_formatter.dart';
 import 'package:fly/features/home/model/post_model.dart';
 import 'package:fly/features/user_profile/presentation/widgets/profile_card.dart';
 import 'package:fly/core/widgets/safe_svg_icon.dart';
@@ -1372,7 +1373,7 @@ class _SocialPostState extends State<SocialPost> {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Text("$displayCount"),
+                        Text(NumberFormatter.format(displayCount)),
                       ],
                     ),
                   );
@@ -1398,7 +1399,7 @@ class _SocialPostState extends State<SocialPost> {
                       children: [
                         const Icon(Icons.comment_outlined, color: Colors.grey),
                         const SizedBox(width: 4),
-                        Text("$_commentCount"),
+                        Text(NumberFormatter.format(_commentCount)),
                       ],
                     ),
                   ),
@@ -1414,7 +1415,7 @@ class _SocialPostState extends State<SocialPost> {
                           size: 24,
                         ),
                         const SizedBox(width: 4),
-                        Text("${widget.post.shares}"),
+                        Text(NumberFormatter.format(widget.post.shares)),
                       ],
                     ),
                   ),
@@ -1424,7 +1425,7 @@ class _SocialPostState extends State<SocialPost> {
                   children: [
                     const Icon(Icons.remove_red_eye, color: Colors.grey),
                     const SizedBox(width: 4),
-                    Text("${widget.post.views}"),
+                    Text(NumberFormatter.format(widget.post.views)),
                   ],
                 ),
                 const SizedBox(width: 16),
@@ -1452,7 +1453,7 @@ class _SocialPostState extends State<SocialPost> {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Text("${widget.post.bookmarks}"),
+                        Text(NumberFormatter.format(widget.post.bookmarks)),
                       ],
                   ),
                 ),

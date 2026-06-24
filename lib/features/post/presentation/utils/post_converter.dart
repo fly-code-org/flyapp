@@ -46,7 +46,16 @@ class PostConverter {
     final now = DateTime.now();
     final difference = now.difference(apiPost.createdAt);
     String timestamp;
-    if (difference.inDays > 0) {
+    if (difference.inDays >= 365) {
+      final years = (difference.inDays / 365).floor();
+      timestamp = '${years}y';
+    } else if (difference.inDays >= 30) {
+      final months = (difference.inDays / 30).floor();
+      timestamp = '${months}mo';
+    } else if (difference.inDays >= 7) {
+      final weeks = (difference.inDays / 7).floor();
+      timestamp = '${weeks}w';
+    } else if (difference.inDays > 0) {
       timestamp = '${difference.inDays}d';
     } else if (difference.inHours > 0) {
       timestamp = '${difference.inHours}h';
