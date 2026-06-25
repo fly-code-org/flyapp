@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fly/core/utils/number_formatter.dart';
 import 'package:fly/features/home/model/post_model.dart';
@@ -1365,11 +1366,13 @@ class _SocialPostState extends State<SocialPost> {
                           transitionBuilder: (child, animation) {
                             return ScaleTransition(scale: animation, child: child);
                           },
-                          child: Icon(
-                            Icons.favorite,
+                          child: SvgPicture.asset(
+                            displayLiked
+                                ? 'assets/icon/like-onTap.svg'
+                                : 'assets/icon/like.svg',
                             key: ValueKey(displayLiked),
-                            color: displayLiked ? Colors.red : Colors.grey,
-                            size: 24,
+                            width: 20,
+                            height: 20,
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -1397,7 +1400,7 @@ class _SocialPostState extends State<SocialPost> {
                     },
                     child: Row(
                       children: [
-                        const Icon(Icons.comment_outlined, color: Colors.grey),
+                        SvgPicture.asset('assets/icon/comment.svg', width: 20, height: 20),
                         const SizedBox(width: 4),
                         Text(NumberFormatter.format(_commentCount)),
                       ],
@@ -1409,10 +1412,14 @@ class _SocialPostState extends State<SocialPost> {
                     onTap: _isSharing ? null : () => _handleShareWithContext(shareIconContext),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.share_outlined,
-                          color: _isSharing ? Colors.grey[400] : Colors.grey,
-                          size: 24,
+                        SvgPicture.asset(
+                          'assets/icon/share.svg',
+                          width: 20,
+                          height: 20,
+                          colorFilter: ColorFilter.mode(
+                            _isSharing ? Colors.grey[400]! : const Color(0xFF707070),
+                            BlendMode.srcIn,
+                          ),
                         ),
                         const SizedBox(width: 4),
                         Text(NumberFormatter.format(widget.post.shares)),
@@ -1423,7 +1430,7 @@ class _SocialPostState extends State<SocialPost> {
                 const Spacer(),
                 Row(
                   children: [
-                    const Icon(Icons.remove_red_eye, color: Colors.grey),
+                    SvgPicture.asset('assets/icon/view.svg', width: 16, height: 16),
                     const SizedBox(width: 4),
                     Text(NumberFormatter.format(widget.post.views)),
                   ],
@@ -1441,15 +1448,17 @@ class _SocialPostState extends State<SocialPost> {
                               child: child,
                             );
                           },
-                  child: Icon(
-                    isBookmarked
-                        ? Icons.bookmark
-                        : Icons.bookmark_border_outlined,
+                  child: SvgPicture.asset(
+                            'assets/icon/bookmark.svg',
                             key: ValueKey(isBookmarked),
-                            color: isBookmarked
-                                ? Colors.grey[800]
-                                : Colors.grey,
-                            size: 24,
+                            width: 20,
+                            height: 20,
+                            colorFilter: isBookmarked
+                                ? const ColorFilter.mode(
+                                    Color(0xFF424242),
+                                    BlendMode.srcIn,
+                                  )
+                                : null,
                           ),
                         ),
                         const SizedBox(width: 4),

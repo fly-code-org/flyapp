@@ -109,6 +109,12 @@ flutter:
     - assets/icon/social.svg
     - assets/icon/wellness.svg
     - assets/icon/edit.svg
+    - assets/icon/bookmark.svg
+    - assets/icon/view.svg
+    - assets/icon/share.svg
+    - assets/icon/comment.svg
+    - assets/icon/like.svg
+    - assets/icon/like-onTap.svg
     - assets/images/
     - assets/icon/social-tags/
     - assets/icon/support-tags/

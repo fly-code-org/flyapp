@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
+import 'package:fly/features/mhp_profile/presentation/widgets/add_review_bottom_sheet.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import '../../controller/notification_controller.dart';
@@ -103,6 +104,18 @@ class NotificationScreen extends StatelessWidget {
                         notif.type == 'session_reminder' ||
                         notif.type == 'session_booked') {
                       Get.toNamed(AppRoutes.UserManageSessions);
+                    } else if (notif.type == 'feedback_request') {
+                      final mhpId = notif.metadata['mhp_id'] as String? ?? '';
+                      final mhpName = notif.metadata['mhp_name'] as String? ?? 'your therapist';
+                      final bookingId = notif.metadata['booking_id'] as String? ?? '';
+                      if (mhpId.isNotEmpty && bookingId.isNotEmpty) {
+                        AddReviewBottomSheet.show(
+                          context,
+                          mhpId: mhpId,
+                          mhpName: mhpName,
+                          bookingId: bookingId,
+                        );
+                      }
                     }
                   },
                 );
