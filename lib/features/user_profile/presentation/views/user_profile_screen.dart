@@ -98,7 +98,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       Map<String, dynamic>? next;
       DateTime? nextStart;
       for (final s in sessions) {
-        final start = DateTime.tryParse(s['start_at']?.toString() ?? '');
+        final start = DateTime.tryParse(s['start_at']?.toString() ?? '')?.toLocal();
         if (start == null || start.isBefore(now)) continue;
         if (nextStart == null || start.isBefore(nextStart)) {
           next = s;

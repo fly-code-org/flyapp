@@ -11,7 +11,7 @@ class UpcomingSessionBanner extends StatelessWidget {
   const UpcomingSessionBanner({super.key, required this.session});
 
   DateTime get _startAt =>
-      DateTime.tryParse(session['start_at']?.toString() ?? '') ?? DateTime.now();
+      (DateTime.tryParse(session['start_at']?.toString() ?? '') ?? DateTime.now()).toLocal();
 
   String get _mhpName => session['mhp_name']?.toString() ?? 'your therapist';
 

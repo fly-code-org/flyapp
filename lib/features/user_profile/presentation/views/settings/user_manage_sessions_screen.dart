@@ -39,8 +39,8 @@ class _Session {
         specialty: m['specialty']?.toString() ?? '',
         preference: m['preference']?.toString() ?? '',
         status: m['status']?.toString() ?? '',
-        startAt: DateTime.tryParse(m['start_at']?.toString() ?? '') ??
-            DateTime.now(),
+        startAt: (DateTime.tryParse(m['start_at']?.toString() ?? '') ??
+            DateTime.now()).toLocal(),
         amountINR: (m['amount_inr'] as num?)?.toInt() ?? 0,
         meetLink: m['meet_link']?.toString() ?? '',
       );
