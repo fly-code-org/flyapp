@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/home/presentation/widgets/upcoming_session_banner.dart';
@@ -221,10 +222,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
             top: 50,
             right: 16,
             child: IconButton(
-              icon: const Icon(
-                Icons.settings_suggest_outlined,
-                color: Colors.white,
-                size: 30,
+              icon: SvgPicture.asset(
+                'assets/icon/setting.svg',
+                width: 28,
+                height: 28,
               ),
               onPressed: () {
                 Get.toNamed(AppRoutes.UserSettingsScreen);

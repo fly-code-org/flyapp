@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/core/services/share_service.dart';
@@ -559,8 +560,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
 
             // Badge, back button, and settings rendered AFTER the sheet so
             // they always appear on top of the floating avatar.
-            if (_profile != null &&
-                (_profile!.certifiedMhp || _profile!.degreePath.isNotEmpty))
+            if (_profile != null && _profile!.degreePath.isNotEmpty)
               Positioned(
                 top: 52,
                 left: _viewingOther ? 56 : 16,
@@ -613,10 +613,10 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                 top: 50,
                 right: 16,
                 child: IconButton(
-                  icon: const Icon(
-                    Icons.settings_suggest_outlined,
-                    color: Colors.white,
-                    size: 30,
+                  icon: SvgPicture.asset(
+                    'assets/icon/setting.svg',
+                    width: 28,
+                    height: 28,
                   ),
                   onPressed: () {
                     Get.toNamed(AppRoutes.MhpSettingsScreen);

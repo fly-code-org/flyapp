@@ -78,7 +78,7 @@ class UserInfo extends StatelessWidget {
         ],
         const SizedBox(height: 10),
         if (expLabel != null) _infoRow(Icons.schedule_outlined, expLabel),
-        if (certifiedMhp || degreePath.isNotEmpty) _infoRow(Icons.verified_outlined, 'Certifications'),
+        if (degreePath.isNotEmpty) _infoRow(Icons.verified_outlined, 'Certifications'),
         if (location.isNotEmpty) _infoRow(Icons.location_on_outlined, location),
       ],
     );

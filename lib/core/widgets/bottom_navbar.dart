@@ -175,6 +175,7 @@ class BottomNavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: SvgPicture.asset('assets/icon/navbar/profile-circle.svg', width: 24, height: 24),
+          activeIcon: SvgPicture.asset('assets/icon/navbar/profile-circle-onTap.svg', width: 24, height: 24),
           label: 'Profile',
         ),
       ],
