@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class EditCommunityButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -17,8 +18,8 @@ class EditCommunityButton extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.edit, size: 20, color: Color(0xFF855DFC)),
+          children: [
+            SvgPicture.asset('assets/icon/edit.svg', width: 20, height: 20),
             SizedBox(width: 8),
             Text(
               "Edit Community",

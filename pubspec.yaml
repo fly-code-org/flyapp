@@ -115,6 +115,9 @@ flutter:
     - assets/icon/comment.svg
     - assets/icon/like.svg
     - assets/icon/like-onTap.svg
+    - assets/icon/activites.svg
+    - assets/icon/activities-onTap.svg
+    - assets/icon/setting.svg
     - assets/images/
     - assets/icon/social-tags/
     - assets/icon/support-tags/

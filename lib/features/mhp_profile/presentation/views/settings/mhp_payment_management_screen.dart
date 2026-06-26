@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/features/profile_creation/data/datasources/mhp_profile_remote_data_source.dart';
 
@@ -145,11 +146,10 @@ class _MhpPaymentManagementScreenState
                                     child: GestureDetector(
                                       onTap: () =>
                                           setState(() => _editing = true),
-                                      child: const Row(
+                                      child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.edit_outlined,
-                                              size: 16, color: Colors.black54),
+                                          SvgPicture.asset('assets/icon/edit.svg', width: 16, height: 16),
                                           SizedBox(width: 4),
                                           Text('Edit',
                                               style: TextStyle(

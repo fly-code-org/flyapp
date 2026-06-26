@@ -89,7 +89,13 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
     setState(() => _selectedTab = index);
   }
 
-  Widget _buildTabItem(String title, IconData icon, int index) {
+  Widget _buildTabItem(
+    String title,
+    IconData icon,
+    int index, {
+    String? svgAsset,
+    String? svgAssetActive,
+  }) {
     final isActive = _selectedTab == index;
     return GestureDetector(
       onTap: () => _onTabSelected(index),
@@ -98,7 +104,14 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
         children: [
           Row(
             children: [
-              Icon(icon, color: isActive ? const Color(0xFF855DFC) : Colors.grey),
+              if (svgAsset != null && svgAssetActive != null)
+                SvgPicture.asset(
+                  isActive ? svgAssetActive : svgAsset,
+                  width: 20,
+                  height: 20,
+                )
+              else
+                Icon(icon, color: isActive ? const Color(0xFF855DFC) : Colors.grey),
               const SizedBox(width: 4),
               Text(
                 title,
@@ -491,6 +504,8 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                                       "Activities",
                                       Icons.dashboard_outlined,
                                       0,
+                                      svgAsset: 'assets/icon/activites.svg',
+                                      svgAssetActive: 'assets/icon/activities-onTap.svg',
                                     ),
                                     Row(
                                       children: [

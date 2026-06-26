@@ -139,7 +139,7 @@ class ProfileAvatar extends StatelessWidget {
               child: CircleAvatar(
                 radius: 16,
                 backgroundColor: Colors.white,
-                child: const Icon(Icons.edit, size: 18, color: Colors.black),
+                child: SvgPicture.asset('assets/icon/edit.svg', width: 18, height: 18),
               ),
             ),
         ],

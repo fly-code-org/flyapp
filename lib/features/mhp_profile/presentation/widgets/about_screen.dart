@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_about_me.dart';
 import 'package:fly/features/profile_creation/domain/usecases/update_about_me.dart';
@@ -384,7 +385,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                   ),
                 ],
               ),
-              if (!readOnly) const Icon(Icons.edit, color: Colors.black54),
+              if (!readOnly) SvgPicture.asset('assets/icon/edit.svg', width: 20, height: 20),
             ],
           ),
           const SizedBox(height: 12),
