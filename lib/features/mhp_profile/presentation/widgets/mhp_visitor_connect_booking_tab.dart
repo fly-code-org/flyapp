@@ -410,7 +410,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
     // sticky bar via barNotifier.
     if (widget.barNotifier != null) {
       return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: _buildFormChildren(durs: durs, slots: slots),

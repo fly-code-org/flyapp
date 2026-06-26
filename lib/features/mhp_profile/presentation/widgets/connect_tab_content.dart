@@ -41,6 +41,10 @@ class ConnectTabContent extends StatefulWidget {
   final String? googleCalendarStatus;
   final VoidCallback? onSlotsUpdated;
 
+  /// When true, skips RefreshIndicator/SingleChildScrollView so the parent
+  /// CustomScrollView handles all scrolling.
+  final bool embedded;
+
   const ConnectTabContent({
     super.key,
     required this.availableSlots,
@@ -48,6 +52,7 @@ class ConnectTabContent extends StatefulWidget {
     this.googleCalendarConnected = false,
     this.googleCalendarStatus,
     this.onSlotsUpdated,
+    this.embedded = false,
   });
 
   @override
@@ -339,17 +344,9 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () => _loadBookedSessions(reset: true),
-      child: SingleChildScrollView(
-        key: ValueKey(
-          '${widget.appointments.length}_${widget.googleCalendarConnected}_${widget.googleCalendarStatus ?? ""}',
-        ),
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    final column = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
             _sectionTitle('Video sessions'),
             const SizedBox(height: 6),
             if (_needsGoogleReauth) ...[
@@ -431,7 +428,22 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
             const SizedBox(height: 8),
             _buildBookedSessionsSection(),
           ],
+    );
+    if (widget.embedded) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: column,
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: () => _loadBookedSessions(reset: true),
+      child: SingleChildScrollView(
+        key: ValueKey(
+          '${widget.appointments.length}_${widget.googleCalendarConnected}_${widget.googleCalendarStatus ?? ""}',
         ),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: column,
       ),
     );
   }

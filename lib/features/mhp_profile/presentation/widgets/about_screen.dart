@@ -14,6 +14,9 @@ class MHPProfileEditScreen extends StatefulWidget {
   final int ratingCount;
   final List<String> specializations;
   final List<Map<String, dynamic>> feedbackItems;
+  /// When true, skips Scaffold/SafeArea/SingleChildScrollView wrappers so the
+  /// parent scroll view (CustomScrollView) handles all scrolling.
+  final bool embedded;
 
   const MHPProfileEditScreen({
     super.key,
@@ -25,6 +28,7 @@ class MHPProfileEditScreen extends StatefulWidget {
     this.ratingCount = 0,
     this.specializations = const [],
     this.feedbackItems = const [],
+    this.embedded = false,
   });
 
   @override
@@ -127,15 +131,9 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        // ✅ Wrapping with SingleChildScrollView fixes bottom overflow
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
               _buildEditableCard(
                 icon: Icons.verified_user,
                 title: "Who I Am?",
@@ -182,11 +180,23 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                 onSave: () => _saveAboutMe(),
                 readOnly: widget.readOnly,
               ),
-              const SizedBox(height: 24),
-              _buildRatingSection(),
-              const SizedBox(height: 20),
-            ],
-          ),
+        const SizedBox(height: 24),
+        _buildRatingSection(),
+        const SizedBox(height: 20),
+      ],
+    );
+    if (widget.embedded) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: content,
+      );
+    }
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: content,
         ),
       ),
     );

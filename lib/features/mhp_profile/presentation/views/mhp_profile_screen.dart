@@ -76,12 +76,15 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
   // Embedded connect booking support
   ValueNotifier<ConnectBookingBarState>? _connectBarNotifier;
   final _tabsRowKey = GlobalKey();
-  ScrollController? _sheetScrollController;
+  ScrollController? _listScrollController;
 
   bool get _viewingOther =>
       _viewedUserId != null && _viewedUserId!.trim().isNotEmpty;
 
   void _onTabSelected(int index) {
+    // Reset scroll to top so the new tab always starts from position 0
+    // and avoids a jarring scroll-position clamp when content height changes.
+    _listScrollController?.jumpTo(0);
     setState(() => _selectedTab = index);
   }
 
@@ -94,14 +97,14 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
         children: [
           Row(
             children: [
-              Icon(icon, color: isActive ? Color(0xFF855DFC) : Colors.grey),
+              Icon(icon, color: isActive ? const Color(0xFF855DFC) : Colors.grey),
               const SizedBox(width: 4),
               Text(
                 title,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: isActive ? Color(0xFF855DFC) : Colors.grey[700],
+                  color: isActive ? const Color(0xFF855DFC) : Colors.grey[700],
                   fontFamily: 'Lexend',
                 ),
               ),
@@ -111,7 +114,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
           Container(
             height: 2,
             width: 40,
-            color: isActive ? Color(0xFF855DFC) : Colors.transparent,
+            color: isActive ? const Color(0xFF855DFC) : Colors.transparent,
           ),
         ],
       ),
@@ -172,12 +175,9 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
       try {
         community = await getMyCommunity.call();
       } catch (_) {
-        // MHP may not have created a community yet
         community = null;
       }
 
-      // Seed the shared streak state so this (own) profile stays in sync with
-      // live engagement updates from home/explore/posts.
       final streaks = profileMap['streaks'];
       if (streaks is Map<String, dynamic> &&
           Get.isRegistered<StreakViewModel>()) {
@@ -199,9 +199,6 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
     }
   }
 
-  /// Top-right "N Streaks" pill. For the current user's own profile it tracks
-  /// the shared [StreakViewModel] so live engagement updates show immediately;
-  /// when viewing another MHP it shows that MHP's fetched value.
   Widget _buildStreakBadge() {
     if (_viewingOther) {
       return _streakPill(_profile?.streakCount ?? 0);
@@ -253,7 +250,8 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
   Widget _buildBody() {
     switch (_selectedTab) {
       case 0:
-        return MhpActivitiesSection(communityId: _community?.id ?? _profile?.communityId);
+        return MhpActivitiesSection(
+            communityId: _community?.id ?? _profile?.communityId);
       case 1:
         if (_viewingOther && _loading) {
           return const Center(
@@ -263,6 +261,8 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
             ),
           );
         }
+        // embedded: true removes the inner SingleChildScrollView so the outer
+        // ListView is the only scroll controller, eliminating the double-scroll trap.
         return MHPProfileEditScreen(
           initialWhoIAm: _profile?.whoIAm,
           initialHowICanHelp: _profile?.howICanHelp,
@@ -272,6 +272,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
           ratingCount: _profile?.ratingCount ?? 0,
           specializations: _profile?.specializations ?? const [],
           feedbackItems: _profile?.feedbackItems ?? const [],
+          embedded: true,
         );
       case 2:
         if (_viewingOther && _loading) {
@@ -303,12 +304,14 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
             barNotifier: _connectBarNotifier,
           );
         }
+        // embedded: true removes RefreshIndicator/SingleChildScrollView.
         return ConnectTabContent(
           availableSlots: _profile?.availableSlots ?? [],
           appointments: _profile?.appointments ?? [],
           googleCalendarConnected: _profile?.googleCalendarConnected ?? false,
           googleCalendarStatus: _profile?.googleCalendarStatus,
           onSlotsUpdated: _loadProfile,
+          embedded: true,
         );
       default:
         return const SizedBox.shrink();
@@ -333,127 +336,40 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
   }
 
   void _jumpToConnectTab() {
+    _listScrollController?.jumpTo(0);
     setState(() => _selectedTab = 2);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _tabsRowKey.currentContext;
-      if (ctx != null) {
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOut,
-          alignment: 0.0,
-        );
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return SafePopScope(
       child: Scaffold(
-      backgroundColor: Colors.black,
+        backgroundColor: Colors.black,
 
-      // Bottom nav bar
-      bottomNavigationBar: _viewingOther
-          ? (_selectedTab == 2 && _connectBarNotifier != null
-              ? ValueListenableBuilder<ConnectBookingBarState>(
-                  valueListenable: _connectBarNotifier!,
-                  builder: (_, state, __) =>
-                      ConnectBookingStickyBar(state: state),
-                )
-              : null)
-          : BottomNavBar(currentIndex: 4),
+        // Visitor Connect bar is now an overlay inside the body Stack so it
+        // doesn't reduce Scaffold body height and cause the sheet to jump up.
+        bottomNavigationBar:
+            _viewingOther ? null : BottomNavBar(currentIndex: 4),
 
-      body: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Background
-          Positioned.fill(
-            child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
-          ),
-
-          // "Certified MHP" badge — only when actually certified (admin flag) or a degree is on file.
-          if (_profile != null &&
-              (_profile!.certifiedMhp || _profile!.degreePath.isNotEmpty))
-            Positioned(
-              top: 52,
-              left: _viewingOther ? 56 : 16,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/images/fly_logo.png',
-                    height: 24,
-                    width: 24,
-                    color: Colors.white,
-                    colorBlendMode: BlendMode.srcIn,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.self_improvement,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'Certified MHP',
-                    style: TextStyle(
-                      fontFamily: 'Lexend',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ],
-              ),
+        body: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Background
+            Positioned.fill(
+              child: Image.asset('assets/images/bg_fly.png', fit: BoxFit.cover),
             ),
 
-          if (_viewingOther)
-            Positioned(
-              top: 50,
-              left: 8,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 28,
-                ),
-                onPressed: () => popOrGoHome(context),
-              ),
-            ),
-
-          // Settings (hamburger menu)
-          if (!_viewingOther)
-            Positioned(
-              top: 50,
-              right: 16,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.settings_suggest_outlined,
-                  color: Colors.white,
-                  size: 30,
-                ),
-                onPressed: () {
-                  Get.toNamed(AppRoutes.MhpSettingsScreen);
-                },
-              ),
-            ),
-
-          // Draggable white sheet
-          DraggableScrollableSheet(
-            initialChildSize: 0.8,
-            minChildSize: 0.8,
-            maxChildSize: 0.8,
-            builder: (context, scrollController) {
-              _sheetScrollController = scrollController;
-              return NotificationListener<DraggableScrollableNotification>(
-                onNotification: (notification) {
-                  return true;
-                },
-                child: Stack(
+            // White sheet — locked at 80 % height, single ListView scroll.
+            DraggableScrollableSheet(
+              initialChildSize: 0.8,
+              minChildSize: 0.8,
+              maxChildSize: 0.8,
+              builder: (context, scrollController) {
+                _listScrollController = scrollController;
+                return Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    // White sheet: fixed header above "MHP's Square", rest scrollable
+                    // Main white card — unpositioned so Stack sizes to it.
                     Container(
                       decoration: const BoxDecoration(
                         color: Colors.white,
@@ -467,12 +383,11 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Streaks badge — top-right of white card.
-                          // Own profile reacts to live engagement updates; a
-                          // viewed MHP shows their fetched value.
-                          if (!_loading && _profile != null) _buildStreakBadge(),
+                          if (!_loading && _profile != null)
+                            _buildStreakBadge(),
 
                           const SizedBox(height: 60),
+
                           if (_loading)
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 24),
@@ -480,7 +395,8 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                             )
                           else if (_error != null)
                             Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 24),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 24),
                               child: Center(
                                 child: Text(
                                   _error!,
@@ -500,8 +416,10 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                               degreePath: _profile!.degreePath,
                             ),
                           ],
+
                           if (!_loading && _error == null && _profile != null)
                             const SizedBox(height: 20),
+
                           if (!_loading && _error == null && _profile != null)
                             Row(
                               mainAxisAlignment: MainAxisAlignment.start,
@@ -517,7 +435,8 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                                   const SizedBox(width: 20),
                                 ],
                                 if (_viewingOther) ...[
-                                  _BookSessionChip(onPressed: _jumpToConnectTab),
+                                  _BookSessionChip(
+                                      onPressed: _jumpToConnectTab),
                                   const SizedBox(width: 12),
                                 ],
                                 ShareProfile(
@@ -526,11 +445,13 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                                     if (_viewingOther) {
                                       shareId = _viewedUserId;
                                     } else {
-                                      final token = await TokenStorage.getToken();
+                                      final token =
+                                          await TokenStorage.getToken();
                                       shareId = JwtDecoder.getUserId(token);
                                     }
                                     if (!mounted) return;
-                                    if (shareId != null && shareId.isNotEmpty) {
+                                    if (shareId != null &&
+                                        shareId.isNotEmpty) {
                                       ShareService.shareProfile(
                                         profileId: shareId,
                                         profileName: _profile?.userName,
@@ -541,18 +462,25 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                                 ),
                               ],
                             ),
-                          const SizedBox(height: 16),
-                          // Community banner — pinned, never scrolls
-                          if (!_loading && _error == null)
-                            MHPSquare(community: _community),
-                          const SizedBox(height: 16),
-                          // Scrollable: tabs + tab content
+
+                          if (!_loading && _error == null && _profile != null)
+                            const SizedBox(height: 16),
+
+                          // Single scroll for tabs + content. embedded: true on
+                          // About/Connect removes their inner ScrollViews so
+                          // this ListView is the only scroll controller.
                           Expanded(
                             child: ListView(
                               controller: scrollController,
                               padding: EdgeInsets.zero,
                               children: [
-                                // Tabs row — anchored for scroll-to via _tabsRowKey
+                                // MHPSquare scrolls with content so the header
+                                // above is as small as possible.
+                                if (!_loading && _error == null) ...[
+                                  MHPSquare(community: _community),
+                                  const SizedBox(height: 16),
+                                ],
+
                                 Row(
                                   key: _tabsRowKey,
                                   mainAxisAlignment:
@@ -582,28 +510,35 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                                     ),
                                   ],
                                 ),
-                                // Visitor Connect tab: no fixed height — embedded
-                                // booking form flows into the outer ListView.
-                                // Own Connect tab: tall SizedBox so the inner
-                                // SingleChildScrollView is never clipped.
-                                // Other tabs: fixed 600 with their own inner scroll.
-                                if (_viewingOther && _selectedTab == 2)
-                                  _buildBody()
-                                else if (!_viewingOther && _selectedTab == 2)
-                                  SizedBox(
-                                    height: MediaQuery.of(context).size.height,
-                                    child: _buildBody(),
-                                  )
-                                else
-                                  SizedBox(height: 600, child: _buildBody()),
+                                const SizedBox(height: 8),
+                                ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    minHeight:
+                                        MediaQuery.of(context).size.height *
+                                            0.45,
+                                  ),
+                                  child: _buildBody(),
+                                ),
                               ],
                             ),
                           ),
+
+                          // "Let's connect" bar pinned below the scroll area.
+                          // Only rendered on Connect tab; jumpTo(0) on every tab
+                          // switch means no jarring height-change jump.
+                          if (_viewingOther &&
+                              _selectedTab == 2 &&
+                              _connectBarNotifier != null)
+                            ValueListenableBuilder<ConnectBookingBarState>(
+                              valueListenable: _connectBarNotifier!,
+                              builder: (_, state, __) =>
+                                  ConnectBookingStickyBar(state: state),
+                            ),
                         ],
                       ),
                     ),
 
-                    // Floating avatar
+                    // Floating avatar — overlaps the top edge of the white card.
                     Positioned(
                       top: -60,
                       left: 16,
@@ -618,13 +553,80 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                       ),
                     ),
                   ],
+                );
+              },
+            ),
+
+            // Badge, back button, and settings rendered AFTER the sheet so
+            // they always appear on top of the floating avatar.
+            if (_profile != null &&
+                (_profile!.certifiedMhp || _profile!.degreePath.isNotEmpty))
+              Positioned(
+                top: 52,
+                left: _viewingOther ? 56 : 16,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/images/fly_logo.png',
+                      height: 24,
+                      width: 24,
+                      color: Colors.white,
+                      colorBlendMode: BlendMode.srcIn,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.self_improvement,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Certified MHP',
+                      style: TextStyle(
+                        fontFamily: 'Lexend',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
-        ],
+              ),
+
+            if (_viewingOther)
+              Positioned(
+                top: 50,
+                left: 8,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                  onPressed: () => popOrGoHome(context),
+                ),
+              ),
+
+            if (!_viewingOther)
+              Positioned(
+                top: 50,
+                right: 16,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.settings_suggest_outlined,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                  onPressed: () {
+                    Get.toNamed(AppRoutes.MhpSettingsScreen);
+                  },
+                ),
+              ),
+
+          ],
+        ),
       ),
-    ),
     );
   }
 }
