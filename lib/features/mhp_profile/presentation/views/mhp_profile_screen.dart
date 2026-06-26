@@ -271,6 +271,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
           averageRating: _profile?.averageRating ?? 0.0,
           ratingCount: _profile?.ratingCount ?? 0,
           specializations: _profile?.specializations ?? const [],
+          feedbackItems: _profile?.feedbackItems ?? const [],
         );
       case 2:
         if (_viewingOther && _loading) {

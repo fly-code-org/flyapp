@@ -20,6 +20,7 @@ class MhpProfileDisplay {
   final double averageRating;
   final int ratingCount;
   final List<String> specializations;
+  final List<Map<String, dynamic>> feedbackItems;
 
   const MhpProfileDisplay({
     required this.userName,
@@ -42,6 +43,7 @@ class MhpProfileDisplay {
     this.averageRating = 0.0,
     this.ratingCount = 0,
     this.specializations = const [],
+    this.feedbackItems = const [],
   });
 
   /// Builds display from API response map. [userName] comes from JWT (pass separately).
@@ -177,6 +179,14 @@ class MhpProfileDisplay {
       else if (cnt is double) ratingCount = cnt.toInt();
     }
 
+    final feedbackItems = <Map<String, dynamic>>[];
+    final feedbackRaw = map['feedback'];
+    if (feedbackRaw is List) {
+      for (final e in feedbackRaw) {
+        if (e is Map<String, dynamic>) feedbackItems.add(Map.from(e));
+      }
+    }
+
     return MhpProfileDisplay(
       userName: resolvedName,
       bio: bio,
@@ -198,6 +208,7 @@ class MhpProfileDisplay {
       averageRating: averageRating,
       ratingCount: ratingCount,
       specializations: specializations,
+      feedbackItems: feedbackItems,
     );
   }
 

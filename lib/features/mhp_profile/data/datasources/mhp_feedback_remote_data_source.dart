@@ -38,7 +38,7 @@ class MhpFeedbackRemoteDataSource {
   }) async {
     try {
       await _dio.post(
-        '/mhp/feedback',
+        '/mhp/external/v1/feedback',
         data: {
           'mhp_id': mhpId,
           'booking_id': bookingId,

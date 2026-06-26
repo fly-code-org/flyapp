@@ -13,6 +13,7 @@ class MHPProfileEditScreen extends StatefulWidget {
   final double averageRating;
   final int ratingCount;
   final List<String> specializations;
+  final List<Map<String, dynamic>> feedbackItems;
 
   const MHPProfileEditScreen({
     super.key,
@@ -23,6 +24,7 @@ class MHPProfileEditScreen extends StatefulWidget {
     this.averageRating = 0.0,
     this.ratingCount = 0,
     this.specializations = const [],
+    this.feedbackItems = const [],
   });
 
   @override
@@ -191,21 +193,24 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
   }
 
   Widget _buildRatingSection() {
-    if (widget.averageRating <= 0 && widget.ratingCount == 0) {
+    if (widget.averageRating <= 0 && widget.ratingCount == 0 && widget.feedbackItems.isEmpty) {
       return const SizedBox.shrink();
     }
     final displayRating = widget.averageRating.toStringAsFixed(1);
     final fullStars = widget.averageRating.floor();
     final hasHalf = (widget.averageRating - fullStars) >= 0.25;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── Divider header ──
         Row(
           children: [
             Expanded(child: Divider(color: Colors.grey.shade300)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                'what clients say',
+                'check what client says',
                 style: TextStyle(
                   fontFamily: 'Lexend',
                   fontSize: 13,
@@ -217,38 +222,117 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        Text(
-          displayRating,
-          style: const TextStyle(
-            fontFamily: 'Lexend',
-            fontSize: 48,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+
+        // ── Big rating number + stars ──
+        Center(
+          child: Column(
+            children: [
+              Text(
+                displayRating,
+                style: const TextStyle(
+                  fontFamily: 'Lexend',
+                  fontSize: 56,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  if (i < fullStars) {
+                    return const Icon(Icons.star, color: Color(0xFFFFC107), size: 32);
+                  } else if (i == fullStars && hasHalf) {
+                    return const Icon(Icons.star_half, color: Color(0xFFFFC107), size: 32);
+                  }
+                  return const Icon(Icons.star_border, color: Color(0xFFFFC107), size: 32);
+                }),
+              ),
+              if (widget.ratingCount > 0) ...[
+                const SizedBox(height: 4),
+                Text(
+                  '${widget.ratingCount} ${widget.ratingCount == 1 ? 'review' : 'reviews'}',
+                  style: TextStyle(
+                    fontFamily: 'Lexend',
+                    fontSize: 13,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
-        if (widget.ratingCount > 0)
-          Text(
-            '${widget.ratingCount} ${widget.ratingCount == 1 ? 'review' : 'reviews'}',
-            style: TextStyle(
-              fontFamily: 'Lexend',
-              fontSize: 13,
-              color: Colors.grey.shade500,
-            ),
-          ),
-        const SizedBox(height: 4),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(5, (i) {
-            if (i < fullStars) {
-              return const Icon(Icons.star, color: Color(0xFFFFC107), size: 28);
-            } else if (i == fullStars && hasHalf) {
-              return const Icon(Icons.star_half, color: Color(0xFFFFC107), size: 28);
-            }
-            return const Icon(Icons.star_border, color: Color(0xFFFFC107), size: 28);
-          }),
-        ),
+
+        // ── Individual review cards ──
+        if (widget.feedbackItems.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          ...widget.feedbackItems.reversed.map((f) => _buildReviewCard(f)),
+        ],
+
         const SizedBox(height: 8),
       ],
+    );
+  }
+
+  Widget _buildReviewCard(Map<String, dynamic> f) {
+    final text = (f['text'] as String?)?.trim() ?? '';
+    final rating = (f['rating'] as num?)?.toInt() ?? 0;
+    final createdAt = f['created_at'];
+    String dateLabel = '';
+    if (createdAt is String) {
+      final dt = DateTime.tryParse(createdAt)?.toLocal();
+      if (dt != null) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        dateLabel = '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: List.generate(5, (i) => Icon(
+                  i < rating ? Icons.star : Icons.star_border,
+                  color: const Color(0xFFFFC107),
+                  size: 18,
+                )),
+              ),
+              if (dateLabel.isNotEmpty)
+                Text(
+                  dateLabel,
+                  style: TextStyle(
+                    fontFamily: 'Lexend',
+                    fontSize: 12,
+                    color: Colors.grey.shade400,
+                  ),
+                ),
+            ],
+          ),
+          if (text.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              text,
+              style: const TextStyle(
+                fontFamily: 'Lexend',
+                fontSize: 14,
+                color: Colors.black87,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 

@@ -71,7 +71,7 @@ class NotificationScreen extends StatelessWidget {
             child: ListView.builder(
               itemCount: controller.notifications.length +
                   (controller.hasMore.value ? 1 : 0),
-              itemBuilder: (context, index) {
+              itemBuilder: (_, index) {
                 if (index == controller.notifications.length) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -105,17 +105,15 @@ class NotificationScreen extends StatelessWidget {
                         notif.type == 'session_booked') {
                       Get.toNamed(AppRoutes.UserManageSessions);
                     } else if (notif.type == 'feedback_request') {
-                      final mhpId = notif.metadata['mhp_id'] as String? ?? '';
-                      final mhpName = notif.metadata['mhp_name'] as String? ?? 'your therapist';
-                      final bookingId = notif.metadata['booking_id'] as String? ?? '';
-                      if (mhpId.isNotEmpty && bookingId.isNotEmpty) {
-                        AddReviewBottomSheet.show(
-                          context,
-                          mhpId: mhpId,
-                          mhpName: mhpName,
-                          bookingId: bookingId,
-                        );
-                      }
+                      final mhpId = notif.metadata['mhp_id']?.toString() ?? '';
+                      final mhpName = notif.metadata['mhp_name']?.toString() ?? 'your therapist';
+                      final bookingId = notif.metadata['booking_id']?.toString() ?? '';
+                      AddReviewBottomSheet.show(
+                        context,
+                        mhpId: mhpId,
+                        mhpName: mhpName,
+                        bookingId: bookingId,
+                      );
                     }
                   },
                 );
