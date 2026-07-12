@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/features/create_community/controller/user_profile_controller.dart';
-import 'package:fly/features/create_community/presentation/views/create_support_community.dart';
-import 'package:fly/features/create_community/presentation/widgets/profile_picture_picker.dart';
 import 'package:get/get.dart';
 
 class CommunityGuidelineScreen extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:fly/features/create_community/presentation/views/community_guidelines.dart';
 import 'package:fly/features/subscription/presentation/views/subscription_plans_screen.dart';
 import 'package:fly/features/create_community/presentation/views/community_profile_screen.dart';
-import 'package:fly/features/create_community/presentation/views/create_support_community.dart';
+import 'package:fly/features/create_community/presentation/views/create_wellness_community.dart';
 import 'package:fly/features/create_community/presentation/views/edit_community_details.dart';
 import 'package:fly/features/explore/presentation/views/explore.dart';
 import 'package:fly/features/explore/presentation/views/discover_mhps_screen.dart';
@@ -125,12 +125,12 @@ class AppPages {
     ),
 
     GetPage(
-      name: AppRoutes.CreateSupportCommunity,
-      page: () => const CreateSupportCommunityScreen(),
+      name: AppRoutes.CreateWellnessCommunity,
+      page: () => const CreateWellnessCommunityScreen(),
     ),
     GetPage(
-      name: AppRoutes.CommunitySupportProfile,
-      page: () => const CommunitySupportProfile(),
+      name: AppRoutes.CommunityWellnessProfile,
+      page: () => const CommunityWellnessProfile(),
     ),
     GetPage(
       name: AppRoutes.EditCommunity,

@@ -18,10 +18,10 @@ class MHPSquare extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         if (hasCommunity) {
-          Get.toNamed(AppRoutes.CommunitySupportProfile,
+          Get.toNamed(AppRoutes.CommunityWellnessProfile,
               arguments: {'communityId': community!.id});
         } else {
-          Get.toNamed(AppRoutes.CreateSupportCommunity);
+          Get.toNamed(AppRoutes.CreateWellnessCommunity);
         }
       },
       child: Container(

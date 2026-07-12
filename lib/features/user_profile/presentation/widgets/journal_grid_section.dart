@@ -26,8 +26,8 @@ class JournalGridSection extends StatelessWidget {
     }
 
     return Obx(() {
-      // Show loading
-      if (journalController.isLoading.value && journalController.journals.isEmpty) {
+      // Show loading only if we haven't fetched yet and are currently loading
+      if (!journalController.hasFetchedOnce.value && journalController.isLoading.value) {
         return const Center(
           child: Padding(
             padding: EdgeInsets.all(32.0),

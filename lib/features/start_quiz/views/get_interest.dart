@@ -564,7 +564,7 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      Separator(text: "Support tags"),
+                      Separator(text: "Wellness tags"),
                       const SizedBox(height: 20),
                       Wrap(
                         spacing: 16,

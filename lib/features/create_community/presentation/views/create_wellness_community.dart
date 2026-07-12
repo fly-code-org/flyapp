@@ -14,21 +14,21 @@ import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
 /// Model for a tag
-class SupportCommunity {
+class WellnessCommunity {
   final String name;
   final String svgPath;
-  SupportCommunity({required this.name, required this.svgPath});
+  WellnessCommunity({required this.name, required this.svgPath});
 }
 
 /// Base widget for tag picker
-class SupportCommunityPicker extends StatefulWidget {
-  final List<SupportCommunity> tags;
-  final bool isSocial; // true = social, false = supported
+class WellnessCommunityPicker extends StatefulWidget {
+  final List<WellnessCommunity> tags;
+  final bool isSocial; // true = social, false = wellness
   final String placeholder;
-  final SupportCommunity? defaultTag;
-  final Function(SupportCommunity?)? onTagSelected;
+  final WellnessCommunity? defaultTag;
+  final Function(WellnessCommunity?)? onTagSelected;
 
-  const SupportCommunityPicker({
+  const WellnessCommunityPicker({
     super.key,
     required this.tags,
     required this.isSocial,
@@ -38,11 +38,11 @@ class SupportCommunityPicker extends StatefulWidget {
   });
 
   @override
-  State<SupportCommunityPicker> createState() => _SupportCommunityPickerState();
+  State<WellnessCommunityPicker> createState() => _WellnessCommunityPickerState();
 }
 
-class _SupportCommunityPickerState extends State<SupportCommunityPicker> {
-  SupportCommunity? _selectedTag;
+class _WellnessCommunityPickerState extends State<WellnessCommunityPicker> {
+  WellnessCommunity? _selectedTag;
 
   @override
   void initState() {
@@ -143,45 +143,45 @@ class _SupportCommunityPickerState extends State<SupportCommunityPicker> {
   }
 }
 
-class CreateSupportCommunityScreen extends StatefulWidget {
-  const CreateSupportCommunityScreen({super.key});
+class CreateWellnessCommunityScreen extends StatefulWidget {
+  const CreateWellnessCommunityScreen({super.key});
 
   @override
-  State<CreateSupportCommunityScreen> createState() =>
-      _CreateSupportCommunityScreenState();
+  State<CreateWellnessCommunityScreen> createState() =>
+      _CreateWellnessCommunityScreenState();
 }
 
-class _CreateSupportCommunityScreenState
-    extends State<CreateSupportCommunityScreen> {
+class _CreateWellnessCommunityScreenState
+    extends State<CreateWellnessCommunityScreen> {
   double _dragPosition = 0.8;
   final CommunityController controller = Get.put(CommunityController());
   final CommunityMediaController mediaController = Get.put(
     CommunityMediaController(),
   );
-  
-  SupportCommunity? _selectedTag;
+
+  WellnessCommunity? _selectedTag;
   String _bio = '';
   bool _isSaving = false;
 
   // Hardcoded lists
-  final supportedTags = [
-    SupportCommunity(name: "Emotional Healing",    svgPath: 'assets/icon/support-tags/emotionalHealing.svg'),
-    SupportCommunity(name: "Anxiety & Stress",     svgPath: 'assets/icon/support-tags/anxietyAndStress.svg'),
-    SupportCommunity(name: "Grief & Heartbreak",   svgPath: 'assets/icon/support-tags/griefAndHeartbreak.svg'),
-    SupportCommunity(name: "Work & Career",        svgPath: 'assets/icon/support-tags/workAndCareer.svg'),
-    SupportCommunity(name: "Trauma",               svgPath: 'assets/icon/support-tags/traumaAndHealing.svg'),
-    SupportCommunity(name: "Family & Relations",   svgPath: 'assets/icon/support-tags/familyAndRelationship.svg'),
-    SupportCommunity(name: "Self-Worth & Identity",svgPath: 'assets/icon/support-tags/selfWorthAndIdentity.svg'),
+  final wellnessTags = [
+    WellnessCommunity(name: "Emotional Healing",    svgPath: 'assets/icon/support-tags/emotionalHealing.svg'),
+    WellnessCommunity(name: "Anxiety & Stress",     svgPath: 'assets/icon/support-tags/anxietyAndStress.svg'),
+    WellnessCommunity(name: "Grief & Heartbreak",   svgPath: 'assets/icon/support-tags/griefAndHeartbreak.svg'),
+    WellnessCommunity(name: "Work & Career",        svgPath: 'assets/icon/support-tags/workAndCareer.svg'),
+    WellnessCommunity(name: "Trauma",               svgPath: 'assets/icon/support-tags/traumaAndHealing.svg'),
+    WellnessCommunity(name: "Family & Relations",   svgPath: 'assets/icon/support-tags/familyAndRelationship.svg'),
+    WellnessCommunity(name: "Self-Worth & Identity",svgPath: 'assets/icon/support-tags/selfWorthAndIdentity.svg'),
   ];
 
   final socialTags = [
-    SupportCommunity(name: "Motivational",     svgPath: 'assets/icon/social-tags/motivational.svg'),
-    SupportCommunity(name: "Awwdorable",       svgPath: 'assets/icon/social-tags/awdorable.svg'),
-    SupportCommunity(name: "Fun & Humour",     svgPath: 'assets/icon/social-tags/funAndHumor.svg'),
-    SupportCommunity(name: "Peace",            svgPath: 'assets/icon/social-tags/peace.svg'),
-    SupportCommunity(name: "Words Of Wisdom",  svgPath: 'assets/icon/social-tags/wordsOfWisdom.svg'),
-    SupportCommunity(name: "News & Insights",  svgPath: 'assets/icon/social-tags/newsAndInsights.svg'),
-    SupportCommunity(name: "Movies & Shows",   svgPath: 'assets/icon/social-tags/moviesAndShows.svg'),
+    WellnessCommunity(name: "Motivational",     svgPath: 'assets/icon/social-tags/motivational.svg'),
+    WellnessCommunity(name: "Awwdorable",       svgPath: 'assets/icon/social-tags/awdorable.svg'),
+    WellnessCommunity(name: "Fun & Humour",     svgPath: 'assets/icon/social-tags/funAndHumor.svg'),
+    WellnessCommunity(name: "Peace",            svgPath: 'assets/icon/social-tags/peace.svg'),
+    WellnessCommunity(name: "Words Of Wisdom",  svgPath: 'assets/icon/social-tags/wordsOfWisdom.svg'),
+    WellnessCommunity(name: "News & Insights",  svgPath: 'assets/icon/social-tags/newsAndInsights.svg'),
+    WellnessCommunity(name: "Movies & Shows",   svgPath: 'assets/icon/social-tags/moviesAndShows.svg'),
   ];
 
   @override
@@ -189,7 +189,7 @@ class _CreateSupportCommunityScreenState
     super.initState();
     // Final mandatory MHP step — resume here if killed before the community is created.
     OnboardingProgress.saveStep(
-      step: AppRoutes.CreateSupportCommunity,
+      step: AppRoutes.CreateWellnessCommunity,
       role: 'mhp',
     );
   }
@@ -244,7 +244,7 @@ class _CreateSupportCommunityScreenState
 
     try {
       String logoPath = '';
-      
+
       // Upload image if selected
       if (controller.selectedImage.value != null) {
         final s3UploadService = sl<S3UploadService>();
@@ -283,7 +283,7 @@ class _CreateSupportCommunityScreenState
       }
 
       // Navigate to next screen
-      Get.toNamed(AppRoutes.CommunitySupportProfile);
+      Get.toNamed(AppRoutes.CommunityWellnessProfile);
     } catch (e) {
       print('❌ [COMMUNITY] Error creating community: $e');
       if (mounted) {
@@ -440,9 +440,9 @@ class _CreateSupportCommunityScreenState
 
                       const SizedBox(height: 20),
 
-                      /// 👇 Supported Community Tag Picker
+                      /// Wellness Community Tag Picker
                       const Text(
-                        "Select Supported Community Tag",
+                        "Select Wellness Community Tag",
                         style: TextStyle(
                           fontFamily: 'Lexend',
                           fontSize: 20,
@@ -450,8 +450,8 @@ class _CreateSupportCommunityScreenState
                         ),
                       ),
                       const SizedBox(height: 10),
-                      SupportCommunityPicker(
-                        tags: supportedTags,
+                      WellnessCommunityPicker(
+                        tags: wellnessTags,
                         isSocial: false,
                         onTagSelected: (tag) {
                           setState(() {
@@ -472,7 +472,7 @@ class _CreateSupportCommunityScreenState
                       //   ),
                       // ),
                       // const SizedBox(height: 10),
-                      // SupportCommunityPicker(tags: socialTags, isSocial: true),
+                      // WellnessCommunityPicker(tags: socialTags, isSocial: true),
                       const SizedBox(height: 30),
                       GradientButton(
                         text: _isSaving ? "Saving..." : "Verify and Continue",

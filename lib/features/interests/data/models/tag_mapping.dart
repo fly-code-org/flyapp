@@ -20,8 +20,8 @@ class TagMapping {
     'Movies & Shows': 9,
   };
 
-  // Support tags mapping (must match MongoDB `tags.tag_id` per name)
-  static const Map<String, int> supportTags = {
+  // Wellness tags mapping (must match MongoDB `tags.tag_id` per name)
+  static const Map<String, int> wellnessTags = {
     'Emotional Healing': 1, // This should match the DB - Emotional Healing has tag_id: 1
     'Anxiety & Stress': 2,
     'Grief & Heartbreak': 3, // MongoDB: type support, tag_id 3
@@ -37,8 +37,8 @@ class TagMapping {
       return socialTags[tagName];
     }
     // Check support tags
-    if (supportTags.containsKey(tagName)) {
-      return supportTags[tagName];
+    if (wellnessTags.containsKey(tagName)) {
+      return wellnessTags[tagName];
     }
     return null;
   }
@@ -49,7 +49,7 @@ class TagMapping {
       return 'social';
     }
     // Check if it's a support tag
-    if (supportTags.containsKey(tagName)) {
+    if (wellnessTags.containsKey(tagName)) {
       return 'support';
     }
     return null;
@@ -64,7 +64,7 @@ class TagMapping {
       }
     }
     // Search in support tags if not found in social tags
-    for (final entry in supportTags.entries) {
+    for (final entry in wellnessTags.entries) {
       if (entry.value == tagId) {
         return entry.key;
       }
@@ -76,8 +76,8 @@ class TagMapping {
     return socialTags.keys.toList();
   }
 
-  static List<String> getAllSupportTagNames() {
-    return supportTags.keys.toList();
+  static List<String> getAllWellnessTagNames() {
+    return wellnessTags.keys.toList();
   }
 }
 

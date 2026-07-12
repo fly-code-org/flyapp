@@ -101,9 +101,9 @@ class _HomeScreenState extends State<HomeScreen> {
   late final UserProfileController _profileController;
   final ScrollController _scrollController = ScrollController();
 
-  // Posts per tab: Social (0) vs Support (1)
+  // Posts per tab: Social (0) vs Wellness (1)
   List<Post> socialPosts = [];
-  List<Post> supportPosts = [];
+  List<Post> wellnessPosts = [];
 
   // Per-tab feed filter: "new" or "popular" — independent per tab
   final Map<int, String> _tabFilter = {0: 'new', 1: 'new'};
@@ -189,9 +189,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Post> get _currentPosts =>
-      activeTabIndex == 0 ? socialPosts : supportPosts;
+      activeTabIndex == 0 ? socialPosts : wellnessPosts;
 
-  /// Fetches and populates both Social and Support tabs
+  /// Fetches and populates both Social and Wellness tabs
   Future<void> _refreshBothTabs() async {
     if (!mounted) return;
     _postController.clearError();
@@ -264,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (tabIndex == 0) {
           socialPosts = uiPosts;
         } else {
-          supportPosts = uiPosts;
+          wellnessPosts = uiPosts;
         }
       });
     }
@@ -345,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (activeTabIndex == 0) {
             socialPosts = uiPosts;
           } else {
-            supportPosts = uiPosts;
+            wellnessPosts = uiPosts;
           }
         });
       }
@@ -424,7 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
         authorUsernames: authorUsernames,
       );
 
-      final currentList = activeTabIndex == 0 ? socialPosts : supportPosts;
+      final currentList = activeTabIndex == 0 ? socialPosts : wellnessPosts;
       final existingIds = currentList.map((p) => p.id).toSet();
       final toAppend = newUiPosts
           .where((p) => !existingIds.contains(p.id))
@@ -435,7 +435,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (activeTabIndex == 0) {
             socialPosts = [...socialPosts, ...toAppend];
           } else {
-            supportPosts = [...supportPosts, ...toAppend];
+            wellnessPosts = [...wellnessPosts, ...toAppend];
           }
         });
       }
@@ -541,7 +541,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 24),
 
                   // Tabs
-                  SocialSupportTabs(
+                  SocialWellnessTabs(
                     key: const ValueKey("tabs"),
                     onTabChanged: (index) {
                       final from = activeTabIndex == 0 ? 'social' : 'support';
@@ -552,7 +552,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                       // If switching to a tab with no posts and using feed, fetch for that tab
                       if (_isUsingFeed &&
-                          (index == 0 ? socialPosts : supportPosts).isEmpty &&
+                          (index == 0 ? socialPosts : wellnessPosts).isEmpty &&
                           !_postController.isLoading.value) {
                         Future.microtask(() {
                           if (mounted) _refreshPosts();
@@ -576,7 +576,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (activeTabIndex == 0) {
                           socialPosts = [];
                         } else {
-                          supportPosts = [];
+                          wellnessPosts = [];
                         }
                         _hasReachedEnd = false;
                       });
@@ -685,7 +685,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 setState(() {
                                   final list = activeTabIndex == 0
                                       ? socialPosts
-                                      : supportPosts;
+                                      : wellnessPosts;
                                   final index = list.indexWhere(
                                     (p) => p.id == updatedPost.id,
                                   );
@@ -694,8 +694,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                       socialPosts = [...socialPosts];
                                       socialPosts[index] = updatedPost;
                                     } else {
-                                      supportPosts = [...supportPosts];
-                                      supportPosts[index] = updatedPost;
+                                      wellnessPosts = [...wellnessPosts];
+                                      wellnessPosts[index] = updatedPost;
                                     }
                                   }
                                 });

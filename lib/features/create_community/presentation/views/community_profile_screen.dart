@@ -19,15 +19,15 @@ import 'package:fly/features/create_community/presentation/widgets/invite_member
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 
-class CommunitySupportProfile extends StatefulWidget {
-  const CommunitySupportProfile({super.key});
+class CommunityWellnessProfile extends StatefulWidget {
+  const CommunityWellnessProfile({super.key});
 
   @override
-  State<CommunitySupportProfile> createState() =>
-      _CommunitySupportProfileState();
+  State<CommunityWellnessProfile> createState() =>
+      _CommunityWellnessProfileState();
 }
 
-class _CommunitySupportProfileState extends State<CommunitySupportProfile> {
+class _CommunityWellnessProfileState extends State<CommunityWellnessProfile> {
   Community? _community;
   bool _loading = true;
   String? _error;
@@ -163,7 +163,7 @@ class _CommunitySupportProfileState extends State<CommunitySupportProfile> {
                                       const Text('No community yet', style: TextStyle(fontFamily: 'Lexend')),
                                       const SizedBox(height: 16),
                                       ElevatedButton(
-                                        onPressed: () => Get.toNamed(AppRoutes.CreateSupportCommunity),
+                                        onPressed: () => Get.toNamed(AppRoutes.CreateWellnessCommunity),
                                         child: const Text('Create community'),
                                       ),
                                     ],

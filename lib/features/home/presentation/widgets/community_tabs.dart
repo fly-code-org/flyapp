@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class SocialSupportTabs extends StatefulWidget {
+class SocialWellnessTabs extends StatefulWidget {
   final Function(int)? onTabChanged;
 
-  const SocialSupportTabs({super.key, this.onTabChanged});
+  const SocialWellnessTabs({super.key, this.onTabChanged});
 
   @override
-  _SocialSupportTabsState createState() => _SocialSupportTabsState();
+  _SocialWellnessTabsState createState() => _SocialWellnessTabsState();
 }
 
-class _SocialSupportTabsState extends State<SocialSupportTabs> {
+class _SocialWellnessTabsState extends State<SocialWellnessTabs> {
   int activeIndex = 0;
 
   @override

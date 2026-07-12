@@ -20,8 +20,8 @@ class TagIconMapping {
     'Movies & Shows': 'assets/icon/social-tags/moviesAndShows.svg',
   };
 
-  // Support tags icon mapping
-  static const Map<String, String> supportTagIcons = {
+  // Wellness tags icon mapping
+  static const Map<String, String> wellnessTagIcons = {
     'Emotional Healing': 'assets/icon/support-tags/emotionalHealing.svg',
     'Anxiety & Stress': 'assets/icon/support-tags/anxietyAndStress.svg',
     'Grief & Heartbreak': 'assets/icon/support-tags/griefAndHeartbreak.svg',
@@ -39,8 +39,8 @@ class TagIconMapping {
       return socialTagIcons[tagName]!;
     }
     // Check support tags
-    if (supportTagIcons.containsKey(tagName)) {
-      return supportTagIcons[tagName]!;
+    if (wellnessTagIcons.containsKey(tagName)) {
+      return wellnessTagIcons[tagName]!;
     }
     // Return empty string if not found
     return '';

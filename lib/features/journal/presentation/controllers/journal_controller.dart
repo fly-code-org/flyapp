@@ -37,6 +37,7 @@ class JournalController extends GetxController {
   var errorMessage = ''.obs;
   var journals = <Journal>[].obs;
   var colorTemplates = <ColorTemplate>[].obs;
+  var hasFetchedOnce = false.obs;
 
   // Cache
   DateTime? _lastFetchTime;
@@ -69,7 +70,8 @@ class JournalController extends GetxController {
       
       journals.value = fetchedJournals;
       _lastFetchTime = DateTime.now();
-      
+      hasFetchedOnce.value = true;
+
       print('✅ [JOURNAL] Fetched ${journals.length} journals');
     } on ServerException catch (e) {
       print('❌ [JOURNAL] ServerException: ${e.message}');
@@ -357,6 +359,7 @@ class JournalController extends GetxController {
     journals.clear();
     _lastFetchTime = null;
     errorMessage.value = '';
+    hasFetchedOnce.value = false;
   }
 }
 

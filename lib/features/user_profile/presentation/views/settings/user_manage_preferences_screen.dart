@@ -27,7 +27,7 @@ class _UserManagePreferencesScreenState
   final _ds = UserSettingsRemoteDataSource();
 
   List<_Tag> _socialTags = [];
-  List<_Tag> _supportTags = [];
+  List<_Tag> _wellnessTags = [];
   bool _loading = true;
   bool _saving = false;
 
@@ -69,7 +69,7 @@ class _UserManagePreferencesScreenState
         }
       }
       _socialTags = social;
-      _supportTags = support;
+      _wellnessTags = support;
     } catch (_) {}
     setState(() => _loading = false);
   }
@@ -77,7 +77,7 @@ class _UserManagePreferencesScreenState
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      final selected = [..._socialTags, ..._supportTags]
+      final selected = [..._socialTags, ..._wellnessTags]
           .where((t) => t.selected)
           .map((t) => {'tag_id': t.id, 'name': t.name})
           .toList();
@@ -145,8 +145,8 @@ class _UserManagePreferencesScreenState
                             ),
                             const SizedBox(height: 24),
                           ],
-                          if (_supportTags.isNotEmpty) ...[
-                            const Text('Support tags',
+                          if (_wellnessTags.isNotEmpty) ...[
+                            const Text('Wellness tags',
                                 style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -155,7 +155,7 @@ class _UserManagePreferencesScreenState
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
-                              children: _supportTags.map(_tagChip).toList(),
+                              children: _wellnessTags.map(_tagChip).toList(),
                             ),
                           ],
                         ],

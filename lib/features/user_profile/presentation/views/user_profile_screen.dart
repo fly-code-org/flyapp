@@ -420,9 +420,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               child: FloatingActionButton(
                 backgroundColor: const Color(0xFF855DFC),
                 onPressed: () async {
-                  if (Get.isRegistered<SubscriptionController>()) {
-                    if (!Get.find<SubscriptionController>().requireAuraPlan()) return;
-                  }
                   final result = await Get.to(
                     () => const CreateJournalScreen(),
                   );

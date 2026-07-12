@@ -53,8 +53,8 @@ class TagSelectionBottomSheet extends StatefulWidget {
     },
   ];
 
-  // Support tag names — icons resolved via [TagIconMapping] (same assets as explore/feed)
-  static const List<String> supportTagNames = [
+  // Wellness tag names — icons resolved via [TagIconMapping] (same assets as explore/feed)
+  static const List<String> wellnessTagNames = [
     'Emotional Healing',
     'Anxiety & Stress',
     'Grief & Heartbreak',
@@ -159,7 +159,7 @@ class _TagSelectionBottomSheetState extends State<TagSelectionBottomSheet> {
                       }),
                       const SizedBox(height: 24),
                       const Text(
-                        'Support Tags',
+                        'Wellness Tags',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -167,7 +167,7 @@ class _TagSelectionBottomSheetState extends State<TagSelectionBottomSheet> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ...TagSelectionBottomSheet.supportTagNames.map((tagName) {
+                      ...TagSelectionBottomSheet.wellnessTagNames.map((tagName) {
                         final tagId =
                             sl<ServerTagCatalog>().tagIdForName(tagName);
                         if (tagId == null) return const SizedBox.shrink();

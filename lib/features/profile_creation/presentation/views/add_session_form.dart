@@ -292,11 +292,11 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                                             if (success &&
                                                 ctrl.message.value.isNotEmpty) {
                                               print(
-                                                "✅ [BUTTON] Profile created successfully, navigating to create support community...",
+                                                "✅ [BUTTON] Profile created successfully, navigating to create wellness community...",
                                               );
-                                              // MHP profile created: go to create support community
+                                              // MHP profile created: go to create wellness community
                                               Get.toNamed(
-                                                AppRoutes.CreateSupportCommunity,
+                                                AppRoutes.CreateWellnessCommunity,
                                               );
                                               print(
                                                 "✅ [BUTTON] Navigation completed",

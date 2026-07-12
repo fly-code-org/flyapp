@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/features/community/domain/entities/community.dart';
 import 'package:fly/features/community/domain/usecases/update_community.dart';
-import 'package:fly/features/create_community/presentation/views/create_support_community.dart';
+import 'package:fly/features/create_community/presentation/views/create_wellness_community.dart';
 import 'package:fly/features/create_community/presentation/widgets/profile_picture_picker.dart';
 import 'package:fly/features/interests/data/server_tag_catalog.dart';
 import 'package:fly/core/services/s3_upload_service.dart';
@@ -24,18 +24,18 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
   final _encourageController = TextEditingController();
   final _discourageController = TextEditingController();
   final _dontTolerateController = TextEditingController();
-  SupportCommunity? _selectedTag;
+  WellnessCommunity? _selectedTag;
   File? _selectedImage;
   bool _saving = false;
 
-  static final supportedTags = [
-    SupportCommunity(name: "Emotional Healing",    svgPath: 'assets/icon/support-tags/emotionalHealing.svg'),
-    SupportCommunity(name: "Anxiety & Stress",     svgPath: 'assets/icon/support-tags/anxietyAndStress.svg'),
-    SupportCommunity(name: "Grief & Heartbreak",   svgPath: 'assets/icon/support-tags/griefAndHeartbreak.svg'),
-    SupportCommunity(name: "Work & Career",        svgPath: 'assets/icon/support-tags/workAndCareer.svg'),
-    SupportCommunity(name: "Trauma",               svgPath: 'assets/icon/support-tags/traumaAndHealing.svg'),
-    SupportCommunity(name: "Family & Relations",   svgPath: 'assets/icon/support-tags/familyAndRelationship.svg'),
-    SupportCommunity(name: "Self-Worth & Identity",svgPath: 'assets/icon/support-tags/selfWorthAndIdentity.svg'),
+  static final wellnessTags = [
+    WellnessCommunity(name: "Emotional Healing",    svgPath: 'assets/icon/support-tags/emotionalHealing.svg'),
+    WellnessCommunity(name: "Anxiety & Stress",     svgPath: 'assets/icon/support-tags/anxietyAndStress.svg'),
+    WellnessCommunity(name: "Grief & Heartbreak",   svgPath: 'assets/icon/support-tags/griefAndHeartbreak.svg'),
+    WellnessCommunity(name: "Work & Career",        svgPath: 'assets/icon/support-tags/workAndCareer.svg'),
+    WellnessCommunity(name: "Trauma",               svgPath: 'assets/icon/support-tags/traumaAndHealing.svg'),
+    WellnessCommunity(name: "Family & Relations",   svgPath: 'assets/icon/support-tags/familyAndRelationship.svg'),
+    WellnessCommunity(name: "Self-Worth & Identity",svgPath: 'assets/icon/support-tags/selfWorthAndIdentity.svg'),
   ];
 
   @override
@@ -58,7 +58,7 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
     if (!mounted || _community == null) return;
     final tagName = sl<ServerTagCatalog>().displayNameForTagId(_community!.tagId);
     if (tagName == null) return;
-    for (final t in supportedTags) {
+    for (final t in wellnessTags) {
       if (t.name == tagName) {
         setState(() => _selectedTag = t);
         break;
@@ -76,17 +76,17 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
     super.dispose();
   }
 
-  SupportCommunity _getDefaultTag() {
+  WellnessCommunity _getDefaultTag() {
     if (_selectedTag != null) return _selectedTag!;
     if (_community != null) {
       final tagName = sl<ServerTagCatalog>().displayNameForTagId(_community!.tagId);
       if (tagName != null) {
         try {
-          return supportedTags.firstWhere((t) => t.name == tagName);
+          return wellnessTags.firstWhere((t) => t.name == tagName);
         } catch (_) {}
       }
     }
-    return supportedTags[2];
+    return wellnessTags[2];
   }
 
   Future<void> _save() async {
@@ -167,8 +167,8 @@ class _EditCommunityScreenState extends State<EditCommunityScreen> {
                       decoration: _inputDecoration("Enter community name"),
                     ),
                     const SizedBox(height: 20),
-                    SupportCommunityPicker(
-                      tags: supportedTags,
+                    WellnessCommunityPicker(
+                      tags: wellnessTags,
                       isSocial: false,
                       defaultTag: _getDefaultTag(),
                       onTagSelected: (tag) => setState(() => _selectedTag = tag),

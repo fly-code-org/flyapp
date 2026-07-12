@@ -99,11 +99,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
   // "Discover Mental Health Professionals" carousel.
   List<ExploreSearchMhp> _discoverMhps = [];
   bool _isLoadingDiscoverMhps = false;
-  bool _isLoadingSupportCommunities = false;
+  bool _isLoadingWellnessCommunities = false;
 
   // Communities from API
   List<Map<String, dynamic>> _socialCommunities = [];
-  List<Map<String, dynamic>> _supportCommunities = [];
+  List<Map<String, dynamic>> _wellnessCommunities = [];
   
   // Track followed tags by tag name (more reliable than ID for display)
   final Set<String> _followedTagNames = {};
@@ -305,7 +305,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   onTap: () {
                     Get.toNamed(
-                      AppRoutes.CommunitySupportProfile,
+                      AppRoutes.CommunityWellnessProfile,
                       arguments: {'communityId': c.id},
                     );
                   },
@@ -316,7 +316,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               const Padding(
                 padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
                 child: Text(
-                  'Support communities',
+                  'Wellness communities',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
@@ -341,7 +341,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   onTap: () {
                     Get.toNamed(
-                      AppRoutes.CommunitySupportProfile,
+                      AppRoutes.CommunityWellnessProfile,
                       arguments: {'communityId': c.id},
                     );
                   },
@@ -371,7 +371,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
     if (!mounted) return;
     _loadSocialCommunities();
-    _loadSupportCommunities();
+    _loadWellnessCommunities();
     _loadFollowedTags();
     _loadDiscoverMhps();
   }
@@ -689,9 +689,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
-  /// "Top Support Square by MHP's" must list only MHP-created support communities.
+  /// "Top Wellness Square by MHP's" must list only MHP-created wellness communities.
   /// Also dedupes by id in case the API returns the same community more than once.
-  List<Community> _uniqueMhpSupportCommunities(List<Community> raw) {
+  List<Community> _uniqueMhpWellnessCommunities(List<Community> raw) {
     final seen = <String>{};
     final out = <Community>[];
     for (final c in raw) {
@@ -702,18 +702,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return out;
   }
 
-  Future<void> _loadSupportCommunities() async {
+  Future<void> _loadWellnessCommunities() async {
     setState(() {
-      _isLoadingSupportCommunities = true;
+      _isLoadingWellnessCommunities = true;
     });
 
     try {
       final getCommunitiesByType = sl<GetCommunitiesByType>();
       final communities = await getCommunitiesByType.call('support');
-      final mhpSupport = _uniqueMhpSupportCommunities(communities);
+      final mhpSupport = _uniqueMhpWellnessCommunities(communities);
 
       setState(() {
-        _supportCommunities = mhpSupport.map((community) {
+        _wellnessCommunities = mhpSupport.map((community) {
           // Convert relative path to full CDN URL
           String profilePicUrl;
           if (community.logoPath.isEmpty) {
@@ -753,7 +753,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _isLoadingSupportCommunities = false;
+          _isLoadingWellnessCommunities = false;
         });
       }
     }
@@ -957,7 +957,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
                     const SizedBox(height: 20),
                     Text(
-                      "Select a Support tag and discover like contents",
+                      "Select a Wellness tag and discover like contents",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -1054,21 +1054,21 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       children: [
                         const SizedBox(height: 20),
                         const Text(
-                          "Top Support Square by MHP's",
+                          "Top Wellness Square by MHP's",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _isLoadingSupportCommunities
+                        _isLoadingWellnessCommunities
                             ? const Center(
                                 child: Padding(
                                   padding: EdgeInsets.all(20.0),
                                   child: CircularProgressIndicator(),
                                 ),
                               )
-                            : _supportCommunities.isEmpty
+                            : _wellnessCommunities.isEmpty
                                 ? const Center(
                                     child: Padding(
                                       padding: EdgeInsets.all(20.0),
@@ -1082,7 +1082,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                     ),
                                   )
                                 : CommunityListHorizontal(
-                                    communities: _supportCommunities,
+                                    communities: _wellnessCommunities,
                                     initialJoinedCommunityIds: _followedCommunityIds,
                                   ),
                       ],
