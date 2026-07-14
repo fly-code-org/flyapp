@@ -30,6 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   final GoogleSignIn _googleSignIn = createFlyAuthGoogleSignIn();
   String _status = "";
+  bool _isError = false; // Track if current status is an error
   late bool _isLogin;
   String selectedRole = 'User';
   bool _isGoogleLogin = false;
@@ -57,13 +58,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted && error.isNotEmpty) {
         setState(() {
           _status = error;
+          _isError = true;
         });
       }
     });
     ever(_authController.message, (message) {
       if (mounted && message.isNotEmpty) {
         setState(() {
-          _status = message;
+          _status = ''; // Clear status on success - no need to show green message
+          _isError = false;
         });
         if (_isGoogleLogin) {
           _handleGoogleAuthSuccess();
@@ -163,29 +166,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  void _setValidationError(String message) {
+    setState(() {
+      _status = message;
+      _isError = true;
+    });
+  }
+
   Future<void> _handleSignup() async {
+    if (selectedRole.isEmpty) {
+      _setValidationError("Please select whether you're a User or Mental Health Professional");
+      return;
+    }
     if (userNameController.text.isEmpty) {
-      setState(() => _status = "Please enter a username");
+      _setValidationError("Username is required");
       return;
     }
     if (firstNameController.text.isEmpty) {
-      setState(() => _status = "Please enter your first name");
+      _setValidationError("First name is required");
       return;
     }
     if (lastNameController.text.isEmpty) {
-      setState(() => _status = "Please enter your last name");
+      _setValidationError("Last name is required");
       return;
     }
     if (emailController.text.isEmpty) {
-      setState(() => _status = "Please enter your email");
+      _setValidationError("Email address is required");
       return;
     }
     if (passwordController.text.isEmpty) {
-      setState(() => _status = "Please enter a password");
+      _setValidationError("Password is required");
       return;
     }
-    if (selectedRole.isEmpty) {
-      setState(() => _status = "Please select a role");
+    if (passwordController.text.length < 8) {
+      _setValidationError("Password must be at least 8 characters");
       return;
     }
 
@@ -203,15 +217,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleLogin() async {
     // Validate required fields
     if (emailController.text.isEmpty) {
-      setState(() {
-        _status = "Please enter your email";
-      });
+      _setValidationError("Email address is required");
       return;
     }
     if (passwordController.text.isEmpty) {
-      setState(() {
-        _status = "Please enter your password";
-      });
+      _setValidationError("Password is required");
       return;
     }
 
@@ -245,18 +255,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       // Validate role selection for signup
       if (!_isLogin && selectedRole.isEmpty) {
-        setState(() {
-          _status = "Please select a role first";
-        });
+        _setValidationError("Please select whether you're a User or Mental Health Professional");
         return;
       }
 
       final GoogleSignInAccount? account = await _googleSignIn.signIn();
 
       if (account == null) {
-        setState(() {
-          _status = "Sign-in aborted by user";
-        });
+        // User cancelled - no need to show error
         return;
       }
 
@@ -269,9 +275,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final serverAuthCode = account.serverAuthCode?.trim();
 
       if (accessToken == null) {
-        setState(() {
-          _status = "Access token is null";
-        });
+        _setValidationError("Google sign-in failed. Please try again.");
         return;
       }
       if (AppConfig.googleWebClientId.isEmpty) {
@@ -318,9 +322,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // Navigation will be handled by the ever listener for message
     } catch (error) {
       print("❌ Google Sign-In Error: $error");
-      setState(() {
-        _status = "Sign-in failed: $error";
-      });
+      _setValidationError("Google sign-in failed. Please try again.");
     }
   }
 
@@ -358,6 +360,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       setState(() {
                         selectedRole = role;
                         _status = '';
+                        _isError = false;
                       });
                     },
                   ),
@@ -423,18 +426,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ],
 
-                if (_status.isNotEmpty)
+                // Only show error messages
+                if (_status.isNotEmpty && _isError)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      _status,
-                      style: TextStyle(
-                        fontFamily: 'Lexend',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: _authController.errorMessage.value.isNotEmpty
-                            ? Colors.red
-                            : Colors.green,
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.red.shade700, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _status,
+                              style: TextStyle(
+                                fontFamily: 'Lexend',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.red.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -545,6 +563,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   setState(() {
                     _isLogin = !_isLogin;
                     _status = '';
+                    _isError = false;
                   });
                 },
               ),
