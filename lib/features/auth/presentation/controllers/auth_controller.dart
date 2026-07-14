@@ -64,6 +64,8 @@ class AuthController extends GetxController {
 
       // Store token securely
       await TokenStorage.saveToken(response.token);
+      // Store auth provider as email (manual signup)
+      await TokenStorage.saveAuthProvider('email');
 
       // Update API client with token for future requests
       ApiClient.updateAuthToken(response.token);
@@ -164,6 +166,8 @@ class AuthController extends GetxController {
 
       // Store token securely
       await TokenStorage.saveToken(response.token);
+      // Store auth provider as email (manual login)
+      await TokenStorage.saveAuthProvider('email');
       print('💾 Token saved to secure storage');
 
       // Update API client with token for future requests
@@ -313,6 +317,8 @@ class AuthController extends GetxController {
       }
 
       await TokenStorage.saveToken(response.token);
+      // Store auth provider as google
+      await TokenStorage.saveAuthProvider('google');
       print('💾 Token saved to secure storage');
 
       ApiClient.updateAuthToken(response.token);

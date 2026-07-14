@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fly/core/config/fly_google_sign_in.dart';
+import 'package:fly/core/storage/token_storage.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/features/user_profile/data/services/user_settings_remote_data_source.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 const _purple = Color(0xFF6C4EE4);
 
@@ -17,7 +16,6 @@ class UserChangePasswordScreen extends StatefulWidget {
 class _UserChangePasswordScreenState
     extends State<UserChangePasswordScreen> {
   final _ds = UserSettingsRemoteDataSource();
-  final GoogleSignIn _googleSignIn = createFlyAuthGoogleSignIn();
 
   final _currentCtrl = TextEditingController();
   final _newCtrl = TextEditingController();
@@ -38,13 +36,9 @@ class _UserChangePasswordScreenState
   }
 
   Future<void> _checkAuthProvider() async {
-    try {
-      // Silently restore previous sign-in state — no UI prompt
-      final account = await _googleSignIn.signInSilently();
-      setState(() => _isGoogleUser = account != null);
-    } catch (_) {
-      setState(() => _isGoogleUser = false);
-    }
+    // Check the stored auth provider instead of Google Sign-In state
+    final isGoogle = await TokenStorage.isGoogleUser();
+    setState(() => _isGoogleUser = isGoogle);
   }
 
   @override

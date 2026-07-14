@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/storage/token_storage.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/features/profile_creation/data/datasources/mhp_profile_remote_data_source.dart';
 
@@ -20,7 +21,21 @@ class _MhpChangePasswordScreenState extends State<MhpChangePasswordScreen> {
   bool _showConfirm = false;
   bool _saving = false;
 
+  // null = still checking, true = Google user (no password), false = email/password user
+  bool? _isGoogleUser;
+
   final _ds = MhpProfileRemoteDataSourceImpl();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthProvider();
+  }
+
+  Future<void> _checkAuthProvider() async {
+    final isGoogle = await TokenStorage.isGoogleUser();
+    setState(() => _isGoogleUser = isGoogle);
+  }
 
   @override
   void dispose() {
@@ -71,30 +86,111 @@ class _MhpChangePasswordScreenState extends State<MhpChangePasswordScreen> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: _appBar(context, 'Change Password'),
-        body: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Current password',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              const SizedBox(height: 8),
-              _passwordField(_currentCtrl, 'Enter current password', _showCurrent,
-                  () => setState(() => _showCurrent = !_showCurrent)),
-              const SizedBox(height: 20),
-              const Text('New Password',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              const SizedBox(height: 8),
-              _passwordField(_newCtrl, 'Enter new password', _showNew,
-                  () => setState(() => _showNew = !_showNew)),
-              const SizedBox(height: 12),
-              _passwordField(_confirmCtrl, 'Re-enter new password', _showConfirm,
-                  () => setState(() => _showConfirm = !_showConfirm)),
-              const Spacer(),
-              _saveButton(_saving ? null : _save, _saving),
-            ],
+        body: _isGoogleUser == null
+            ? const Center(child: CircularProgressIndicator(color: _purple))
+            : _isGoogleUser!
+                ? _buildGoogleUserInfo()
+                : _buildPasswordForm(),
+      ),
+    );
+  }
+
+  Widget _buildGoogleUserInfo() {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/images/google.png',
+                    width: 28,
+                    height: 28,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.g_mobiledata_rounded,
+                      size: 28,
+                      color: Color(0xFF4285F4),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Signed in with Google',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Your account uses Google Sign-In. Password management is handled through your Google account.',
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                            height: 1.4),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: 24),
+          const Text(
+            'To change your Google account password, visit myaccount.google.com.',
+            style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPasswordForm() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Current password',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          const SizedBox(height: 8),
+          _passwordField(_currentCtrl, 'Enter current password', _showCurrent,
+              () => setState(() => _showCurrent = !_showCurrent)),
+          const SizedBox(height: 20),
+          const Text('New Password',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          const SizedBox(height: 8),
+          _passwordField(_newCtrl, 'Enter new password', _showNew,
+              () => setState(() => _showNew = !_showNew)),
+          const SizedBox(height: 12),
+          _passwordField(_confirmCtrl, 'Re-enter new password', _showConfirm,
+              () => setState(() => _showConfirm = !_showConfirm)),
+          const Spacer(),
+          _saveButton(_saving ? null : _save, _saving),
+        ],
       ),
     );
   }
