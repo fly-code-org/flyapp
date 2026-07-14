@@ -144,13 +144,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
           Get.toNamed(AppRoutes.createUserProfile, arguments: {'role': role});
         } else {
-          // MHP: route to quiz intro (MHP flow)
-          print('   🚀 Navigating to: /intro-quiz (MHP flow)');
+          // MHP: route to phone verification first (same as manual flow, but skip email verification)
+          // Phone verification has a skip option, then continues to quiz intro
+          print('   🚀 Navigating to: /phone-verification (MHP flow)');
           await OnboardingProgress.saveStep(
-            step: AppRoutes.IntroScreen,
+            step: AppRoutes.phoneVerification,
             role: role,
           );
-          Get.toNamed(AppRoutes.IntroScreen, arguments: {'role': role});
+          Get.toNamed(AppRoutes.phoneVerification, arguments: {'role': role, 'email': ''});
         }
       } else {
         // Existing user logging in via Google - navigate to home
