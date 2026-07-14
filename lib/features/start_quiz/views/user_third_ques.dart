@@ -91,7 +91,7 @@ class _UserQuestionThirdScreenState extends State<UserQuestionThirdScreen> {
           ),
           DraggableScrollableSheet(
             initialChildSize: 0.8,
-            minChildSize: 0.1,
+            minChildSize: 0.8,
             maxChildSize: 0.8,
             builder: (context, scrollController) {
               return NotificationListener<DraggableScrollableNotification>(
