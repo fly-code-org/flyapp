@@ -72,6 +72,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Widget build(BuildContext context) {
     return SafePopScope(
       child: Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text("Create Post"),
         leading: IconButton(
@@ -88,20 +89,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Text field
-            TextField(
-              controller: _textController,
-              maxLines: null,
-              decoration: const InputDecoration(
-                hintText: "What's on your mind?",
-                border: InputBorder.none,
-              ),
-            ),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Text field
+                  TextField(
+                    controller: _textController,
+                    maxLines: null,
+                    decoration: const InputDecoration(
+                      hintText: "What's on your mind?",
+                      border: InputBorder.none,
+                    ),
+                  ),
 
             // Images preview with PageView + dots
             if (_selectedImages.isNotEmpty)
@@ -234,47 +238,60 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ),
                 ],
               ),
-          ],
-        ),
-      ),
-
-      // Bottom bar to attach media/poll
-      bottomNavigationBar: SafeArea(
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.image),
-              onPressed: () {
-                setState(() {
-                  if (_selectedVideo == null) {
-                    _selectedImages.add(
-                      "https://picsum.photos/400/300?random=${_selectedImages.length}",
-                    );
-                  }
-                });
-              },
+                ],
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.videocam),
-              onPressed: () {
-                setState(() {
-                  if (_selectedImages.isEmpty) {
-                    _selectedVideo =
-                        "https://sample-videos.com/video123/mp4/480/asdasdas.mp4";
-                  }
-                });
-              },
+          ),
+          // Bottom bar to attach media/poll - stays above keyboard
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                top: BorderSide(color: Colors.grey.shade300),
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.poll),
-              onPressed: () {
-                setState(() {
-                  _pollOptions = ["", ""];
-                });
-              },
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                  ? 8
+                  : MediaQuery.of(context).padding.bottom,
             ),
-          ],
-        ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.image),
+                  onPressed: () {
+                    setState(() {
+                      if (_selectedVideo == null) {
+                        _selectedImages.add(
+                          "https://picsum.photos/400/300?random=${_selectedImages.length}",
+                        );
+                      }
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.videocam),
+                  onPressed: () {
+                    setState(() {
+                      if (_selectedImages.isEmpty) {
+                        _selectedVideo =
+                            "https://sample-videos.com/video123/mp4/480/asdasdas.mp4";
+                      }
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.poll),
+                  onPressed: () {
+                    setState(() {
+                      _pollOptions = ["", ""];
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     ),
     );
