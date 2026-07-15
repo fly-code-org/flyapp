@@ -234,6 +234,8 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                               onChanged: (value) {
                                 print('👤 [USER PROFILE FORM] Username changed: $value');
                                 ctrl.username.value = value;
+                                // Clear username error when user types
+                                ctrl.usernameError.value = '';
                               },
                             );
                           } catch (e) {
@@ -245,27 +247,47 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         },
                       ),
                       const SizedBox(height: 10),
-                      const Text(
-                        "😮 Someone stole your idea.",
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          height: 28.75 / 23,
-                          color: Colors.red,
-                        ),
+                      // Show username unavailable message only when there's an error
+                      Builder(
+                        builder: (context) {
+                          try {
+                            final ctrl = controller;
+                            return Obx(() {
+                              if (ctrl.usernameError.value.isNotEmpty) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "😮 Someone stole your idea.",
+                                      style: TextStyle(
+                                        fontFamily: 'Lexend',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w400,
+                                        height: 28.75 / 23,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                    const Text(
+                                      "Username unavailable. Try another fictional name as fly is an anonymous platform!",
+                                      style: TextStyle(
+                                        fontFamily: 'Lexend',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w400,
+                                        height: 28.75 / 23,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                  ],
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            });
+                          } catch (e) {
+                            return const SizedBox.shrink();
+                          }
+                        },
                       ),
-                      const Text(
-                        "Username unavailable. Try another fictional name as fly is an anonymous platform!",
-                        style: TextStyle(
-                          fontFamily: 'Lexend',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          height: 28.75 / 23,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
                       const Text(
                         "First Name",
                         textAlign: TextAlign.left,
@@ -386,20 +408,18 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         builder: (context) {
                           try {
                             final ctrl = controller;
-                            return GeneralCustomInputField(
-                              hintText: "Type your mood",
-                              onChanged: (value) {
-                                print('😊 [USER PROFILE FORM] Mood changed: $value');
-                                ctrl.mood.value = value;
+                            return Obx(() => _MoodSelector(
+                              selectedMood: ctrl.mood.value,
+                              onMoodSelected: (mood) {
+                                print('😊 [USER PROFILE FORM] Mood selected: $mood');
+                                ctrl.mood.value = mood;
                               },
-                            );
+                            ));
                           } catch (e) {
                             print("❌ [USER PROFILE FORM] Error accessing controller: $e");
-                            return GeneralCustomInputField(
-                              hintText: "Type your mood",
-                              onChanged: (value) {
-                                // Empty handler for fallback
-                              },
+                            return _MoodSelector(
+                              selectedMood: '',
+                              onMoodSelected: (mood) {},
                             );
                           }
                         },
@@ -558,6 +578,58 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+const _moodOptions = [
+  ('🦋', 'Delicate'),
+  ('😊', 'Happy'),
+  ('😌', 'Calm'),
+  ('😔', 'Sad'),
+  ('😤', 'Frustrated'),
+  ('🥰', 'Loved'),
+  ('😴', 'Tired'),
+  ('🌟', 'Energized'),
+  ('🤔', 'Thoughtful'),
+  ('😰', 'Anxious'),
+];
+
+class _MoodSelector extends StatelessWidget {
+  final String selectedMood;
+  final Function(String) onMoodSelected;
+
+  const _MoodSelector({
+    required this.selectedMood,
+    required this.onMoodSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _moodOptions.map((m) {
+        final isSelected = selectedMood == m.$2;
+        return GestureDetector(
+          onTap: () => onMoodSelected(m.$2),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFF7A5AF8) : const Color(0xFFF2F2F2),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Text(
+              '${m.$1} ${m.$2}',
+              style: TextStyle(
+                fontFamily: 'Lexend',
+                color: isSelected ? Colors.white : Colors.black87,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

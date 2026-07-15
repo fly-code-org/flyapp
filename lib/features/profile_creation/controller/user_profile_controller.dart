@@ -32,6 +32,13 @@ class UserProfileController extends GetxController {
   var picturePath = ''.obs;
   var selectedDegreeFile = Rxn<PlatformFile>(); // Store selected file info
 
+  // MHP Availability fields
+  var sessionModes = <String>[].obs; // Online, In-Person, Hybrid
+  var availableDays = <String>[].obs; // Mon, Tue, Wed, etc.
+  var availabilityStartTime = ''.obs; // e.g., "09:00"
+  var availabilityEndTime = ''.obs; // e.g., "17:00"
+  var therapyTypes = <String>[].obs; // Types of therapies provided
+
   // User Profile form fields
   var firstName = ''.obs;
   var lastName = ''.obs;
@@ -49,6 +56,7 @@ class UserProfileController extends GetxController {
   var isLoading = false.obs;
   var message = ''.obs;
   var errorMessage = ''.obs;
+  var usernameError = ''.obs; // Username availability error
   var uploadProgress = 0.0.obs; // Upload progress (0.0 to 1.0)
   var isUploading = false.obs; // Whether file is currently uploading
 
@@ -157,6 +165,11 @@ class UserProfileController extends GetxController {
         if (langsList.isNotEmpty) 'languages': langsList,
         if (specsList.isNotEmpty) 'specializations': specsList,
         if (commIdValue.isNotEmpty) 'community_id': commIdValue,
+        if (sessionModes.isNotEmpty) 'session_modes': sessionModes.toList(),
+        if (availableDays.isNotEmpty) 'available_days': availableDays.toList(),
+        if (availabilityStartTime.value.isNotEmpty) 'availability_start_time': availabilityStartTime.value,
+        if (availabilityEndTime.value.isNotEmpty) 'availability_end_time': availabilityEndTime.value,
+        if (therapyTypes.isNotEmpty) 'therapy_types': therapyTypes.toList(),
       };
 
       print('💾 [SAVE TO CACHE] Profile data map created: $profileData');
@@ -423,6 +436,25 @@ class UserProfileController extends GetxController {
       final commIdValue = communityId.value;
       print('   ✅ communityId.value = "$commIdValue"');
 
+      // Build session preferences from session modes
+      final sessionPrefs = <String, dynamic>{
+        'video_enabled': sessionModes.contains('Online') || sessionModes.contains('Hybrid'),
+        'call_enabled': sessionModes.contains('Online') || sessionModes.contains('Hybrid'),
+        'in_person_enabled': sessionModes.contains('In-Person') || sessionModes.contains('Hybrid'),
+      };
+
+      // Build available slots from days and times
+      final availableSlots = <Map<String, dynamic>>[];
+      if (availableDays.isNotEmpty && availabilityStartTime.value.isNotEmpty && availabilityEndTime.value.isNotEmpty) {
+        for (final day in availableDays) {
+          availableSlots.add({
+            'day': day,
+            'start_time': availabilityStartTime.value,
+            'end_time': availabilityEndTime.value,
+          });
+        }
+      }
+
       // Merge with current form data
       final profileData = <String, dynamic>{
         ...cachedData,
@@ -438,6 +470,9 @@ class UserProfileController extends GetxController {
         if (langsList.isNotEmpty) 'languages': langsList,
         if (specsList.isNotEmpty) 'specializations': specsList,
         if (commIdValue.isNotEmpty) 'community_id': commIdValue,
+        if (sessionModes.isNotEmpty) 'session_preferences': sessionPrefs,
+        if (availableSlots.isNotEmpty) 'connect': {'available_slots': availableSlots},
+        if (therapyTypes.isNotEmpty) 'therapy_types': therapyTypes.toList(),
       };
 
       print('✅ [CREATE PROFILE] Profile data map created: $profileData');
@@ -709,6 +744,14 @@ class UserProfileController extends GetxController {
       print('❌ [CREATE USER PROFILE] ServerException: ${e.message}');
       try {
         errorMessage.value = e.message;
+        // Check if error is username-related
+        final errorLower = e.message.toLowerCase();
+        if (errorLower.contains('username') &&
+            (errorLower.contains('taken') || errorLower.contains('exists') ||
+             errorLower.contains('already') || errorLower.contains('duplicate') ||
+             errorLower.contains('unavailable'))) {
+          usernameError.value = e.message;
+        }
         update();
       } catch (updateError, stackTrace) {
         print(

@@ -151,9 +151,13 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
-                      const ListInputWidget(
+                      ListInputWidget(
                         title: "What are your types of therapies you provide",
                         hintText: 'Type a therapy and press space',
+                        onLanguagesChanged: (therapies) {
+                          controller.therapyTypes.value = therapies;
+                          controller.saveToCache();
+                        },
                       ),
                       const SizedBox(height: 24),
                       const Text(
@@ -171,7 +175,9 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                       SelectablePillList(
                         options: ["Online", "In-Person", "Hybrid"],
                         onSelectionChanged: (selected) {
-                          print("Selected options: $selected");
+                          print("Selected session modes: $selected");
+                          controller.sessionModes.value = selected;
+                          controller.saveToCache();
                         },
                       ),
                       const SizedBox(height: 24),
@@ -198,7 +204,9 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                           "Sun",
                         ],
                         onSelectionChanged: (selected) {
-                          print("Selected options: $selected");
+                          print("Selected available days: $selected");
+                          controller.availableDays.value = selected;
+                          controller.saveToCache();
                         },
                       ),
                       const SizedBox(height: 24),
@@ -216,9 +224,12 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                       const SizedBox(height: 12),
                       TimeAvailabilityField(
                         onTimeSelected: (from, to) {
-                          print(
-                            "From: ${from.format(context)}, To: ${to.format(context)}",
-                          );
+                          final fromStr = '${from.hour.toString().padLeft(2, '0')}:${from.minute.toString().padLeft(2, '0')}';
+                          final toStr = '${to.hour.toString().padLeft(2, '0')}:${to.minute.toString().padLeft(2, '0')}';
+                          print("Availability time: $fromStr - $toStr");
+                          controller.availabilityStartTime.value = fromStr;
+                          controller.availabilityEndTime.value = toStr;
+                          controller.saveToCache();
                         },
                       ),
                       const SizedBox(height: 24),
