@@ -49,9 +49,13 @@ class _EnterOtpWidgetState extends State<EnterOtpWidget> {
 
   void _handlePaste(String pastedText) {
     final digits = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
-    for (int i = 0; i < widget.length && i < digits.length; i++) {
-      _controllers[i].text = digits[i];
-    }
+    setState(() {
+      for (int i = 0; i < widget.length; i++) {
+        if (i < digits.length) {
+          _controllers[i].text = digits[i];
+        }
+      }
+    });
     if (digits.length >= widget.length) {
       _focusNodes.last.requestFocus();
     } else if (digits.isNotEmpty) {
@@ -83,7 +87,6 @@ class _EnterOtpWidgetState extends State<EnterOtpWidget> {
                 controller: _controllers[index],
                 focusNode: _focusNodes[index],
                 keyboardType: TextInputType.number,
-                maxLength: 1,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 20,
