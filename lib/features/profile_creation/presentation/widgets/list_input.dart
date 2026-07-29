@@ -42,7 +42,7 @@ class _ListInputWidgetState extends State<ListInputWidget> {
         Text(
           widget.title,
           style: const TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 16,
             fontWeight: FontWeight.w300,
             color: Colors.black,
@@ -69,7 +69,7 @@ class _ListInputWidgetState extends State<ListInputWidget> {
               child: Text(
                 lang,
                 style: const TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: Colors.white,
@@ -95,7 +95,7 @@ class _ListInputWidgetState extends State<ListInputWidget> {
               controller: _controller,
               onChanged: _handleInput,
               style: const TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
                 height: 35 / 18,
@@ -106,7 +106,7 @@ class _ListInputWidgetState extends State<ListInputWidget> {
                 border: InputBorder.none,
                 hintText: widget.hintText,
                 hintStyle: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                   color: Colors.grey.withOpacity(0.6),

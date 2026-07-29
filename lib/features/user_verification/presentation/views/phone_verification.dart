@@ -264,7 +264,7 @@ class _PhoneVerificationState extends State<PhoneVerification> {
                           "Create your account",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 27,
                             fontWeight: FontWeight.w400,
                             height: 33.75 / 27,
@@ -277,7 +277,7 @@ class _PhoneVerificationState extends State<PhoneVerification> {
                         "Verify your phone number",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -288,7 +288,7 @@ class _PhoneVerificationState extends State<PhoneVerification> {
                       const Text(
                         "This step is optional but recommended for account recovery",
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 14,
                           color: Colors.grey,
                         ),
@@ -364,7 +364,7 @@ class _PhoneVerificationState extends State<PhoneVerification> {
       child: RichText(
         text: TextSpan(
           style: const TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 14,
             color: Colors.black,
           ),

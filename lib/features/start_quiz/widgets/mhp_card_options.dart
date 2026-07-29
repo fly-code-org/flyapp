@@ -70,7 +70,7 @@ class _SelectableCardsState extends State<SelectableCards> {
             Text(
               title,
               style: TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: isSelected ? Colors.white : Colors.black87,
@@ -86,7 +86,7 @@ class _SelectableCardsState extends State<SelectableCards> {
               Text(
                 subtitle,
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 14,
                   color: isSelected ? Colors.white70 : Colors.grey[600],
                 ),

@@ -140,7 +140,7 @@ class _CommunityPostsTabsState extends State<CommunityPostsTabs> {
             ? const Center(
                 child: Text('No posts yet',
                     style: TextStyle(
-                        fontFamily: 'Lexend', color: Colors.grey)),
+                         color: Colors.grey)),
               )
             : SocialFeed(
                 posts: uiNew,
@@ -150,7 +150,7 @@ class _CommunityPostsTabsState extends State<CommunityPostsTabs> {
             ? const Center(
                 child: Text('No posts yet',
                     style: TextStyle(
-                        fontFamily: 'Lexend', color: Colors.grey)),
+                         color: Colors.grey)),
               )
             : SocialFeed(
                 posts: uiPopular,

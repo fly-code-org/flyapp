@@ -36,7 +36,7 @@ class _BookSessionScreenState extends State<BookSessionScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => popOrGoHome(context)),
-        title: const Text('Connect', style: TextStyle(fontFamily: 'Lexend', color: Colors.black, fontWeight: FontWeight.w600)),
+        title: const Text('Connect', style: TextStyle( color: Colors.black, fontWeight: FontWeight.w600)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -46,7 +46,7 @@ class _BookSessionScreenState extends State<BookSessionScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(monthYear, style: const TextStyle(fontFamily: 'Lexend', fontSize: 18, fontWeight: FontWeight.w500)),
+                Text(monthYear, style: const TextStyle( fontSize: 18, fontWeight: FontWeight.w500)),
                 Row(
                   children: [
                     IconButton(onPressed: () => setState(() => _selectedDate = _selectedDate.subtract(const Duration(days: 7))), icon: const Icon(Icons.chevron_left)),
@@ -80,7 +80,7 @@ class _BookSessionScreenState extends State<BookSessionScreen> {
               }).toList(),
             ),
             const SizedBox(height: 28),
-            const Text('Preference', style: TextStyle(fontFamily: 'Lexend', fontSize: 16, fontWeight: FontWeight.w500)),
+            const Text('Preference', style: TextStyle( fontSize: 16, fontWeight: FontWeight.w500)),
             const SizedBox(height: 10),
             Row(
               children: _preferences.map((p) {
@@ -97,7 +97,7 @@ class _BookSessionScreenState extends State<BookSessionScreen> {
               }).toList(),
             ),
             const SizedBox(height: 20),
-            const Text('Duration', style: TextStyle(fontFamily: 'Lexend', fontSize: 16, fontWeight: FontWeight.w500)),
+            const Text('Duration', style: TextStyle( fontSize: 16, fontWeight: FontWeight.w500)),
             const SizedBox(height: 10),
             Row(
               children: _durations.map((d) {
@@ -109,7 +109,7 @@ class _BookSessionScreenState extends State<BookSessionScreen> {
               }).toList(),
             ),
             const SizedBox(height: 20),
-            const Text('Available slots', style: TextStyle(fontFamily: 'Lexend', fontSize: 16, fontWeight: FontWeight.w500)),
+            const Text('Available slots', style: TextStyle( fontSize: 16, fontWeight: FontWeight.w500)),
             const SizedBox(height: 10),
             Row(
               children: _slots.map((s) {
@@ -139,7 +139,7 @@ class _BookSessionScreenState extends State<BookSessionScreen> {
                     gradient: const LinearGradient(colors: [Color(0xFFC36AFD), Color(0xFF7A5AF8)], begin: Alignment.centerLeft, end: Alignment.centerRight),
                     borderRadius: BorderRadius.circular(50),
                   ),
-                  child: const Text("Let's connect", textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Lexend', fontSize: 18, fontWeight: FontWeight.w500, color: Colors.white)),
+                  child: const Text("Let's connect", textAlign: TextAlign.center, style: TextStyle( fontSize: 18, fontWeight: FontWeight.w500, color: Colors.white)),
                 ),
               ),
             ),
@@ -164,7 +164,7 @@ class _BookSessionScreenState extends State<BookSessionScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[Icon(icon, size: 18, color: selected ? Colors.white : Colors.grey), const SizedBox(width: 6)],
-            Text(label, style: TextStyle(fontFamily: 'Lexend', fontSize: 14, color: selected ? Colors.white : Colors.grey[700])),
+            Text(label, style: TextStyle( fontSize: 14, color: selected ? Colors.white : Colors.grey[700])),
           ],
         ),
       ),

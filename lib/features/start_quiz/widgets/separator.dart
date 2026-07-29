@@ -23,7 +23,7 @@ class Separator extends StatelessWidget {
           text,
           style: const TextStyle(
             color: Colors.grey,
-            fontFamily: 'Lexend',
+            
             fontSize: 14,
             fontWeight: FontWeight.w400,
           ),

@@ -467,7 +467,7 @@ class _GetInterestScreenState extends State<GetInterestScreen> {
                         "Which tags would you like to follow?",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 27,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,

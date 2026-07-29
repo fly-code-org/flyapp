@@ -81,7 +81,7 @@ class NotificationCard extends StatelessWidget {
                   Text(
                     notification.title,
                     style: TextStyle(
-                      fontFamily: 'Lexend',
+                      
                       fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
                       fontSize: 14,
                       color: Colors.black,
@@ -91,7 +91,7 @@ class NotificationCard extends StatelessWidget {
                   Text(
                     notification.message,
                     style: const TextStyle(
-                      fontFamily: 'Lexend',
+                      
                       color: Colors.black54,
                       fontSize: 13,
                       height: 1.3,
@@ -178,7 +178,7 @@ class _JoinMeetChip extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
-                fontFamily: 'Lexend',
+                
               ),
             ),
           ],

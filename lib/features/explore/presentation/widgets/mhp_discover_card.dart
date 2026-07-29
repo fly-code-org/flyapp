@@ -77,7 +77,7 @@ class MhpDiscoverCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
@@ -109,7 +109,7 @@ class MhpDiscoverCard extends StatelessWidget {
                       Text(
                         'Book Session',
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,

@@ -152,7 +152,7 @@ class _UserQuestionFourthScreenState extends State<UserQuestionFourthScreen> {
                               child: Text(
                                 question.question,
                                 style: const TextStyle(
-                                  fontFamily: 'Lexend',
+                                  
                                   fontSize: 27,
                                   fontWeight: FontWeight.normal,
                                 ),

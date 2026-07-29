@@ -35,7 +35,7 @@ class OnboardingSheetContent extends StatelessWidget {
                         child: Text(
                           "Welcome to your safe space to connect, grow, and heal anonymously.",
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 40,
                             fontWeight: FontWeight.w500,
                             height: 50 / 40,
@@ -66,7 +66,7 @@ class OnboardingSheetContent extends StatelessWidget {
                             "Let's Begin",
                             style: TextStyle(
                               color: Colors.white,
-                              fontFamily: 'Lexend',
+                              
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
                             ),

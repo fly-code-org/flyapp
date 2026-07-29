@@ -370,13 +370,13 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
               Text(
                 _loadError!,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontFamily: 'Lexend', color: Colors.grey.shade800),
+                style: TextStyle( color: Colors.grey.shade800),
               ),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: _loadOffers,
                 style: FilledButton.styleFrom(backgroundColor: _purple),
-                child: const Text('Retry', style: TextStyle(fontFamily: 'Lexend')),
+                child: const Text('Retry'),
               ),
             ],
           ),
@@ -392,7 +392,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
             'This professional has not published any therapy offers yet. Check back later.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Lexend',
+              
               color: Colors.grey.shade700,
               height: 1.4,
             ),
@@ -449,7 +449,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
       Text(
         'Choose the session package. Duration and fees follow the offer.',
         style: TextStyle(
-          fontFamily: 'Lexend',
+          
           fontSize: 12,
           height: 1.35,
           color: Colors.grey.shade600,
@@ -467,7 +467,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
                 ? 'You\'ll receive call details before your session.'
                 : 'Meeting location or address will be shared after booking.',
         style: TextStyle(
-          fontFamily: 'Lexend',
+          
           fontSize: 12,
           height: 1.35,
           color: Colors.grey.shade600,
@@ -482,7 +482,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
         Text(
           'No ${_preference.toLowerCase()} slots in this offer. Try another therapy type or preference.',
           style: TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 13,
             color: Colors.orange.shade800,
           ),
@@ -544,7 +544,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
           child: Text(
             formatted,
             style: const TextStyle(
-              fontFamily: 'Lexend',
+              
               fontSize: _titleSize,
               fontWeight: FontWeight.w600,
               color: Colors.black87,
@@ -584,7 +584,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
                     child: Text(
                       l,
                       style: TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: Colors.grey.shade600,
@@ -636,7 +636,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
                 child: Text(
                   '${d.day}',
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 14,
                     fontWeight:
                         selected ? FontWeight.w600 : FontWeight.w500,
@@ -659,7 +659,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
     return Text(
       t,
       style: const TextStyle(
-        fontFamily: 'Lexend',
+        
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: Colors.black87,
@@ -750,7 +750,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
                 child: Text(
                   'No slots this day',
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                     color: Colors.grey.shade800,
@@ -763,7 +763,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
           Text(
             'Try another day in this week or use the arrows to check the next week.',
             style: TextStyle(
-              fontFamily: 'Lexend',
+              
               fontSize: 13,
               height: 1.35,
               color: Colors.grey.shade600,
@@ -813,7 +813,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
               Text(
                 label,
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: selected ? Colors.white : Colors.grey.shade700,
@@ -844,7 +844,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
                 _summaryLine1(),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
@@ -855,7 +855,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
                 _summaryLine2(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 12,
                   color: Colors.grey.shade600,
                 ),
@@ -887,7 +887,7 @@ class _MhpVisitorConnectBookingTabState extends State<MhpVisitorConnectBookingTa
                       : const Text(
                           "Let's connect",
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),

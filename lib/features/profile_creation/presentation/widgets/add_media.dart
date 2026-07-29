@@ -34,7 +34,7 @@ class AddMediaWidget extends StatelessWidget {
               Text(
                 text,
                 style: const TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: Colors.black,

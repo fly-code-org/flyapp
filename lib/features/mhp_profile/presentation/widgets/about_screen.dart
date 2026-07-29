@@ -223,7 +223,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
               child: Text(
                 'check what client says',
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 13,
                   color: Colors.grey.shade500,
                 ),
@@ -241,7 +241,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
               Text(
                 displayRating,
                 style: const TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 56,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
@@ -263,7 +263,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                 Text(
                   '${widget.ratingCount} ${widget.ratingCount == 1 ? 'review' : 'reviews'}',
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 13,
                     color: Colors.grey.shade500,
                   ),
@@ -323,7 +323,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                 Text(
                   dateLabel,
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 12,
                     color: Colors.grey.shade400,
                   ),
@@ -335,7 +335,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
             Text(
               text,
               style: const TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 color: Colors.black87,
                 height: 1.4,
@@ -377,7 +377,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontFamily: 'Lexend',
+                      
                       fontWeight: FontWeight.w600,
                       fontSize: 18,
                       color: color,
@@ -394,7 +394,6 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
             readOnly: readOnly,
             onChanged: readOnly ? null : onChanged,
             maxLines: null,
-            style: const TextStyle(fontFamily: 'Lexend'),
             decoration: InputDecoration(
               hintText: readOnly ? null : "Add details here...",
               border: InputBorder.none,
@@ -416,7 +415,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                 ),
                 child: const Text(
                   "Save Changes",
-                  style: TextStyle(color: Colors.white, fontFamily: 'Lexend'),
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
             ),
@@ -447,7 +446,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
               Text(
                 title,
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontWeight: FontWeight.w600,
                   fontSize: 18,
                   color: color,
@@ -474,7 +473,7 @@ class _MHPProfileEditScreenState extends State<MHPProfileEditScreen> {
                       tag,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontFamily: 'Lexend',
+                        
                       ),
                     ),
                   ),

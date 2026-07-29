@@ -47,7 +47,7 @@ class _BookSessionChip extends StatelessWidget {
       label: const Text(
         'Book Session',
         style: TextStyle(
-          fontFamily: 'Lexend',
+          
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
@@ -119,7 +119,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: isActive ? const Color(0xFF855DFC) : Colors.grey[700],
-                  fontFamily: 'Lexend',
+                  
                 ),
               ),
             ],
@@ -249,7 +249,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
             Text(
               '$count Streak${count == 1 ? '' : 's'}',
               style: const TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF855DFC),
@@ -306,7 +306,6 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                 child: Text(
                   'Unable to load booking for this profile.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontFamily: 'Lexend'),
                 ),
               ),
             );
@@ -598,7 +597,7 @@ class _MhpProfileScreenState extends State<MhpProfileScreen>
                     const Text(
                       'Certified MHP',
                       style: TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,

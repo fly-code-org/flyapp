@@ -88,7 +88,7 @@ class NotificationScreen extends StatelessWidget {
                                 'Load more',
                                 style: TextStyle(
                                   color: Color(0xFF855DFC),
-                                  fontFamily: 'Lexend',
+                                  
                                 ),
                               ),
                             ),

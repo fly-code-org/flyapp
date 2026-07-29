@@ -59,7 +59,7 @@ class _SelectablePillListState extends State<SelectablePillList> {
             child: Text(
               option,
               style: TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: isSelected ? Colors.white : Colors.black87,

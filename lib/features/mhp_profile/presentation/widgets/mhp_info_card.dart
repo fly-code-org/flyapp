@@ -35,7 +35,7 @@ class UserInfo extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
                 color: Colors.black54,
-                fontFamily: 'Lexend',
+                
               ),
             ),
           ),
@@ -60,7 +60,7 @@ class UserInfo extends StatelessWidget {
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
-            fontFamily: 'Lexend',
+            
           ),
         ),
         if (bio.isNotEmpty) ...[
@@ -71,7 +71,7 @@ class UserInfo extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: Colors.black54,
-              fontFamily: 'Lexend',
+              
               height: 1.4,
             ),
           ),

@@ -30,7 +30,7 @@ class EditProfileButton extends StatelessWidget {
                 color: Color(0xFF855DFC),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                fontFamily: 'Lexend',
+                
               ),
             ),
           ],

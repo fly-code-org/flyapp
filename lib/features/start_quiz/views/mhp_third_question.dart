@@ -154,7 +154,7 @@ class _MhpQuestionThirdScreenState extends State<MhpQuestionThirdScreen> {
                               child: Text(
                                 question.question,
                                 style: const TextStyle(
-                                  fontFamily: 'Lexend',
+                                  
                                   fontSize: 27,
                                   fontWeight: FontWeight.normal,
                                 ),

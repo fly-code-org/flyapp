@@ -79,7 +79,7 @@ class CommunityCard extends StatelessWidget {
             child: Text(
               communityName,
               style: const TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 fontWeight: FontWeight.normal,
                 color: Colors.black,

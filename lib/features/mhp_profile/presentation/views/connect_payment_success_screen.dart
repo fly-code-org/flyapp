@@ -553,7 +553,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                   'Payment Success',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    fontFamily: 'Lexend',
+                                    
                                     fontSize: 22,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.black87,
@@ -592,7 +592,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                       label: Text(
                                         'Open video link',
                                         style: TextStyle(
-                                          fontFamily: 'Lexend',
+                                          
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,
                                           color: Colors.deepPurple.shade700,
@@ -629,7 +629,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                               child: Text(
                                                 'Video link unavailable',
                                                 style: TextStyle(
-                                                  fontFamily: 'Lexend',
+                                                  
                                                   fontWeight: FontWeight.w700,
                                                   fontSize: 14,
                                                   color: Colors.amber.shade900,
@@ -642,7 +642,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                         Text(
                                           _connectMeetFailureCopy(meetCode),
                                           style: TextStyle(
-                                            fontFamily: 'Lexend',
+                                            
                                             fontSize: 12.5,
                                             height: 1.35,
                                             color: Colors.brown.shade800,
@@ -719,7 +719,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                   label: const Text(
                                     'Get PDF Receipt',
                                     style: TextStyle(
-                                      fontFamily: 'Lexend',
+                                      
                                       fontWeight: FontWeight.w600,
                                       fontSize: 15,
                                     ),
@@ -771,7 +771,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                         Text(
                                           'Trouble with your payment?',
                                           style: TextStyle(
-                                            fontFamily: 'Lexend',
+                                            
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                             color: Colors.white.withValues(
@@ -784,7 +784,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                                         Text(
                                           'Let us know on help center now!',
                                           style: TextStyle(
-                                            fontFamily: 'Lexend',
+                                            
                                             fontSize: 12,
                                             fontWeight: FontWeight.w400,
                                             color: Colors.white.withValues(
@@ -815,7 +815,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
                               child: const Text(
                                 'Back to Home',
                                 style: TextStyle(
-                                  fontFamily: 'Lexend',
+                                  
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                   color: _backHomePurple,
@@ -847,7 +847,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 13,
                 color: Colors.grey.shade700,
                 height: 1.35,
@@ -858,7 +858,7 @@ class ConnectPaymentSuccessScreen extends StatelessWidget {
             child: Text(
               value,
               style: const TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,

@@ -114,7 +114,7 @@ class UpcomingSessionBanner extends StatelessWidget {
                     Text(
                       imminent ? _countdownLabel : 'Upcoming session',
                       style: TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.85),
@@ -125,7 +125,7 @@ class UpcomingSessionBanner extends StatelessWidget {
                     Text(
                       _mhpName,
                       style: const TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -138,7 +138,7 @@ class UpcomingSessionBanner extends StatelessWidget {
                       Text(
                         '${_formatDate(_startAt)} · ${_formatTime(_startAt)}',
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 12,
                           color: Colors.white.withValues(alpha: 0.8),
                         ),
@@ -148,7 +148,7 @@ class UpcomingSessionBanner extends StatelessWidget {
                       Text(
                         '${_formatDate(_startAt)} · ${_formatTime(_startAt)}',
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 12,
                           color: Colors.white.withValues(alpha: 0.8),
                         ),
@@ -192,7 +192,7 @@ class _ActionChip extends StatelessWidget {
         child: Text(
           label,
           style: const TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: _purple,

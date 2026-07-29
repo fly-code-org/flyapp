@@ -37,7 +37,7 @@ class _RoleSelectorState extends State<RoleSelector> {
             child: Text(
               'Mental Health Professional — therapist, counselor, or coach',
               style: TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: Color(0xFF8545E1),
@@ -82,7 +82,7 @@ class _RoleSelectorState extends State<RoleSelector> {
               Text(
                 role,
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: isSelected ? const Color(0xFF8545E1) : Colors.grey,

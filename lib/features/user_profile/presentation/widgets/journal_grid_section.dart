@@ -165,7 +165,7 @@ class JournalGridSection extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Lexend',
+                    
                     color: Colors.black87,
                   ),
                   maxLines: 2,
@@ -176,7 +176,7 @@ class JournalGridSection extends StatelessWidget {
                   _formatDate(journal.createdAt),
                   style: const TextStyle(
                     fontSize: 13,
-                    fontFamily: 'Lexend',
+                    
                     color: Colors.black54,
                   ),
                 ),

@@ -318,7 +318,7 @@ class _SessionPaymentPlaceholderScreenState
         title: const Text(
           'Checkout',
           style: TextStyle(
-            fontFamily: 'Lexend',
+            
             color: Colors.black87,
             fontWeight: FontWeight.w600,
           ),
@@ -351,7 +351,7 @@ class _SessionPaymentPlaceholderScreenState
                                       Text(
                                         therapyLine,
                                         style: TextStyle(
-                                          fontFamily: 'Lexend',
+                                          
                                           fontSize: 13,
                                           color: Colors.grey.shade600,
                                           height: 1.3,
@@ -361,7 +361,7 @@ class _SessionPaymentPlaceholderScreenState
                                       Text(
                                         mhpName,
                                         style: const TextStyle(
-                                          fontFamily: 'Lexend',
+                                          
                                           fontSize: 20,
                                           fontWeight: FontWeight.w600,
                                           color: Colors.black87,
@@ -382,7 +382,7 @@ class _SessionPaymentPlaceholderScreenState
                               Text(
                                 'Pay before ${DateFormat('h:mm a').format(holdExpDt.toLocal())}',
                                 style: TextStyle(
-                                  fontFamily: 'Lexend',
+                                  
                                   fontSize: 12,
                                   color: Colors.grey.shade600,
                                 ),
@@ -409,7 +409,7 @@ class _SessionPaymentPlaceholderScreenState
                                 decoration: InputDecoration(
                                   hintText: 'Coupon code',
                                   hintStyle: TextStyle(
-                                    fontFamily: 'Lexend',
+                                    
                                     color: Colors.grey.shade500,
                                     fontSize: 15,
                                   ),
@@ -417,7 +417,7 @@ class _SessionPaymentPlaceholderScreenState
                                   isDense: true,
                                 ),
                                 style: const TextStyle(
-                                  fontFamily: 'Lexend',
+                                  
                                   fontSize: 15,
                                 ),
                               ),
@@ -427,7 +427,7 @@ class _SessionPaymentPlaceholderScreenState
                               child: const Text(
                                 'Apply',
                                 style: TextStyle(
-                                  fontFamily: 'Lexend',
+                                  
                                   fontWeight: FontWeight.w600,
                                   color: _purple,
                                 ),
@@ -447,7 +447,7 @@ class _SessionPaymentPlaceholderScreenState
                             const Text(
                               'Payment Info:',
                               style: TextStyle(
-                                fontFamily: 'Lexend',
+                                
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.black87,
@@ -487,7 +487,7 @@ class _SessionPaymentPlaceholderScreenState
                                   child: Text(
                                     'Final amount',
                                     style: TextStyle(
-                                      fontFamily: 'Lexend',
+                                      
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.black87,
@@ -499,7 +499,7 @@ class _SessionPaymentPlaceholderScreenState
                                       ? '…'
                                       : '₹$_finalPayableInr',
                                   style: const TextStyle(
-                                    fontFamily: 'Lexend',
+                                    
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.black87,
@@ -512,7 +512,7 @@ class _SessionPaymentPlaceholderScreenState
                               Text(
                                 _orderError!,
                                 style: TextStyle(
-                                  fontFamily: 'Lexend',
+                                  
                                   fontSize: 13,
                                   color: Colors.red.shade800,
                                   height: 1.35,
@@ -520,10 +520,7 @@ class _SessionPaymentPlaceholderScreenState
                               ),
                               TextButton(
                                 onPressed: _loadingOrder ? null : _loadPaymentOrder,
-                                child: const Text(
-                                  'Retry',
-                                  style: TextStyle(fontFamily: 'Lexend'),
-                                ),
+                                child: const Text('Retry'),
                               ),
                             ],
                           ],
@@ -565,7 +562,7 @@ class _SessionPaymentPlaceholderScreenState
                         : const Text(
                             'Continue',
                             style: TextStyle(
-                              fontFamily: 'Lexend',
+                              
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
                             ),
@@ -589,7 +586,7 @@ class _SessionPaymentPlaceholderScreenState
             child: Text(
               label,
               style: TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
@@ -600,7 +597,7 @@ class _SessionPaymentPlaceholderScreenState
             child: Text(
               value,
               style: const TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.black87,
@@ -625,7 +622,7 @@ class _SessionPaymentPlaceholderScreenState
           child: Text(
             label,
             style: TextStyle(
-              fontFamily: 'Lexend',
+              
               fontSize: 14,
               color: Colors.grey.shade700,
             ),
@@ -635,7 +632,7 @@ class _SessionPaymentPlaceholderScreenState
           value,
           style: valueStyle ??
               TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: valueIsMuted ? Colors.grey.shade500 : Colors.black87,

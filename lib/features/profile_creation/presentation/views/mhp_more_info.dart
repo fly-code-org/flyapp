@@ -139,7 +139,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                         "Tell us about yourself",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 27,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -151,7 +151,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                         "Where have you studied?",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -163,7 +163,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                         "Add the name of your college/university",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -184,7 +184,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                         "What did you pursue",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -204,7 +204,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                         "Years of experience: ",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -234,7 +234,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                         "State where you practice",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -263,7 +263,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                         "Upload your degree certificate",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -275,7 +275,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                         "Add your certificate in PDF format",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -350,7 +350,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                                                       .value!
                                                       .name,
                                                   style: const TextStyle(
-                                                    fontFamily: 'Lexend',
+                                                    
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.w500,
                                                     color: Colors.white,
@@ -363,7 +363,7 @@ class _MoreInfoScreenState extends State<MoreInfoScreen> {
                                                 Text(
                                                   '${(ctrl.selectedDegreeFile.value!.size / 1024).toStringAsFixed(2)} KB',
                                                   style: TextStyle(
-                                                    fontFamily: 'Lexend',
+                                                    
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w400,
                                                     color: Colors.grey[400],

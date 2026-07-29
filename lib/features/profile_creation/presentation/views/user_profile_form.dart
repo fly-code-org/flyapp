@@ -141,7 +141,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         "Create your profile",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 27,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -193,7 +193,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                                           Text(
                                             "Photo selected",
                                             style: TextStyle(
-                                              fontFamily: 'Lexend',
+                                              
                                               fontSize: 14,
                                               color: Color(0xFF34A853),
                                             ),
@@ -215,7 +215,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         "Create your alias username",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -260,7 +260,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                                     const Text(
                                       "😮 Someone stole your idea.",
                                       style: TextStyle(
-                                        fontFamily: 'Lexend',
+                                        
                                         fontSize: 13,
                                         fontWeight: FontWeight.w400,
                                         height: 28.75 / 23,
@@ -270,7 +270,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                                     const Text(
                                       "Username unavailable. Try another fictional name as fly is an anonymous platform!",
                                       style: TextStyle(
-                                        fontFamily: 'Lexend',
+                                        
                                         fontSize: 13,
                                         fontWeight: FontWeight.w400,
                                         height: 28.75 / 23,
@@ -292,7 +292,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         "First Name",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -328,7 +328,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         "Last Name",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -363,7 +363,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         "Date of Birth",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -396,7 +396,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         "Mood Check-In",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -429,7 +429,7 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                         "Add a quick bio",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -622,7 +622,7 @@ class _MoodSelector extends StatelessWidget {
             child: Text(
               '${m.$1} ${m.$2}',
               style: TextStyle(
-                fontFamily: 'Lexend',
+                
                 color: isSelected ? Colors.white : Colors.black87,
                 fontSize: 14,
               ),

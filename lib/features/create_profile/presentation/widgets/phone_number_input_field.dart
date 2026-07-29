@@ -24,7 +24,7 @@ class PhoneNumberInputField extends StatelessWidget {
           controller: controller,
           keyboardType: TextInputType.phone,
           style: const TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 18,
             fontWeight: FontWeight.w500,
             height: 35 / 18,
@@ -35,7 +35,7 @@ class PhoneNumberInputField extends StatelessWidget {
             border: InputBorder.none,
             hintText: 'Enter Phone Number',
             hintStyle: TextStyle(
-              fontFamily: 'Lexend',
+              
               fontSize: 18,
               fontWeight: FontWeight.w500,
               height: 20.5 / 18,

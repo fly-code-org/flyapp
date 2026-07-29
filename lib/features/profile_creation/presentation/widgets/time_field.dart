@@ -37,7 +37,7 @@ class _TimeAvailabilityFieldState extends State<TimeAvailabilityField> {
         const Text(
           "From time to To time",
           style: TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 14,
             fontWeight: FontWeight.w300,
           ),
@@ -63,7 +63,7 @@ class _TimeAvailabilityFieldState extends State<TimeAvailabilityField> {
                   child: Text(
                     _fromTime != null ? _fromTime!.format(context) : "From",
                     style: const TextStyle(
-                      fontFamily: 'Lexend',
+                      
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       ),
@@ -91,7 +91,7 @@ class _TimeAvailabilityFieldState extends State<TimeAvailabilityField> {
                   child: Text(
                     _toTime != null ? _toTime!.format(context) : "To",
                     style: const TextStyle(
-                      fontFamily: 'Lexend',
+                      
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       ),

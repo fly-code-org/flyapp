@@ -71,7 +71,7 @@ class _UserProfileState extends State<UserProfile> {
                       "Create your profile",
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 27,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,

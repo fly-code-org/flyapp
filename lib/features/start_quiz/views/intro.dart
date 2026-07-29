@@ -100,7 +100,7 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                           "We’ve designed a few quick questions to better understand your journey.\n\n"
                           "Your insights will help us improve fly and create a more supportive space for everyone.",
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 30,
                             fontWeight: FontWeight.w500,
                             height: 50 / 40,
@@ -143,7 +143,7 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                               color: Color(0xFF8545E1), // purple
                               fontSize: 18,
                               fontWeight: FontWeight.normal,
-                              fontFamily: 'Lexend',
+                              
                             ),
                           ),
                         ),

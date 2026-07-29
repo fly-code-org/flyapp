@@ -77,7 +77,7 @@ class SocialTag extends StatelessWidget {
             Text(
               rightText,
               style: const TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: Colors.black,

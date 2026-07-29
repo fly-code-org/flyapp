@@ -21,7 +21,7 @@ class NotRecievedOTP extends StatelessWidget {
               TextSpan(
                 text: "Didn't recieve OTP?",
                 style: const TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
                   color: Colors.black,
@@ -33,7 +33,7 @@ class NotRecievedOTP extends StatelessWidget {
               TextSpan(
                 text: "Resend",
                 style: const TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,

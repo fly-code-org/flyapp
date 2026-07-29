@@ -133,7 +133,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: isActive ? Color(0xFF855DFC) : Colors.grey[700],
-                  fontFamily: 'Lexend',
+                  
                 ),
               ),
             ],

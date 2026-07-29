@@ -355,7 +355,7 @@ class _CreateWellnessCommunityScreenState
                         "Create your community, set the vibe that speaks to your mission",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 27,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -387,7 +387,7 @@ class _CreateWellnessCommunityScreenState
                                     Text(
                                       "Photo selected",
                                       style: TextStyle(
-                                        fontFamily: 'Lexend',
+                                        
                                         fontSize: 14,
                                         color: Color(0xFF34A853),
                                       ),
@@ -403,7 +403,7 @@ class _CreateWellnessCommunityScreenState
                         "Community Name",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -421,7 +421,7 @@ class _CreateWellnessCommunityScreenState
                         "Add a description",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -444,7 +444,7 @@ class _CreateWellnessCommunityScreenState
                       const Text(
                         "Select Wellness Community Tag",
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 20,
                           fontWeight: FontWeight.w400,
                         ),
@@ -466,7 +466,7 @@ class _CreateWellnessCommunityScreenState
                       // const Text(
                       //   "Select Social Community Tag",
                       //   style: TextStyle(
-                      //     fontFamily: 'Lexend',
+                      //     
                       //     fontSize: 20,
                       //     fontWeight: FontWeight.w400,
                       //   ),

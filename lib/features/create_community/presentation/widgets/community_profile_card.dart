@@ -58,7 +58,7 @@ class CommunityProfileCard extends StatelessWidget {
               Text(
                 title,
                 style: const TextStyle(
-                  fontFamily: "Lexend",
+                  
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.black,
@@ -68,7 +68,7 @@ class CommunityProfileCard extends StatelessWidget {
               Text(
                 "$members members",
                 style: const TextStyle(
-                  fontFamily: "Lexend",
+                  
                   fontSize: 14,
                   color: Colors.grey,
                 ),
@@ -77,7 +77,7 @@ class CommunityProfileCard extends StatelessWidget {
               Text(
                 description,
                 style: const TextStyle(
-                  fontFamily: "Lexend",
+                  
                   fontSize: 14,
                   color: Colors.black87,
                 ),

@@ -160,7 +160,7 @@ class _CommunityWellnessProfileState extends State<CommunityWellnessProfile> {
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Text('No community yet', style: TextStyle(fontFamily: 'Lexend')),
+                                      const Text('No community yet'),
                                       const SizedBox(height: 16),
                                       ElevatedButton(
                                         onPressed: () => Get.toNamed(AppRoutes.CreateWellnessCommunity),

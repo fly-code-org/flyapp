@@ -57,7 +57,7 @@ class MHPSquare extends StatelessWidget {
                     Text(
                       "MHP's Square",
                       style: TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.85),
@@ -68,7 +68,7 @@ class MHPSquare extends StatelessWidget {
                     Text(
                       hasCommunity ? community!.name : 'No community yet',
                       style: const TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -83,7 +83,7 @@ class MHPSquare extends StatelessWidget {
                       Text(
                         '${community!.members!.length} members',
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 12,
                           color: Colors.white.withValues(alpha: 0.8),
                         ),
@@ -168,7 +168,7 @@ class _Chip extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          fontFamily: 'Lexend',
+          
           fontSize: 13,
           fontWeight: FontWeight.w700,
           color: _purple,

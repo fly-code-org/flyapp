@@ -70,7 +70,7 @@ class CommunityMenuSheet extends StatelessWidget {
       title: Text(
         text,
         style: TextStyle(
-          fontFamily: 'Lexend',
+          
           fontSize: 16,
           color: color,
           fontWeight: text == "Leave Community"

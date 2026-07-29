@@ -228,7 +228,7 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
                   child: Text(
                     "first love yourself",
                     style: TextStyle(
-                      fontFamily: 'Lexend',
+                      
                       fontSize: 24,
                       fontWeight: FontWeight.w400,
                       color: Colors.white,
@@ -279,7 +279,7 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
                 child: const Text(
                   "Created with 🤍 in India",
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: Colors.white,
@@ -311,7 +311,7 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
                   const Text(
                     "Welcome to your safe space to connect, grow, and heal anonymously.",
                     style: TextStyle(
-                      fontFamily: 'Lexend',
+                      
                       fontSize: 40,
                       fontWeight: FontWeight.w500,
                       height: 50 / 40,
@@ -371,7 +371,7 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
                   "Let's Begin",
                   style: TextStyle(
                     color: Colors.white,
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
                   ),
@@ -400,7 +400,7 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
                     TextSpan(
                       text: 'Already a part of fly? ',
                       style: TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 14,
                         color: Colors.black87,
                       ),
@@ -408,7 +408,7 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
                     TextSpan(
                       text: 'Login Here',
                       style: TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
@@ -439,7 +439,7 @@ class _OnboardingState extends State<Onboarding> with TickerProviderStateMixin {
         style: const TextStyle(
           color: Colors.white,
           fontSize: 12,
-          fontFamily: 'Lexend',
+          
           fontWeight: FontWeight.w500,
         ),
       ),

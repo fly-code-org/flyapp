@@ -29,7 +29,7 @@ class ConnectBookingStickyBar extends StatelessWidget {
                   state.summaryLine1,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
@@ -40,7 +40,7 @@ class ConnectBookingStickyBar extends StatelessWidget {
                 state.summaryLine2,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 12,
                   color: Colors.grey.shade600,
                 ),
@@ -74,7 +74,7 @@ class ConnectBookingStickyBar extends StatelessWidget {
                       : const Text(
                           "Let's connect",
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),

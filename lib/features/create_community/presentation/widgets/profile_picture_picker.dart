@@ -56,7 +56,7 @@ class _ProfileImagePickerState extends State<ProfileImagePicker> {
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey,
-              fontFamily: 'Lexend',
+              
             ),
           ),
         ],

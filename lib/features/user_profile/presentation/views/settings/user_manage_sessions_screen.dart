@@ -485,7 +485,7 @@ class _UpcomingSessionActions extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color:
                         _isStartingSoon ? Colors.orange.shade700 : _purple,
-                    fontFamily: 'Lexend',
+                    
                   ),
                 ),
               ],
@@ -505,8 +505,7 @@ class _UpcomingSessionActions extends StatelessWidget {
                 style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
-                    color: Colors.white,
-                    fontFamily: 'Lexend'),
+                    color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _purple,

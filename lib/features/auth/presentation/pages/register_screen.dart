@@ -344,7 +344,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     _isLogin ? "Log In" : "Create your account",
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontFamily: 'Lexend',
+                      
                       fontSize: 27,
                       fontWeight: FontWeight.w400,
                       height: 33.75 / 27,
@@ -409,7 +409,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const Text(
                     "💪🏻 Keep it strong and safe.",
                     style: TextStyle(
-                      fontFamily: 'Lexend',
+                      
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
                       color: Colors.red,
@@ -418,7 +418,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const Text(
                     "Min 8 letters, add numbers or symbols.",
                     style: TextStyle(
-                      fontFamily: 'Lexend',
+                      
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
                       color: Colors.black,
@@ -445,7 +445,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: Text(
                               _status,
                               style: TextStyle(
-                                fontFamily: 'Lexend',
+                                
                                 fontSize: 13,
                                 fontWeight: FontWeight.w400,
                                 color: Colors.red.shade700,
@@ -511,7 +511,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             _isLogin ? "Log in" : "Create account",
                             style: const TextStyle(
                               color: Colors.white,
-                              fontFamily: 'Lexend',
+                              
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
                             ),
@@ -544,7 +544,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const Text(
                         'Google',
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                           color: Colors.black,

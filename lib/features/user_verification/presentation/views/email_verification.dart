@@ -210,7 +210,7 @@ class _EmailVerificationState extends State<EmailVerification> {
                           "Create your account",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 27,
                             fontWeight: FontWeight.w400,
                             height: 33.75 / 27,
@@ -224,7 +224,7 @@ class _EmailVerificationState extends State<EmailVerification> {
                       Text(
                         email,
                         style: const TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                           color: Color(0xFF7A5AF8),
@@ -281,7 +281,7 @@ class _EmailVerificationState extends State<EmailVerification> {
       child: RichText(
         text: TextSpan(
           style: const TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 14,
             color: Colors.black,
           ),

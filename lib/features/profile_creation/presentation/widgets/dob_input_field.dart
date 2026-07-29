@@ -70,7 +70,7 @@ class _DOBInputFieldState extends State<DOBInputField> {
                     ? DateFormat('dd MMM yyyy').format(selectedDate!)
                     : (widget.hintText ?? 'Select Date of Birth'),
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
                   height: 20.5 / 18,

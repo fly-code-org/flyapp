@@ -161,7 +161,7 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
                         "Create your account",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 27,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -204,7 +204,7 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
                                     Text(
                                       "Photo selected",
                                       style: TextStyle(
-                                        fontFamily: 'Lexend',
+                                        
                                         fontSize: 14,
                                         color: Color(0xFF34A853),
                                       ),
@@ -220,7 +220,7 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
                         "May I know your full name",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -241,7 +241,7 @@ class _CreateMhpProfileScreenState extends State<CreateMhpProfileScreen> {
                         "Add a quick bio",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 23,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,

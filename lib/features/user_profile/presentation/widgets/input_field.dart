@@ -58,7 +58,7 @@ class _GeneralCustomInputFieldState extends State<GeneralCustomInputField> {
           focusNode: _focusNode,
           keyboardType: widget.keyboardType ?? TextInputType.name,
           style: const TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 18,
             fontWeight: FontWeight.w500,
             height: 35 / 18,
@@ -70,7 +70,7 @@ class _GeneralCustomInputFieldState extends State<GeneralCustomInputField> {
             border: InputBorder.none,
             hintText: widget.hintText ?? 'Enter text',
             hintStyle: TextStyle(
-              fontFamily: 'Lexend',
+              
               fontSize: 18,
               fontWeight: FontWeight.w500,
               height: 20.5 / 18,

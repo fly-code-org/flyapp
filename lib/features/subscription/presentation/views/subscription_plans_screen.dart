@@ -164,7 +164,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             Text(
               'Welcome to ${plan.name} Plan!',
               style: const TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
@@ -175,7 +175,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               plan.tagline,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 color: Colors.grey.shade600,
                 height: 1.4,
@@ -193,7 +193,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 ),
                 child: const Text(
                   'Done',
-                  style: TextStyle(fontFamily: 'Lexend', fontWeight: FontWeight.w600, fontSize: 15),
+                  style: TextStyle( fontWeight: FontWeight.w600, fontSize: 15),
                 ),
               ),
             ),
@@ -296,7 +296,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                             style: TextStyle(
                               color: Colors.red.shade700,
                               fontSize: 13,
-                              fontFamily: 'Lexend',
+                              
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -354,7 +354,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Lexend',
+              
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               color: isSelected ? _kPurple : const Color(0xFF9CA3AF),
@@ -403,7 +403,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     const Text(
                       'Soul Plan',
                       style: TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: headerText,
@@ -416,7 +416,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         const Text(
                           '₹99',
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: headerText,
@@ -425,7 +425,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         Text(
                           'per month',
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 12,
                             color: headerText.withValues(alpha: 0.7),
                           ),
@@ -438,7 +438,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 Text(
                   kSoulPlan.tagline,
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 13,
                     color: headerText.withValues(alpha: 0.8),
                   ),
@@ -454,7 +454,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 const Text(
                   'FEATURES PROVIDED',
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF9CA3AF),
@@ -506,7 +506,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     const Text(
                       'Aura Plan',
                       style: TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -519,7 +519,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         const Text(
                           '₹189',
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
@@ -528,7 +528,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         Text(
                           'per month',
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 12,
                             color: Colors.white.withValues(alpha: 0.8),
                           ),
@@ -541,7 +541,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 Text(
                   kAuraPlan.tagline,
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 13,
                     color: Colors.white.withValues(alpha: 0.9),
                   ),
@@ -557,7 +557,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 const Text(
                   'FEATURES PROVIDED',
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF9CA3AF),
@@ -594,7 +594,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             child: Text(
               feature,
               style: const TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 color: Color(0xFF1F2937),
                 height: 1.3,
@@ -624,7 +624,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             child: Text(
               '${_activeSub?.planName ?? 'Plan'} active — renews $expStr',
               style: const TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: _kPurple,
@@ -679,7 +679,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     : Text(
                         buttonLabel,
                         style: const TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                         ),
@@ -690,7 +690,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             Text(
               'Cancel anytime. Billed monthly.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: 'Lexend', fontSize: 12, color: Colors.grey.shade500),
+              style: TextStyle( fontSize: 12, color: Colors.grey.shade500),
             ),
           ],
         ),
@@ -733,7 +733,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         Text(
           label,
           style: TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: isTotal ? 14 : 13,
             fontWeight: isTotal ? FontWeight.w700 : FontWeight.w400,
             color: isCredit ? const Color(0xFF16A34A) : const Color(0xFF374151),
@@ -742,7 +742,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         Text(
           amount,
           style: TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: isTotal ? 15 : 13,
             fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
             color: isCredit ? const Color(0xFF16A34A) : (isTotal ? _kPurple : const Color(0xFF374151)),

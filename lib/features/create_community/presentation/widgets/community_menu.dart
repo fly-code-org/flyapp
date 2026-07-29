@@ -143,7 +143,7 @@ class _CommunityMenuSheetState extends State<CommunityMenuSheet> {
       title: Text(
         text,
         style: TextStyle(
-          fontFamily: 'Lexend',
+          
           fontSize: 16,
           color: color,
           fontWeight:

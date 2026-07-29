@@ -72,7 +72,7 @@ class _EnterOtpWidgetState extends State<EnterOtpWidget> {
         const Text(
           "Enter OTP",
           style: TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
@@ -91,7 +91,7 @@ class _EnterOtpWidgetState extends State<EnterOtpWidget> {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'Lexend',
+                  
                 ),
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,

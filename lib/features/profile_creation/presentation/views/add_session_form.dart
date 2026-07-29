@@ -143,7 +143,7 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                         "Tell us about yourself",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 27,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -164,7 +164,7 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                         "Select the mode of session",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -185,7 +185,7 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                         "Select your available days",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,
@@ -214,7 +214,7 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                         "Set your availability time",
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontFamily: 'Lexend',
+                          
                           fontSize: 16,
                           fontWeight: FontWeight.w400,
                           height: 33.75 / 27,

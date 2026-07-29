@@ -84,7 +84,7 @@ class _OptionsGridState extends State<OptionsGrid> {
                       widget.labels[index],
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        fontFamily: 'lexend',
+                        
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
                         color: Colors.black87,

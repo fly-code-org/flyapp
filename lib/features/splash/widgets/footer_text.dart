@@ -13,7 +13,7 @@ class FooterText extends StatelessWidget {
         child: Text(
           "Created with 🤍 in India",
           style: TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 14,
             fontWeight: FontWeight.w400,
             color: Colors.white,

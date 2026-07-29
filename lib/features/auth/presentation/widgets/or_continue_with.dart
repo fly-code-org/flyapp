@@ -18,7 +18,7 @@ class OrContinueWith extends StatelessWidget {
           "or continue with",
           style: TextStyle(
             color: Colors.grey,
-            fontFamily: 'Lexend',
+            
             fontSize: 14,
             fontWeight: FontWeight.w400,
           ),

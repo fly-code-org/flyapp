@@ -152,7 +152,7 @@ class _MhpQuestionOneScreenState extends State<MhpQuestionOneScreen> {
                               child: Text(
                                 question.question,
                                 style: const TextStyle(
-                                  fontFamily: 'Lexend',
+                                  
                                   fontSize: 27,
                                   fontWeight: FontWeight.normal,
                                 ),

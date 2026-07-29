@@ -147,7 +147,7 @@ class _DiscoverMhpsScreenState extends State<DiscoverMhpsScreen> {
         title: const Text(
           'Discover Mental Health\nProfessionals',
           style: TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: Colors.black87,
@@ -163,11 +163,11 @@ class _DiscoverMhpsScreenState extends State<DiscoverMhpsScreen> {
             child: TextField(
               controller: _searchController,
               onChanged: _onSearchChanged,
-              style: const TextStyle(fontFamily: 'Lexend', fontSize: 14),
+              style: const TextStyle( fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Search for concern - anxiety, career, marriage more.',
                 hintStyle: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 13,
                   color: Colors.grey.shade500,
                 ),
@@ -246,7 +246,7 @@ class _StateMessage extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 14,
                 color: Colors.grey.shade600,
               ),

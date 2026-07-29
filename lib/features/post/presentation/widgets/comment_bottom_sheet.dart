@@ -247,7 +247,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Lexend',
+                            
                           ),
                         ),
                         const Spacer(),
@@ -418,7 +418,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                         color: Color(0xFF855DFC),
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        fontFamily: 'Lexend',
+                        
                       ),
                     ),
                   ),
@@ -452,7 +452,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                     style: const TextStyle(
                       color: Colors.black87,
                       fontSize: 14,
-                      fontFamily: 'Lexend',
+                      
                     ),
                     children: [
                       TextSpan(

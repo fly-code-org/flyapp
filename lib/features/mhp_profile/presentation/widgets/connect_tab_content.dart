@@ -145,7 +145,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
         child: Text(
           'Could not load bookings. Pull to refresh.',
           style: TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 13,
             color: Colors.red.shade800,
           ),
@@ -156,7 +156,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
       return Text(
         'No sessions yet. Pending payments and confirmed bookings will appear here.',
         style: TextStyle(
-          fontFamily: 'Lexend',
+          
           fontSize: 13,
           color: Colors.grey.shade700,
           height: 1.3,
@@ -225,7 +225,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
                     )
                   : const Text(
                       'Load more',
-                      style: TextStyle(fontFamily: 'Lexend', color: _purple),
+                      style: TextStyle( color: _purple),
                     ),
             ),
           ),
@@ -357,7 +357,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
               Text(
                 'Connect Google Calendar so paid video bookings get a Meet link.',
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 13,
                   color: Colors.grey.shade700,
                   height: 1.3,
@@ -381,7 +381,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
                       ),
                 label: Text(
                   _calendarLinkBusy ? 'Connecting…' : 'Connect Google Calendar',
-                  style: const TextStyle(fontFamily: 'Lexend', color: _purple),
+                  style: const TextStyle( color: _purple),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: _purple),
@@ -403,7 +403,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
                 ),
                 child: const Text(
                   'No slots set. Tap below to add your availability.',
-                  style: TextStyle(fontFamily: 'Lexend', color: Colors.grey),
+                  style: TextStyle( color: Colors.grey),
                 ),
               )
             else
@@ -414,7 +414,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
               icon: const Icon(Icons.edit_calendar, size: 20, color: _purple),
               label: const Text(
                 'Edit availability',
-                style: TextStyle(fontFamily: 'Lexend', color: _purple),
+                style: TextStyle( color: _purple),
               ),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: _purple),
@@ -468,7 +468,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
                 child: Text(
                   'Google Calendar connected',
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
                     color: Colors.green.shade900,
@@ -481,7 +481,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
           Text(
             'You\'re set—Meet links are created automatically for paid video sessions.',
             style: TextStyle(
-              fontFamily: 'Lexend',
+              
               fontSize: 13,
               color: Colors.grey.shade800,
               height: 1.35,
@@ -497,7 +497,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
               child: Text(
                 'Use a different Google account',
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   color: _purple,
                   fontWeight: FontWeight.w600,
                 ),
@@ -529,7 +529,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
                 child: Text(
                   'Calendar disconnected—tap to fix',
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                     color: Colors.orange.shade900,
@@ -543,7 +543,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
           Text(
             'Your Google session may have expired or been revoked. Reconnect to restore Meet links for video bookings.',
             style: TextStyle(
-              fontFamily: 'Lexend',
+              
               fontSize: 13,
               color: Colors.grey.shade800,
               height: 1.35,
@@ -567,7 +567,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
             label: Text(
               _calendarLinkBusy ? 'Connecting…' : 'Reconnect Google Calendar',
               style: TextStyle(
-                fontFamily: 'Lexend',
+                
                 color: Colors.orange.shade900,
               ),
             ),
@@ -587,7 +587,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
     return Text(
       text,
       style: const TextStyle(
-        fontFamily: 'Lexend',
+        
         fontWeight: FontWeight.w600,
         fontSize: 16,
         color: _purple,
@@ -614,7 +614,7 @@ class _ConnectTabContentState extends State<ConnectTabContent> {
           Expanded(
             child: Text(
               '$day $start – $end',
-              style: const TextStyle(fontFamily: 'Lexend', fontSize: 14),
+              style: const TextStyle( fontSize: 14),
             ),
           ),
         ],
@@ -721,7 +721,7 @@ class _EditSlotsSheetState extends State<_EditSlotsSheet> {
             const Text(
               'Edit availability',
               style: TextStyle(
-                fontFamily: 'Lexend',
+                
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -774,7 +774,7 @@ class _EditSlotsSheetState extends State<_EditSlotsSheet> {
                 icon: const Icon(Icons.add, color: _purple, size: 20),
                 label: const Text(
                   'Add slot',
-                  style: TextStyle(color: _purple, fontFamily: 'Lexend'),
+                  style: TextStyle(color: _purple),
                 ),
               ),
             ),
@@ -808,7 +808,7 @@ class _EditSlotsSheetState extends State<_EditSlotsSheet> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Save', style: TextStyle(fontFamily: 'Lexend')),
+              child: const Text('Save'),
             ),
           ],
         ),

@@ -18,7 +18,7 @@ class OnboardingTitle extends StatelessWidget {
           child: Text(
             "first love yourself",
             style: TextStyle(
-              fontFamily: 'Lexend',
+              
               fontSize: 24,
               fontWeight: FontWeight.w400,
               color: Colors.white,

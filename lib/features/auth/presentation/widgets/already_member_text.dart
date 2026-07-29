@@ -31,7 +31,7 @@ class AlreadyMemberText extends StatelessWidget {
               TextSpan(
                 text: prefix,
                 style: const TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
                   color: Colors.black,
@@ -40,7 +40,7 @@ class AlreadyMemberText extends StatelessWidget {
               TextSpan(
                 text: actionText,
                 style: const TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,

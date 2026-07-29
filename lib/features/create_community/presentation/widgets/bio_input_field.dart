@@ -54,7 +54,7 @@ class _BioInputFieldState extends State<BioInputField> {
         minLines: 3,
         keyboardType: TextInputType.multiline,
         style: const TextStyle(
-          fontFamily: 'Lexend',
+          
           fontSize: 16,
           fontWeight: FontWeight.w400,
           height: 1.5,
@@ -66,7 +66,7 @@ class _BioInputFieldState extends State<BioInputField> {
           border: InputBorder.none,
           hintText: widget.hintText ?? 'Write a short bio...',
           hintStyle: TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 16,
             fontWeight: FontWeight.w400,
             height: 1.5,

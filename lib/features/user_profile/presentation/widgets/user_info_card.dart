@@ -27,7 +27,7 @@ class UserInfo extends StatelessWidget {
               fontSize: 16,
               fontWeight: FontWeight.normal,
               color: Colors.black87,
-              fontFamily: 'Lexend',
+              
             ),
           ),
         ),
@@ -47,7 +47,7 @@ class UserInfo extends StatelessWidget {
             fontSize: 22, // bigger font
             fontWeight: FontWeight.bold,
             color: Colors.black87, // make sure it's visible
-            fontFamily: 'Lexend',
+            
           ),
         ),
         const SizedBox(height: 12),

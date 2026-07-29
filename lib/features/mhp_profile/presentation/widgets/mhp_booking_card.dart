@@ -65,7 +65,7 @@ class MhpBookingCard extends StatelessWidget {
                     Text(
                       fullName,
                       style: const TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontWeight: FontWeight.w500,
                         fontSize: 16,
                         color: Colors.black87,
@@ -75,7 +75,7 @@ class MhpBookingCard extends StatelessWidget {
                     Text(
                       username,
                       style: TextStyle(
-                        fontFamily: 'Lexend',
+                        
                         fontSize: 14,
                         color: Colors.grey[800],
                       ),
@@ -96,7 +96,7 @@ class MhpBookingCard extends StatelessWidget {
                 child: Text(
                   '$startTimeLabel · $dateLabel',
                   style: TextStyle(
-                    fontFamily: 'Lexend',
+                    
                     fontSize: 13,
                     color: Colors.grey[900],
                   ),
@@ -131,7 +131,7 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontFamily: 'Lexend',
+          
           fontWeight: FontWeight.w500,
           fontSize: 12,
           color: fg,
@@ -164,7 +164,7 @@ class _VideoPill extends StatelessWidget {
               Text(
                 'Video',
                 style: TextStyle(
-                  fontFamily: 'Lexend',
+                  
                   fontWeight: FontWeight.w500,
                   fontSize: 13,
                   color: Colors.white,

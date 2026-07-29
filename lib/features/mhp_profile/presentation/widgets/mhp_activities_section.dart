@@ -92,7 +92,7 @@ class _MhpActivitiesSectionState extends State<MhpActivitiesSection> {
         child: Center(
           child: Text(
             'No posts in your community yet',
-            style: TextStyle(fontFamily: 'Lexend', color: Colors.grey),
+            style: TextStyle( color: Colors.grey),
           ),
         ),
       );

@@ -49,7 +49,7 @@ class _InputTextFieldState extends State<InputTextField> {
           keyboardType: widget.inputType,
           obscureText: _isObscure,
           style: const TextStyle(
-            fontFamily: 'Lexend',
+            
             fontSize: 18,
             fontWeight: FontWeight.w500,
             height: 35 / 18,
@@ -60,7 +60,7 @@ class _InputTextFieldState extends State<InputTextField> {
             border: InputBorder.none,
             hintText: widget.label,
             hintStyle: TextStyle(
-              fontFamily: 'Lexend',
+              
               fontSize: 18,
               fontWeight: FontWeight.w500,
               height: 20.5 / 18,

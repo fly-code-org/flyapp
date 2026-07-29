@@ -74,7 +74,7 @@ class _MhpProfileState extends State<MhpProfile> {
                         "Create your profile",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 27,
                             fontWeight: FontWeight.w400,
                             height: 33.75 / 27,
@@ -87,7 +87,7 @@ class _MhpProfileState extends State<MhpProfile> {
                         "Feel free to share your number",
                           textAlign: TextAlign.left ,
                           style: TextStyle(
-                            fontFamily: 'Lexend',
+                            
                             fontSize: 23,
                             fontWeight: FontWeight.w400,
                             height: 33.75 / 27,

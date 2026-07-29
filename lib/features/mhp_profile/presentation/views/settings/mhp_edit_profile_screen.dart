@@ -219,7 +219,7 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
             color: Colors.white,
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            fontFamily: 'Lexend',
+            
           ),
         ),
       ),
@@ -280,8 +280,7 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
                               'Tap to change profile picture',
                               style: TextStyle(
                                   fontSize: 13,
-                                  color: Colors.grey,
-                                  fontFamily: 'Lexend'),
+                                  color: Colors.grey),
                             ),
                           ),
                           const SizedBox(height: 28),
@@ -296,7 +295,6 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
                             maxLines: 4,
                             decoration: InputDecoration(
                               hintText: 'Tell clients about yourself...',
-                              hintStyle: const TextStyle(fontFamily: 'Lexend'),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12)),
                               enabledBorder: OutlineInputBorder(
@@ -329,7 +327,6 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               hintText: 'e.g. 5',
-                              hintStyle: const TextStyle(fontFamily: 'Lexend'),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12)),
                               enabledBorder: OutlineInputBorder(
@@ -364,7 +361,7 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
-                            fontFamily: 'Lexend',
+                            
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -382,7 +379,7 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
         style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            fontFamily: 'Lexend',
+            
             color: Colors.black87),
       );
 
@@ -390,7 +387,7 @@ class _MhpEditProfileScreenState extends State<MhpEditProfileScreen> {
         controller: ctrl,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(fontFamily: 'Lexend', color: Colors.black38),
+          hintStyle: const TextStyle( color: Colors.black38),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
