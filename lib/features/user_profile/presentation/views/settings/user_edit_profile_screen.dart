@@ -1,14 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:fly/core/di/service_locator.dart';
-import 'package:fly/core/services/s3_upload_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
-import 'package:fly/features/subscription/presentation/controllers/subscription_controller.dart';
+import 'package:fly/core/utils/profile_picture_helper.dart';
 import 'package:fly/features/user_profile/data/services/user_settings_remote_data_source.dart';
+import 'package:fly/features/user_profile/data/services/profile_pictures_service.dart';
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
-import 'package:fly/routes/app_routes.dart';
+import 'package:fly/features/user_profile/presentation/widgets/avatar_picker.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 
 const _purple = Color(0xFF6C4EE4);
 
@@ -35,8 +33,8 @@ class _UserEditProfileScreenState extends State<UserEditProfileScreen> {
 
   String _selectedMood = '';
   String _selectedMoodEmoji = '';
-  String? _currentPictureUrl;
-  File? _pickedImage;
+  String? _currentPicturePath;
+  String? _selectedAvatarPath;
   bool _loading = true;
   bool _saving = false;
 
@@ -64,7 +62,7 @@ class _UserEditProfileScreenState extends State<UserEditProfileScreen> {
       _lastNameCtrl.text = data['last_name']?.toString() ?? '';
       _bioCtrl.text = data['bio']?.toString() ?? '';
       _phoneCtrl.text = data['phone']?.toString() ?? '';
-      _currentPictureUrl = data['picture_path']?.toString();
+      _currentPicturePath = data['picture_path']?.toString();
       final mood = data['mood']?.toString() ?? '';
       if (mood.isNotEmpty) {
         final found = _moods.where((m) => m.$2 == mood).toList();
@@ -79,33 +77,22 @@ class _UserEditProfileScreenState extends State<UserEditProfileScreen> {
     setState(() => _loading = false);
   }
 
-  Future<void> _pickImage() async {
-    if (Get.isRegistered<SubscriptionController>()) {
-      if (!Get.find<SubscriptionController>().requireAnyPlan()) return;
-    } else {
-      Get.toNamed(AppRoutes.subscriptionPlans);
-      return;
-    }
-    final picker = ImagePicker();
-    final XFile? picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (picked != null) {
-      setState(() => _pickedImage = File(picked.path));
+  Future<void> _pickAvatar() async {
+    final result = await showDialog<ProfilePictureItem>(
+      context: context,
+      builder: (context) => AvatarPickerDialog(currentPath: _selectedAvatarPath ?? _currentPicturePath),
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedAvatarPath = result.path;
+      });
     }
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      String? uploadedPath;
-      if (_pickedImage != null) {
-        final s3 = sl<S3UploadService>();
-        uploadedPath = await s3.uploadFile(
-          file: _pickedImage!,
-          isProfilePicture: true,
-          role: 'user',
-        );
-      }
-
       final body = <String, dynamic>{
         'username': _usernameCtrl.text.trim(),
         'first_name': _firstNameCtrl.text.trim(),
@@ -114,7 +101,7 @@ class _UserEditProfileScreenState extends State<UserEditProfileScreen> {
         'phone': _phoneCtrl.text.trim(),
         'mood': _selectedMood,
       };
-      if (uploadedPath != null) body['picture_path'] = uploadedPath;
+      if (_selectedAvatarPath != null) body['picture_path'] = _selectedAvatarPath;
 
       await _ds.updateProfile(body);
       // Refresh the profile controller so the profile screen shows updated data
@@ -222,21 +209,11 @@ class _UserEditProfileScreenState extends State<UserEditProfileScreen> {
                         children: [
                           Center(
                             child: GestureDetector(
-                              onTap: _pickImage,
+                              onTap: _pickAvatar,
                               child: Stack(
                                 children: [
-                                  CircleAvatar(
-                                    radius: 44,
-                                    backgroundColor: const Color(0xFFE0E0E0),
-                                    backgroundImage: _pickedImage != null
-                                        ? FileImage(_pickedImage!) as ImageProvider
-                                        : (_currentPictureUrl != null && _currentPictureUrl!.isNotEmpty)
-                                            ? NetworkImage(_currentPictureUrl!)
-                                            : null,
-                                    child: (_pickedImage == null &&
-                                            (_currentPictureUrl == null || _currentPictureUrl!.isEmpty))
-                                        ? const Icon(Icons.person, size: 44, color: Colors.white)
-                                        : null,
+                                  ClipOval(
+                                    child: _buildAvatarImage(),
                                   ),
                                   Positioned(
                                     right: 0,
@@ -422,4 +399,36 @@ class _UserEditProfileScreenState extends State<UserEditProfileScreen> {
           ),
         ),
       );
+
+  Widget _buildAvatarImage() {
+    final path = _selectedAvatarPath ?? _currentPicturePath;
+    if (path == null || path.isEmpty) {
+      return Container(
+        width: 88,
+        height: 88,
+        color: const Color(0xFFE0E0E0),
+        child: const Icon(Icons.person, size: 44, color: Colors.white),
+      );
+    }
+
+    final url = ProfilePictureHelper.getProfilePictureUrl(path);
+    return CachedNetworkImage(
+      imageUrl: url,
+      width: 88,
+      height: 88,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
+        width: 88,
+        height: 88,
+        color: const Color(0xFFE0E0E0),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      errorWidget: (context, url, error) => Container(
+        width: 88,
+        height: 88,
+        color: const Color(0xFFE0E0E0),
+        child: const Icon(Icons.person, size: 44, color: Colors.white),
+      ),
+    );
+  }
 }
