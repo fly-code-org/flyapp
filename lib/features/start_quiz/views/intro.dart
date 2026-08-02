@@ -133,8 +133,8 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                                 Get.toNamed(AppRoutes.createMhpProfile, arguments: {'role': role});
                               }
                             } else if (role == 'user') {
-                              // For users, go to avatar selection first
-                              Get.toNamed(AppRoutes.SelectAvatar);
+                              // For users, go to interests selection
+                              Get.toNamed(AppRoutes.GetInterest);
                             }
                           },
                           child: const Text(
