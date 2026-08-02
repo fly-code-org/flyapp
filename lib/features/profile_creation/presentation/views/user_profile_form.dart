@@ -8,7 +8,7 @@ import 'package:fly/routes/app_routes.dart';
 import 'package:fly/features/profile_creation/controller/user_profile_controller.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/bio_input_field.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/dob_input_field.dart';
-import 'package:fly/features/profile_creation/presentation/widgets/profile_picture_picker.dart';
+import 'package:fly/features/profile_creation/presentation/widgets/user_avatar_picker.dart';
 import 'package:fly/features/profile_creation/presentation/widgets/user_name_input_field.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_user_profile.dart';
 import 'package:fly/features/profile_creation/domain/usecases/create_mhp_profile.dart';
@@ -150,21 +150,20 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                       ),
                       const SizedBox(height: 30),
 
-                      /// Profile Image Picker
+                      /// Avatar Picker (from CDN pool)
                       Builder(
                         builder: (context) {
                           try {
                             final ctrl = controller;
-                            return ProfileImagePicker(
-                              role: "user",
-                              onImagePicked: (file) {
-                                print('📸 [USER PROFILE FORM] Image picked: ${file.path}');
-                                ctrl.selectedImage.value = file;
-                                // Don't set picturePath here - it will be set after S3 upload
-                                // Clear any previous S3 path so upload will trigger
-                                ctrl.picturePath.value = '';
-                                print('✅ [USER PROFILE FORM] Image selected, will upload to S3 on profile creation');
-                              },
+                            return Center(
+                              child: UserAvatarPicker(
+                                onAvatarSelected: (path, url) {
+                                  print('🖼️ [USER PROFILE FORM] Avatar selected: $path');
+                                  ctrl.picturePath.value = path;
+                                  ctrl.selectedImage.value = null;
+                                  print('✅ [USER PROFILE FORM] Avatar path set, no S3 upload needed');
+                                },
+                              ),
                             );
                           } catch (e) {
                             print("❌ [USER PROFILE FORM] Error accessing controller: $e");
@@ -175,14 +174,14 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
 
                       const SizedBox(height: 20),
 
-                      /// Image Selected Text
+                      /// Avatar Selected Text
                       Builder(
                         builder: (context) {
                           try {
                             final ctrl = controller;
                             return Obx(() {
-                              final image = ctrl.selectedImage.value;
-                              return image != null
+                              final path = ctrl.picturePath.value;
+                              return path.isNotEmpty
                                   ? const Center(
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -191,9 +190,8 @@ class _CreateUserProfileScreenState extends State<CreateUserProfileScreen> {
                                               color: Color(0xFF34A853), size: 18),
                                           SizedBox(width: 6),
                                           Text(
-                                            "Photo selected",
+                                            "Avatar selected",
                                             style: TextStyle(
-                                              
                                               fontSize: 14,
                                               color: Color(0xFF34A853),
                                             ),
