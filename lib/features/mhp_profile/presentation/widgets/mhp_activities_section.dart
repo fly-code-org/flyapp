@@ -4,6 +4,7 @@ import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/features/home/presentation/views/post_detail_screen.dart';
 import 'package:fly/features/post/domain/entities/post.dart';
 import 'package:fly/features/post/domain/usecases/get_posts_by_community.dart';
+import 'package:fly/features/post/presentation/services/user_profile_service.dart';
 import 'package:fly/features/post/presentation/utils/post_converter.dart';
 
 /// Activities tab: posts in MHP's community, tappable to full post detail.
@@ -18,6 +19,8 @@ class MhpActivitiesSection extends StatefulWidget {
 
 class _MhpActivitiesSectionState extends State<MhpActivitiesSection> {
   List<Post> _posts = [];
+  Map<String, String> _authorUsernames = {};
+  Map<String, String> _authorProfileUrls = {};
   bool _loading = true;
   String? _error;
 
@@ -48,8 +51,35 @@ class _MhpActivitiesSectionState extends State<MhpActivitiesSection> {
     try {
       final posts = await sl<GetPostsByCommunity>().call(widget.communityId!);
       if (!mounted) return;
+
+      // Fetch author profiles
+      final authorIds = posts.map((p) => p.authorId).toSet().toList();
+      final userProfileService = UserProfileService();
+      final authorProfiles = await userProfileService.getUserProfiles(authorIds);
+
+      final authorUsernames = <String, String>{};
+      final authorProfileUrls = <String, String>{};
+
+      for (var entry in authorProfiles.entries) {
+        final oderId = entry.key;
+        final profile = entry.value;
+        final usernameValue = profile['username'];
+        if (usernameValue != null) {
+          final s = usernameValue.toString().trim();
+          if (s.isNotEmpty) authorUsernames[oderId] = s;
+        }
+        final picPath = profile['picture_path'];
+        if (picPath != null) {
+          final p = picPath.toString().trim();
+          if (p.isNotEmpty) authorProfileUrls[oderId] = p;
+        }
+      }
+
+      if (!mounted) return;
       setState(() {
         _posts = posts;
+        _authorUsernames = authorUsernames;
+        _authorProfileUrls = authorProfileUrls;
         _loading = false;
       });
     } catch (e) {
@@ -62,7 +92,11 @@ class _MhpActivitiesSectionState extends State<MhpActivitiesSection> {
   }
 
   void _openDetail(Post domainPost) {
-    final uiPost = PostConverter.toUIPost(domainPost);
+    final uiPost = PostConverter.toUIPost(
+      domainPost,
+      username: _authorUsernames[domainPost.authorId],
+      profileUrl: _authorProfileUrls[domainPost.authorId],
+    );
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PostDetailScreen(post: uiPost),

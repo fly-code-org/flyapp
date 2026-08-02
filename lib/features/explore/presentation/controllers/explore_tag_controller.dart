@@ -8,6 +8,7 @@ import 'package:fly/features/interests/domain/usecases/follow_tag.dart';
 import 'package:fly/features/interests/domain/usecases/get_tag_info.dart';
 import 'package:fly/features/interests/domain/usecases/unfollow_tag.dart';
 import 'package:fly/features/post/domain/usecases/get_posts_by_tag.dart';
+import 'package:fly/features/post/presentation/services/user_profile_service.dart';
 import 'package:fly/features/post/presentation/utils/post_converter.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_mhp_profile.dart';
 import 'package:fly/features/profile_creation/domain/usecases/get_user_profile.dart';
@@ -106,7 +107,35 @@ class ExploreTagController extends GetxController {
     try {
       final getPostsByTag = sl<GetPostsByTag>();
       final rawPosts = await getPostsByTag.call(tagId, postType: type);
-      posts.value = rawPosts.map((p) => PostConverter.toUIPost(p)).toList();
+
+      // Fetch author profiles for usernames and pictures
+      final authorIds = rawPosts.map((p) => p.authorId).toSet().toList();
+      final userProfileService = UserProfileService();
+      final authorProfiles = await userProfileService.getUserProfiles(authorIds);
+
+      final authorProfileUrls = <String, String>{};
+      final authorUsernames = <String, String>{};
+
+      for (var entry in authorProfiles.entries) {
+        final oderId = entry.key;
+        final profile = entry.value;
+        final usernameValue = profile['username'];
+        if (usernameValue != null) {
+          final s = usernameValue.toString().trim();
+          if (s.isNotEmpty) authorUsernames[oderId] = s;
+        }
+        final picPath = profile['picture_path'];
+        if (picPath != null) {
+          final p = picPath.toString().trim();
+          if (p.isNotEmpty) authorProfileUrls[oderId] = p;
+        }
+      }
+
+      posts.value = PostConverter.toUIPosts(
+        rawPosts,
+        authorProfileUrls: authorProfileUrls,
+        authorUsernames: authorUsernames,
+      );
     } catch (e) {
       errorMessage.value = e.toString();
     } finally {

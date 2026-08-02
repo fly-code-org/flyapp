@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:fly/features/post/presentation/controllers/post_controller.dart';
 import 'package:fly/features/post/domain/entities/post.dart';
+import 'package:fly/features/post/presentation/services/user_profile_service.dart';
 import 'package:fly/features/post/presentation/utils/post_converter.dart';
 import 'package:fly/features/home/model/post_model.dart' as home_model;
 import 'package:fly/features/home/presentation/views/post_detail_screen.dart';
@@ -156,13 +157,36 @@ class _CommunityMediaSectionState extends State<CommunityMediaSection> {
         
         // Get fetched posts from controller
         final fetchedPosts = List<Post>.from(_postController.posts);
-        
+
+        // Fetch author profiles
+        final authorIds = fetchedPosts.map((p) => p.authorId).toSet().toList();
+        final userProfileService = UserProfileService();
+        final authorProfiles = await userProfileService.getUserProfiles(authorIds);
+
+        final authorUsernames = <String, String>{};
+        final authorProfileUrls = <String, String>{};
+
+        for (var entry in authorProfiles.entries) {
+          final oderId = entry.key;
+          final profile = entry.value;
+          final usernameValue = profile['username'];
+          if (usernameValue != null) {
+            final s = usernameValue.toString().trim();
+            if (s.isNotEmpty) authorUsernames[oderId] = s;
+          }
+          final picPath = profile['picture_path'];
+          if (picPath != null) {
+            final p = picPath.toString().trim();
+            if (p.isNotEmpty) authorProfileUrls[oderId] = p;
+          }
+        }
+
         // Convert posts to display format with image/video URLs
         final postsList = <Map<String, dynamic>>[];
         for (var post in fetchedPosts) {
           String? mediaUrl;
           String mediaType = 'text';
-          
+
           // Get first image or video from attachments
           if (post.attachments.isNotEmpty) {
             final firstAttachment = post.attachments.first;
@@ -172,13 +196,17 @@ class _CommunityMediaSectionState extends State<CommunityMediaSection> {
             // Text-only post
             mediaType = 'text';
           }
-          
+
           postsList.add({
             "type": mediaType,
             "url": mediaUrl,
             "post_id": post.id,
             "content": post.content,
-            "homePost": PostConverter.toUIPost(post),
+            "homePost": PostConverter.toUIPost(
+              post,
+              username: authorUsernames[post.authorId],
+              profileUrl: authorProfileUrls[post.authorId],
+            ),
           });
         }
         

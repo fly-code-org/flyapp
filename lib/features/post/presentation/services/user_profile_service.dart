@@ -177,9 +177,18 @@ class UserProfileService {
         );
       }
             } on DioException catch (e) {
-              print('❌ [USER PROFILE SERVICE] Error fetching profile for $userId: ${e.message}');
+              print('❌ [USER PROFILE SERVICE] Error fetching user profile for $userId: ${e.message}');
               if (e.response?.statusCode == 404) {
-                // User profile not found - return null values
+                // User profile not found - try MHP profile endpoint
+                print('🔍 [USER PROFILE SERVICE] User profile not found, trying MHP profile for $userId');
+                final mhpProfile = await _fetchMhpProfile(userId);
+                if (mhpProfile != null) {
+                  _cache[cacheKey] = _CachedProfile(
+                    profile: mhpProfile,
+                    timestamp: DateTime.now(),
+                  );
+                  return mhpProfile;
+                }
                 return {'username': null, 'picture_path': null};
               }
               // For other errors (like 500), try JWT fallback if it's the current user
@@ -230,6 +239,66 @@ class UserProfileService {
               }
               return {'username': null, 'picture_path': null};
             }
+  }
+
+  /// Fetches MHP profile by user ID (fallback when user profile not found)
+  Future<Map<String, String?>?> _fetchMhpProfile(String userId) async {
+    try {
+      print('🔍 [USER PROFILE SERVICE] Fetching MHP profile for: $userId');
+
+      final response = await _client.get(
+        '/mhp/external/v1/profile/$userId',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = response.data as Map<String, dynamic>;
+        Map<String, dynamic> profileData;
+
+        if (responseData.containsKey('data') && responseData['data'] is Map<String, dynamic>) {
+          profileData = responseData['data'] as Map<String, dynamic>;
+        } else {
+          profileData = responseData;
+        }
+
+        // MHP profile uses 'name' or 'display_name' for the display name
+        String? displayName = _normalizeStringField(profileData['name']) ??
+            _normalizeStringField(profileData['display_name']) ??
+            _normalizeStringField(profileData['username']);
+
+        // Also check nested 'user' or 'profile' objects
+        if (displayName == null) {
+          for (final nestedKey in <String>['profile', 'user']) {
+            final nested = profileData[nestedKey];
+            if (nested is Map<String, dynamic>) {
+              displayName = _normalizeStringField(nested['name']) ??
+                  _normalizeStringField(nested['display_name']) ??
+                  _normalizeStringField(nested['username']);
+              if (displayName != null) break;
+            }
+          }
+        }
+
+        final picturePath = profileData['picture_path'] ?? profileData['profile_picture'];
+        String? picturePathStr;
+        if (picturePath != null) {
+          final pathStr = picturePath.toString().trim();
+          if (pathStr.isNotEmpty) {
+            picturePathStr = pathStr;
+          }
+        }
+
+        print('✅ [USER PROFILE SERVICE] MHP profile found: name=$displayName, picture=$picturePathStr');
+        return {
+          'username': displayName,
+          'picture_path': picturePathStr,
+        };
+      }
+      return null;
+    } catch (e) {
+      print('❌ [USER PROFILE SERVICE] Error fetching MHP profile: $e');
+      return null;
+    }
   }
 
   /// Fetches profiles for multiple user IDs in parallel
