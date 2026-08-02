@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../model/notification_model.dart';
@@ -26,6 +27,13 @@ class NotificationCard extends StatelessWidget {
         return Icons.local_fire_department_outlined;
       case 'streak_milestone':
         return Icons.emoji_events_outlined;
+      case 'post_like':
+        return Icons.favorite;
+      case 'post_comment':
+      case 'comment_reply':
+        return Icons.comment;
+      case 'followed_tag_post':
+        return Icons.tag;
       default:
         return Icons.notifications_outlined;
     }
@@ -43,15 +51,96 @@ class NotificationCard extends StatelessWidget {
         return Colors.red.shade400;
       case 'streak_milestone':
         return Colors.amber.shade700;
+      case 'post_like':
+        return Colors.red.shade400;
+      case 'post_comment':
+      case 'comment_reply':
+        return Colors.blue.shade600;
+      case 'followed_tag_post':
+        return _purple;
       default:
         return Colors.grey.shade600;
     }
   }
 
+  Widget _buildLeadingWidget() {
+    // For social notifications, show user avatar
+    if (notification.isSocialNotification && notification.firstActorPicture != null) {
+      return Stack(
+        children: [
+          ClipOval(
+            child: CachedNetworkImage(
+              imageUrl: notification.firstActorPicture!,
+              width: 44,
+              height: 44,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => _buildIconCircle(),
+              errorWidget: (context, url, error) => _buildIconCircle(),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: _colorForType(notification.type),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: Icon(
+                _iconForType(notification.type),
+                size: 10,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return _buildIconCircle();
+  }
+
+  Widget _buildIconCircle() {
+    final iconColor = _colorForType(notification.type);
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: iconColor.withAlpha(26),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(_iconForType(notification.type), color: iconColor, size: 22),
+    );
+  }
+
+  Widget? _buildTrailingThumbnail() {
+    if (notification.postThumbnail != null && notification.postThumbnail!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: CachedNetworkImage(
+          imageUrl: notification.postThumbnail!,
+          width: 44,
+          height: 44,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            width: 44,
+            height: 44,
+            color: Colors.grey.shade200,
+          ),
+          errorWidget: (context, url, error) => const SizedBox.shrink(),
+        ),
+      );
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isUnread = !notification.isRead;
-    final iconColor = _colorForType(notification.type);
+    final thumbnail = _buildTrailingThumbnail();
 
     return InkWell(
       onTap: onTap,
@@ -64,15 +153,7 @@ class NotificationCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: iconColor.withAlpha(26),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(_iconForType(notification.type), color: iconColor, size: 22),
-            ),
+            _buildLeadingWidget(),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -81,7 +162,6 @@ class NotificationCard extends StatelessWidget {
                   Text(
                     notification.title,
                     style: TextStyle(
-                      
                       fontWeight: isUnread ? FontWeight.w600 : FontWeight.w400,
                       fontSize: 14,
                       color: Colors.black,
@@ -91,7 +171,6 @@ class NotificationCard extends StatelessWidget {
                   Text(
                     notification.message,
                     style: const TextStyle(
-                      
                       color: Colors.black54,
                       fontSize: 13,
                       height: 1.3,
@@ -109,6 +188,10 @@ class NotificationCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                if (thumbnail != null) ...[
+                  thumbnail,
+                  const SizedBox(height: 4),
+                ],
                 Text(
                   _formatTime(notification.createdAt),
                   style: const TextStyle(fontSize: 11, color: Colors.grey),
@@ -178,7 +261,6 @@ class _JoinMeetChip extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
-                
               ),
             ),
           ],

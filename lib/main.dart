@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -11,11 +12,18 @@ import 'core/di/service_locator.dart' as di;
 import 'core/network/api_client.dart';
 import 'core/config/config.dart';
 import 'core/services/analytics_service.dart';
+import 'core/services/push/push_notification_service.dart';
 import 'firebase_options.dart'; // Generated from flutterfire configure
 import 'routes/app_routes.dart';
 import 'routes/app_pages.dart';
 import 'features/streak/presentation/streak_view_model.dart';
 import 'core/services/streak_engagement_service.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  // Background message handling - notifications are displayed automatically by FCM
+}
 
 Future<void> main() async {
   // Set up error handling to catch SVG parsing errors (must be before any widget code)
@@ -96,6 +104,13 @@ Future<void> _initializeServices() async {
         options: DefaultFirebaseOptions.currentPlatform,
       ).timeout(const Duration(seconds: 15));
       print('✅ [MAIN] Firebase initialized');
+
+      // Set up background message handler
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+      // Initialize push notification service
+      await Get.putAsync(() => PushNotificationService().init());
+      print('✅ [MAIN] Push notification service initialized');
     } on TimeoutException {
       print('❌ [MAIN] Firebase initialization timeout');
     } catch (e) {

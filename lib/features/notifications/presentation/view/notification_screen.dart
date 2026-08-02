@@ -114,6 +114,19 @@ class NotificationScreen extends StatelessWidget {
                         mhpName: mhpName,
                         bookingId: bookingId,
                       );
+                    } else if (notif.type == 'post_like' || notif.type == 'followed_tag_post') {
+                      // Navigate to post
+                      final postId = notif.postId;
+                      if (postId != null) {
+                        Get.toNamed('/post/$postId');
+                      }
+                    } else if (notif.type == 'post_comment' || notif.type == 'comment_reply') {
+                      // Navigate to post with comment highlighted
+                      final postId = notif.postId;
+                      final commentId = notif.commentId;
+                      if (postId != null) {
+                        Get.toNamed('/post/$postId', arguments: {'scrollToComment': commentId});
+                      }
                     }
                   },
                 );
