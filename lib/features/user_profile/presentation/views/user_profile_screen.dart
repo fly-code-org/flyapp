@@ -4,10 +4,13 @@ import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
 import 'package:fly/features/home/presentation/widgets/upcoming_session_banner.dart';
 import 'package:fly/features/user_profile/data/services/user_settings_remote_data_source.dart';
+import 'package:fly/features/user_profile/data/services/profile_update_service.dart';
 import 'package:fly/features/user_profile/presentation/widgets/community_post_grid.dart';
 import 'package:fly/features/user_profile/presentation/widgets/profile_card.dart';
 import 'package:fly/features/user_profile/presentation/widgets/user_info_card.dart';
 import 'package:fly/features/user_profile/presentation/widgets/journal_grid_section.dart';
+import 'package:fly/features/user_profile/presentation/widgets/avatar_picker.dart';
+import 'package:fly/features/user_profile/data/services/profile_pictures_service.dart';
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
 import 'package:fly/features/journal/presentation/controllers/journal_controller.dart';
 import 'package:fly/features/subscription/presentation/controllers/subscription_controller.dart';
@@ -114,6 +117,34 @@ class _UserProfileScreenState extends State<UserProfileScreen>
 
   void _onTabSelected(int index) {
     setState(() => _selectedTab = index);
+  }
+
+  Future<void> _showAvatarPicker(String? currentPath) async {
+    final result = await showDialog<ProfilePictureItem>(
+      context: context,
+      builder: (context) => AvatarPickerDialog(currentPath: currentPath),
+    );
+
+    if (result != null) {
+      try {
+        final updateService = ProfileUpdateService();
+        final success = await updateService.updateProfilePicture(result.path);
+        if (success) {
+          _profileController.fetchUserProfile(forceRefresh: true);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Avatar updated successfully')),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to update avatar')),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildTabItem(String title, IconData icon, int index) {
@@ -382,7 +413,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       }),
                     ),
 
-                    // Floating avatar
+                    // Floating avatar (tappable to change)
                     Positioned(
                       top: -60,
                       left: 16,
@@ -397,12 +428,35 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                         print(
                           '🖼️ [PROFILE SCREEN] picturePath: "$picturePath", userId: "$userId"',
                         );
-                        return ProfileAvatar(
-                          imagePath:
-                              picturePath, // ProfileAvatar handles both assets and URLs
-                          userId: userId,
-                          size: 120,
-                          showEditIcon: false,
+                        return GestureDetector(
+                          onTap: () => _showAvatarPicker(picturePath),
+                          child: Stack(
+                            children: [
+                              ProfileAvatar(
+                                imagePath:
+                                    picturePath, // ProfileAvatar handles both assets and URLs
+                                userId: userId,
+                                size: 120,
+                                showEditIcon: false,
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF855DFC),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.edit,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       }),
                     ),

@@ -1,53 +1,74 @@
-// data/utils/default_profile_picture.dart
-// Utility for assigning random default profile pictures
-
 import 'dart:math';
 
 class DefaultProfilePicture {
-  // Default profile pictures available on CDN
-  // Using PNG/JPG instead of SVG to avoid parsing errors
-  static const List<String> defaultProfileSVGs = [
-    '/assets/profile_1.svg',
-    '/assets/images/fly_logo.png', // Use PNG instead of SVG to avoid parsing errors
-    '/assets/profile_3.svg',
-    '/assets/profile_4.svg',
-    '/assets/profile_5.svg',
-    '/assets/profile_6.svg',
-    '/assets/profile_7.svg',
-    '/assets/profile_8.svg',
-    '/assets/profile_9.svg',
-    '/assets/profile_10.svg',
-    '/assets/profile_11.svg',
-    '/assets/profile_12.svg',
-    '/assets/profile_13.svg',
-    '/assets/profile_14.svg',
-    '/assets/profile_15.svg',
-    '/assets/profile_16.svg',
-    '/assets/profile_17.svg',
-    '/assets/profile_18.svg',
-    '/assets/profile_19.svg',
-    '/assets/profile_20.svg',
+  static const String cdnBaseUrl = 'https://cdn.flyapp.in';
+  static const String dpFlyPath = '/user/DP-fly/';
+
+  static const List<String> defaultProfilePictures = [
+    '0_0_640_N.webp',
+    '0_0_640_N (1).webp',
+    '0_0_640_N (2).webp',
+    '0_0_640_N (3).webp',
+    '0_0_640_N (4).webp',
+    '0_0_640_N (5).webp',
+    '0_0_640_N (6).webp',
+    '0_0_640_N (7).webp',
+    '0_0_640_N (8).webp',
+    '0_0_640_N (9).webp',
+    '0_0_640_N (10).webp',
+    '0_0_640_N (11).webp',
+    '0_0_640_N (12).webp',
+    '0_0_640_N (13).webp',
+    '0_0_640_N (14).webp',
+    '0_0_640_N (15).webp',
+    '0_0_640_N (16).webp',
+    '0_0_640_N (17).webp',
+    '0_0_640_N (18).webp',
+    '0_0_640_N (19).webp',
+    '0_0_640_N (20).webp',
+    '0_0_640_N (21).webp',
+    '0_0_640_N (22).webp',
+    '0_0_640_N (23).webp',
+    '0_0_640_N (24).webp',
+    '0_0_640_N (25).webp',
+    '0_0_640_N (26).webp',
+    '0_0_640_N (27).webp',
+    '0_0_640_N (28).webp',
+    '0_0_640_N (29).webp',
+    '0_0_640_N (30).webp',
+    '0_0_640_N (31).webp',
+    '0_0_640_N (32).webp',
+    '0_0_640_N (33).webp',
+    '0_0_640_N (34).webp',
+    '0_0_640_N (35).webp',
+    '0_0_640_N (36).webp',
+    '0_0_640_N (37).webp',
+    '0_0_640_N (38).webp',
+    '0_0_640_N (39).webp',
+    '0_0_640_N (40).webp',
+    '0_0_640_N (41).webp',
+    '0_0_640_N (42).webp',
+    '0_0_640_N (43).webp',
+    '0_0_640_N (44).webp',
+    '0_0_640_N (45).webp',
+    '0_0_640_N (46).webp',
+    '0_0_640_N (47).webp',
+    '0_0_640_N (48).webp',
+    '0_0_640_N (49).webp',
+    '0_0_640_N (50).webp',
   ];
 
-  /// Gets a random default profile picture based on user ID
-  /// Uses userId as seed for Random to ensure consistency for the same user
-  /// but appears random across different users
-  /// 
-  /// Returns the full CDN URL (e.g., 'https://cdn.flyapp.in/assets/profile_1.svg')
   static String getRandomProfilePicture(String userId) {
-    // Use userId as seed for Random to ensure consistency for the same user
     final random = Random(userId.hashCode);
-    final index = random.nextInt(defaultProfileSVGs.length);
-    final svgPath = defaultProfileSVGs[index];
-    // Return full CDN URL
-    return 'https://cdn.flyapp.in$svgPath';
+    final index = random.nextInt(defaultProfilePictures.length);
+    final filename = defaultProfilePictures[index];
+    return '$cdnBaseUrl$dpFlyPath$filename';
   }
 
-  /// Gets the relative path (without CDN URL) for a user ID
-  /// Useful for saving to backend (e.g., '/assets/profile_1.svg')
   static String getRandomProfilePicturePath(String userId) {
     final random = Random(userId.hashCode);
-    final index = random.nextInt(defaultProfileSVGs.length);
-    return defaultProfileSVGs[index];
+    final index = random.nextInt(defaultProfilePictures.length);
+    final filename = defaultProfilePictures[index];
+    return '$dpFlyPath$filename';
   }
 }

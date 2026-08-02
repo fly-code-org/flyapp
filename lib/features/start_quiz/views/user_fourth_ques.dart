@@ -208,7 +208,7 @@ class _UserQuestionFourthScreenState extends State<UserQuestionFourthScreen> {
                                             .then((success) {
                                               if (success) {
                                                 Get.toNamed(
-                                                  AppRoutes.GetInterest,
+                                                  AppRoutes.SelectAvatar,
                                                 );
                                               } else if (quizController
                                                   .submitError

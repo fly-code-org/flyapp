@@ -1,9 +1,5 @@
-// data/services/profile_update_service.dart
-// Service for updating user profile
-// TODO: Implement when PATCH /users/external/v1/profile endpoint is available
-
 import 'package:dio/dio.dart';
-// import '../../../../core/error/exceptions.dart'; // Uncommented when implementing
+import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/api_client.dart';
 
 class ProfileUpdateService {
@@ -11,20 +7,10 @@ class ProfileUpdateService {
 
   ProfileUpdateService({Dio? dio}) : client = dio ?? ApiClient.dio;
 
-  /// Update user profile picture path
-  /// 
-  /// This method will be implemented once the backend endpoint is available.
-  /// Expected endpoint: PATCH /users/external/v1/profile
-  /// Expected payload: {"picture_path": "/assets/profile_X.svg"}
-  /// 
-  /// Returns true if successful, throws exception on error
   Future<bool> updateProfilePicture(String picturePath) async {
-    // TODO: Implement when PATCH endpoint is available
-    // Example implementation:
-    /*
     try {
       print('🔄 [PROFILE UPDATE] Updating profile picture: $picturePath');
-      
+
       final response = await client.patch(
         '/users/external/v1/profile',
         data: {
@@ -56,7 +42,7 @@ class ProfileUpdateService {
       } else if (e.response != null) {
         final statusCode = e.response!.statusCode;
         final responseData = e.response!.data;
-        
+
         String errorMessage = 'An error occurred';
         if (responseData is Map<String, dynamic>) {
           if (responseData.containsKey('msg')) {
@@ -80,14 +66,5 @@ class ProfileUpdateService {
       }
       throw ServerException('Unexpected error: ${e.toString()}');
     }
-    */
-    
-    // Placeholder implementation - just log that it would be saved
-    print('⚠️ [PROFILE UPDATE] Profile picture update endpoint not yet available');
-    print('   Would save picture_path: $picturePath');
-    print('   TODO: Implement PATCH /users/external/v1/profile endpoint');
-    
-    // Return false to indicate it wasn't actually saved
-    return false;
   }
 }

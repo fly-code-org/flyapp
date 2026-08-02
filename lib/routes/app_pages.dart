@@ -27,6 +27,7 @@ import 'package:fly/features/start_quiz/views/user_first_question.dart';
 import 'package:fly/features/start_quiz/views/user_fourth_ques.dart';
 import 'package:fly/features/start_quiz/views/user_second_ques.dart';
 import 'package:fly/features/start_quiz/views/user_third_ques.dart';
+import 'package:fly/features/start_quiz/views/select_avatar_screen.dart';
 import 'package:fly/features/user_profile/presentation/views/create_journal_screen.dart';
 import 'package:fly/features/user_profile/presentation/views/user_profile_screen.dart';
 import 'package:fly/features/legal/presentation/views/privacy_policy_screen.dart';
@@ -90,6 +91,7 @@ class AppPages {
     // GetPage(name: '/login', page: () => LoginScreen()),
     // Q&A Flow
     GetPage(name: AppRoutes.IntroScreen, page: () => const QuizIntroScreen()),
+    GetPage(name: AppRoutes.SelectAvatar, page: () => const SelectAvatarScreen()),
     GetPage(name: AppRoutes.GetInterest, page: () => const GetInterestScreen()),
     GetPage(
       name: AppRoutes.UserQuestion1,
