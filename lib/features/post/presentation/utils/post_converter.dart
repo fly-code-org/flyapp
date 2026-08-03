@@ -1,17 +1,11 @@
 // presentation/utils/post_converter.dart
 import '../../../home/model/post_model.dart' as ui_model;
 import '../../domain/entities/post.dart' as api_model;
+import '../../../../core/utils/avatar_generator.dart';
 import '../../../../core/utils/profile_picture_helper.dart';
 import '../../../../features/interests/data/models/tag_icon_mapping.dart';
-import '../../../../features/user_profile/data/utils/default_profile_picture.dart';
 
 class PostConverter {
-  /// Gets a random default profile picture based on user ID
-  /// Uses userId as seed for Random to ensure same user always gets the same picture
-  /// but appears random across different users
-  static String _getDefaultProfilePicture(String userId) {
-    return DefaultProfilePicture.getRandomProfilePicture(userId);
-  }
 
   /// Converts API Post entity to UI Post model
   static ui_model.Post toUIPost(api_model.Post apiPost, {
@@ -90,8 +84,8 @@ class PostConverter {
     if (profileUrl != null && profileUrl.isNotEmpty) {
       finalProfileUrl = ProfilePictureHelper.getProfilePictureUrl(profileUrl);
     } else {
-      // Use a deterministic default SVG profile picture from CDN
-      finalProfileUrl = _getDefaultProfilePicture(apiPost.authorId);
+      // Use AvatarGenerator for consistency with profile screens
+      finalProfileUrl = AvatarGenerator.generateFromUserId(apiPost.authorId);
     }
     final finalUsername = (username != null && username.isNotEmpty)
         ? username

@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:fly/core/di/service_locator.dart';
 import 'package:fly/core/utils/safe_navigation.dart';
 import 'package:fly/core/widgets/bottom_navbar.dart';
+import 'package:fly/features/home/presentation/views/post_detail_screen.dart';
 import 'package:fly/features/mhp_profile/presentation/widgets/add_review_bottom_sheet.dart';
+import 'package:fly/features/post/presentation/controllers/post_controller.dart';
+import 'package:fly/features/post/presentation/services/user_profile_service.dart';
+import 'package:fly/features/post/presentation/utils/post_converter.dart';
+import 'package:fly/features/post/presentation/widgets/comment_bottom_sheet.dart';
 import 'package:fly/routes/app_routes.dart';
 import 'package:get/get.dart';
 import '../../controller/notification_controller.dart';
+import '../../model/notification_model.dart';
 import '../widget/notification_card.dart';
 
 class NotificationScreen extends StatelessWidget {
@@ -114,19 +121,10 @@ class NotificationScreen extends StatelessWidget {
                         mhpName: mhpName,
                         bookingId: bookingId,
                       );
-                    } else if (notif.type == 'post_like' || notif.type == 'followed_tag_post') {
-                      // Navigate to post
-                      final postId = notif.postId;
-                      if (postId != null) {
-                        Get.toNamed('/post/$postId');
-                      }
                     } else if (notif.type == 'post_comment' || notif.type == 'comment_reply') {
-                      // Navigate to post with comment highlighted
-                      final postId = notif.postId;
-                      final commentId = notif.commentId;
-                      if (postId != null) {
-                        Get.toNamed('/post/$postId', arguments: {'scrollToComment': commentId});
-                      }
+                      _openComments(context, notif);
+                    } else if (notif.isSocialNotification) {
+                      _navigateToPost(context, notif);
                     }
                   },
                 );
@@ -136,5 +134,64 @@ class NotificationScreen extends StatelessWidget {
         }),
       ),
     );
+  }
+
+  void _openComments(BuildContext context, NotificationModel notif) {
+    final postId = notif.postId;
+    if (postId == null || postId.isEmpty) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CommentBottomSheet(postId: postId),
+    );
+  }
+
+  Future<void> _navigateToPost(BuildContext context, NotificationModel notif) async {
+    final postId = notif.postId;
+    if (postId == null || postId.isEmpty) return;
+
+    final postController = Get.isRegistered<PostController>()
+        ? Get.find<PostController>()
+        : Get.put(sl<PostController>());
+
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
+
+    try {
+      await postController.fetchPostsByIds([postId]);
+      final posts = postController.posts;
+      if (posts.isEmpty) {
+        Get.back();
+        Get.snackbar('Error', 'Post not found', snackPosition: SnackPosition.BOTTOM);
+        return;
+      }
+
+      final domainPost = posts.first;
+      final userProfileService = UserProfileService();
+      final profiles = await userProfileService.getUserProfiles([domainPost.authorId]);
+      final profile = profiles[domainPost.authorId];
+      final username = profile?['username']?.toString();
+      final profileUrl = profile?['picture_path']?.toString();
+
+      final uiPost = PostConverter.toUIPost(
+        domainPost,
+        username: username,
+        profileUrl: profileUrl,
+      );
+
+      Get.back();
+      if (context.mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => PostDetailScreen(post: uiPost)),
+        );
+      }
+    } catch (e) {
+      Get.back();
+      Get.snackbar('Error', 'Failed to load post', snackPosition: SnackPosition.BOTTOM);
+    }
   }
 }

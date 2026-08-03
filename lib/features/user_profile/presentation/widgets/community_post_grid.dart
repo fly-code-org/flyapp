@@ -154,9 +154,14 @@ class _CommunityMediaSectionState extends State<CommunityMediaSection> {
       try {
         // Fetch posts by IDs (this will update controller's posts temporarily)
         await _postController.fetchPostsByIds(postIdsToFetch);
-        
-        // Get fetched posts from controller
-        final fetchedPosts = List<Post>.from(_postController.posts);
+
+        // Get fetched posts from controller and reorder to match original ID order
+        final rawFetchedPosts = List<Post>.from(_postController.posts);
+        final postsById = {for (var p in rawFetchedPosts) p.id: p};
+        final fetchedPosts = postIdsToFetch
+            .where((id) => postsById.containsKey(id))
+            .map((id) => postsById[id]!)
+            .toList();
 
         // Fetch author profiles
         final authorIds = fetchedPosts.map((p) => p.authorId).toSet().toList();
