@@ -80,11 +80,16 @@ class PostConverter {
     
     // Use fallbacks if profileUrl or username are null or empty
     // For profileUrl, process through ProfilePictureHelper to handle asset paths vs CDN URLs
+    // MHP posts (identified by having communityId) should only show their selected picture, no fallback
+    final isMhpPost = apiPost.communityId != null && apiPost.communityId!.isNotEmpty;
     String finalProfileUrl;
     if (profileUrl != null && profileUrl.isNotEmpty) {
       finalProfileUrl = ProfilePictureHelper.getProfilePictureUrl(profileUrl);
+    } else if (isMhpPost) {
+      // MHP posts without picture_path: use empty string (ProfileAvatar will handle)
+      finalProfileUrl = '';
     } else {
-      // Use AvatarGenerator for consistency with profile screens
+      // Regular user posts: use AvatarGenerator for consistency with profile screens
       finalProfileUrl = AvatarGenerator.generateFromUserId(apiPost.authorId);
     }
     final finalUsername = (username != null && username.isNotEmpty)

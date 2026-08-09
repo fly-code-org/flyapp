@@ -242,6 +242,7 @@ class UserProfileService {
   }
 
   /// Fetches MHP profile by user ID (fallback when user profile not found)
+  /// If MHP has no picture_path, fetches community logo as fallback
   Future<Map<String, String?>?> _fetchMhpProfile(String userId) async {
     try {
       print('🔍 [USER PROFILE SERVICE] Fetching MHP profile for: $userId');
@@ -288,6 +289,18 @@ class UserProfileService {
           }
         }
 
+        // If MHP has no picture_path, try to get community logo as fallback
+        if (picturePathStr == null || picturePathStr.isEmpty) {
+          final communityId = profileData['community_id'];
+          if (communityId != null && communityId.toString().isNotEmpty) {
+            final communityLogo = await _fetchCommunityLogo(communityId.toString());
+            if (communityLogo != null && communityLogo.isNotEmpty) {
+              picturePathStr = communityLogo;
+              print('✅ [USER PROFILE SERVICE] Using community logo as MHP picture: $picturePathStr');
+            }
+          }
+        }
+
         print('✅ [USER PROFILE SERVICE] MHP profile found: name=$displayName, picture=$picturePathStr');
         return {
           'username': displayName,
@@ -297,6 +310,41 @@ class UserProfileService {
       return null;
     } catch (e) {
       print('❌ [USER PROFILE SERVICE] Error fetching MHP profile: $e');
+      return null;
+    }
+  }
+
+  /// Fetches community logo by community ID
+  Future<String?> _fetchCommunityLogo(String communityId) async {
+    try {
+      print('🔍 [USER PROFILE SERVICE] Fetching community logo for: $communityId');
+      final response = await _client.get(
+        '/community/external/v1/community/$communityId',
+        options: Options(headers: {"Content-Type": "application/json"}),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = response.data as Map<String, dynamic>;
+        Map<String, dynamic> communityData;
+
+        if (responseData.containsKey('data') && responseData['data'] is Map<String, dynamic>) {
+          communityData = responseData['data'] as Map<String, dynamic>;
+        } else {
+          communityData = responseData;
+        }
+
+        final logoPath = communityData['logo_path'];
+        if (logoPath != null) {
+          final pathStr = logoPath.toString().trim();
+          if (pathStr.isNotEmpty) {
+            print('✅ [USER PROFILE SERVICE] Community logo found: $pathStr');
+            return pathStr;
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      print('❌ [USER PROFILE SERVICE] Error fetching community logo: $e');
       return null;
     }
   }

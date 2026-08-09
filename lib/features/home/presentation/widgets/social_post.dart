@@ -1013,9 +1013,12 @@ class _SocialPostState extends State<SocialPost> {
 
   Widget _buildProfilePicture() {
     final useSquare = widget.post.isSupportContext || !widget.isSocialTab;
+    // MHP posts (have communityId) should only show their selected picture, no avatar fallback
+    final isMhpPost = widget.post.communityId != null && widget.post.communityId!.isNotEmpty;
     return ProfileAvatar(
       imagePath: widget.post.profileUrl,
-      userId: widget.post.authorId.isNotEmpty ? widget.post.authorId : null,
+      // For MHP posts, don't pass userId to prevent AvatarGenerator fallback
+      userId: isMhpPost ? null : (widget.post.authorId.isNotEmpty ? widget.post.authorId : null),
       size: 40,
       dense: true,
       useRoundedSquare: useSquare,
