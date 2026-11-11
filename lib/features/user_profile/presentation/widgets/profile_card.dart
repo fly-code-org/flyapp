@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/utils/avatar_generator.dart';
 import '../../../../core/utils/jwt_decoder.dart';
 import '../../../../core/utils/profile_picture_helper.dart';
 import '../../../../core/network/api_client.dart';
 
 class ProfileAvatar extends StatelessWidget {
-  final String imagePath; // can be asset or network
+  final String imagePath;
   final double size;
   final bool showEditIcon;
-  final String? userId; // Optional: for generating avatar if imagePath is empty
+  final String? userId;
 
-  /// Inline avatars (e.g. feed): fixed size, no outer frame; avoids [Center]
-  /// expanding inside [Row] and matches compact list layout.
+  /// Inline avatars (e.g. feed): fixed size, no outer frame.
   final bool dense;
 
-  /// When true, clip as a rounded square (support / community style) instead of a circle.
+  /// When true, clip as a rounded square instead of a circle.
   final bool useRoundedSquare;
 
   const ProfileAvatar({
@@ -29,42 +29,25 @@ class ProfileAvatar extends StatelessWidget {
   });
 
   String _getAvatarUrl() {
-    print('🔍 [AVATAR] _getAvatarUrl called with imagePath: "$imagePath", userId: "$userId"');
-    
-    // If imagePath is provided, process it through ProfilePictureHelper
     if (imagePath.isNotEmpty) {
-      final processedPath = ProfilePictureHelper.getProfilePictureUrl(imagePath);
-      print('✅ [AVATAR] Processed imagePath: $processedPath');
-      return processedPath;
+      return ProfilePictureHelper.getProfilePictureUrl(imagePath);
     }
-    
-    // Try to get userId from JWT if not provided
+
     String? effectiveUserId = userId;
     if (effectiveUserId == null || effectiveUserId.isEmpty) {
-      print('🔍 [AVATAR] userId not provided, trying to extract from JWT...');
       try {
         final token = ApiClient.getAuthToken();
         if (token != null && token.isNotEmpty) {
           effectiveUserId = JwtDecoder.getUserId(token);
-          print('✅ [AVATAR] Extracted userId from JWT: $effectiveUserId');
-        } else {
-          print('⚠️ [AVATAR] No token available');
         }
-      } catch (e) {
-        print('⚠️ [AVATAR] Could not extract userId from token: $e');
-      }
+      } catch (_) {}
     }
-    
-    // Generate avatar from userId if available
+
     if (effectiveUserId != null && effectiveUserId.isNotEmpty) {
-      final avatarUrl = AvatarGenerator.generateFromUserId(effectiveUserId);
-      print('🎨 [AVATAR] Generated avatar URL: $avatarUrl');
-      return avatarUrl;
+      return AvatarGenerator.generateFromUserId(effectiveUserId);
     }
-    
-    // Fallback to default asset
-    print('⚠️ [AVATAR] No userId available, using default asset');
-    return 'assets/images/mydp.JPG';
+
+    return '';
   }
 
   @override
@@ -74,36 +57,11 @@ class ProfileAvatar extends StatelessWidget {
     final isNetworkImage = avatarUrl.startsWith("http");
     final isAssetImage = avatarUrl.startsWith("assets/") || isLocalAsset;
 
-    print('🖼️ [AVATAR] Building avatar with URL: $avatarUrl');
-    print(
-      '🖼️ [AVATAR] isLocalAsset: $isLocalAsset, isNetworkImage: $isNetworkImage, isAssetImage: $isAssetImage',
-    );
-
-    final child = _buildAvatarWidget(
-      avatarUrl,
-      isLocalAsset,
-      isNetworkImage,
-      isAssetImage,
-    );
-    final squareRadius = BorderRadius.circular(
-      (size * 0.2).clamp(6.0, 10.0),
-    );
+    final child = _buildAvatarWidget(avatarUrl, isLocalAsset, isNetworkImage, isAssetImage);
+    final squareRadius = BorderRadius.circular((size * 0.2).clamp(6.0, 10.0));
     final inner = useRoundedSquare
-        ? ClipRRect(
-            borderRadius: squareRadius,
-            child: SizedBox(
-              width: size,
-              height: size,
-              child: child,
-            ),
-          )
-        : ClipOval(
-            child: SizedBox(
-              width: size,
-              height: size,
-              child: child,
-            ),
-          );
+        ? ClipRRect(borderRadius: squareRadius, child: SizedBox(width: size, height: size, child: child))
+        : ClipOval(child: SizedBox(width: size, height: size, child: child));
 
     if (dense) {
       return SizedBox(width: size, height: size, child: inner);
@@ -120,13 +78,12 @@ class ProfileAvatar extends StatelessWidget {
               shape: useRoundedSquare ? BoxShape.rectangle : BoxShape.circle,
               borderRadius: useRoundedSquare ? squareRadius : null,
               border: Border.all(color: Colors.white, width: 4),
-              // Beautiful gradient background matching app's purple theme
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  const Color(0xFF855DFC).withOpacity(0.15), // Light purple
-                  const Color(0xFFA68CFC).withOpacity(0.25), // Lighter purple
+                  const Color(0xFF855DFC).withOpacity(0.15),
+                  const Color(0xFFA68CFC).withOpacity(0.25),
                 ],
               ),
             ),
@@ -147,110 +104,68 @@ class ProfileAvatar extends StatelessWidget {
     );
   }
 
+  Widget _buildPlaceholder() {
+    return Container(
+      color: const Color(0xFFE8E0F0),
+      child: Icon(
+        Icons.person,
+        size: size * 0.55,
+        color: const Color(0xFF855DFC).withOpacity(0.4),
+      ),
+    );
+  }
+
   Widget _buildAvatarWidget(String avatarUrl, bool isLocalAsset, bool isNetworkImage, bool isAssetImage) {
-    // Handle local assets (e.g., /assets/profile_2.svg)
+    if (avatarUrl.isEmpty) {
+      return _buildPlaceholder();
+    }
+
     if (isLocalAsset) {
       final assetPath = ProfilePictureHelper.getAssetPath(avatarUrl);
       final isSvg = assetPath.toLowerCase().endsWith('.svg');
-      
       if (isSvg) {
         return SvgPicture.asset(
           assetPath,
           fit: BoxFit.cover,
-          placeholderBuilder: (context) => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          errorBuilder: (context, error, stackTrace) {
-            print('❌ [AVATAR] SVG asset failed: $assetPath');
-            return _getFallbackAvatar();
-          },
-        );
-      } else {
-        return Image.asset(
-          assetPath,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            print('❌ [AVATAR] Asset image failed: $assetPath');
-            return _getFallbackAvatar();
-          },
+          placeholderBuilder: (_) => _buildPlaceholder(),
+          errorBuilder: (_, __, ___) => _buildPlaceholder(),
         );
       }
+      return Image.asset(
+        assetPath,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _buildPlaceholder(),
+      );
     }
-    
-    // Handle network images
+
     if (isNetworkImage) {
       final isSvg = avatarUrl.toLowerCase().endsWith('.svg');
-      
       if (isSvg) {
-        // Wrap SVG loading in a try-catch-like widget structure
-        // Use errorBuilder to catch SVG parsing errors
         return SvgPicture.network(
           avatarUrl,
           fit: BoxFit.cover,
-          placeholderBuilder: (context) => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          errorBuilder: (context, error, stackTrace) {
-            print('❌ [AVATAR] Network SVG failed (error: $error), using fallback');
-            print('📚 [AVATAR] Stack trace: $stackTrace');
-            // Return fallback immediately on any SVG error
-            return _getFallbackAvatar();
-          },
-        );
-      } else {
-        return Image.network(
-          avatarUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            print('❌ [AVATAR] Network image failed, trying fallback');
-            return _getFallbackAvatar();
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
-              ),
-            );
-          },
+          placeholderBuilder: (_) => _buildPlaceholder(),
+          errorBuilder: (_, __, ___) => _buildPlaceholder(),
         );
       }
+      return CachedNetworkImage(
+        imageUrl: avatarUrl,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => _buildPlaceholder(),
+        errorWidget: (_, __, ___) => _buildPlaceholder(),
+        fadeInDuration: const Duration(milliseconds: 200),
+        fadeOutDuration: const Duration(milliseconds: 100),
+      );
     }
-    
-    // Handle regular asset images (assets/...)
+
     if (isAssetImage) {
       return Image.asset(
         avatarUrl,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          print('❌ [AVATAR] Asset image failed, generating avatar');
-          return _getFallbackAvatar();
-        },
+        errorBuilder: (_, __, ___) => _buildPlaceholder(),
       );
     }
-    
-    // Fallback
-    return _getFallbackAvatar();
-  }
 
-  Widget _getFallbackAvatar() {
-    // Try generated avatar if userId is available
-    if (userId != null && userId!.isNotEmpty) {
-      final fallbackUrl = AvatarGenerator.generateFromUserId(userId!);
-      if (fallbackUrl.startsWith('http')) {
-        return Image.network(
-          fallbackUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Image.asset('assets/images/mydp.JPG', fit: BoxFit.cover);
-          },
-        );
-      }
-    }
-    // Default asset
-    return Image.asset('assets/images/mydp.JPG', fit: BoxFit.cover);
+    return _buildPlaceholder();
   }
 }

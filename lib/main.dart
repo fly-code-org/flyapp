@@ -73,6 +73,14 @@ Future<void> main() async {
       print('⚠️ [MAIN] PostHog initialization failed (non-fatal): $e');
     }
 
+    // ✅ Initialize dependency injection (synchronous registrations — must complete before UI)
+    try {
+      await di.init();
+      print('✅ [MAIN] Service locator initialized');
+    } catch (e) {
+      print('❌ [MAIN] Error initializing service locator: $e');
+    }
+
     // ✅ Start the app immediately to allow Dart VM Service to be discovered
     print(
       '✅ [MAIN] Starting app (initialization will continue in background)...',
@@ -127,15 +135,7 @@ Future<void> _initializeServices() async {
       print('❌ [MAIN] Error initializing ApiClient: $e');
     }
 
-    // ✅ Initialize dependency injection
-    try {
-      await di.init().timeout(const Duration(seconds: 5));
-      print('✅ [MAIN] Service locator initialized');
-    } on TimeoutException {
-      print('❌ [MAIN] Service locator initialization timeout');
-    } catch (e) {
-      print('❌ [MAIN] Error initializing service locator: $e');
-    }
+    // Service locator already initialized before runApp()
 
     print('✅ [MAIN] Background initialization complete');
   } catch (e, stackTrace) {

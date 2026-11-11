@@ -221,9 +221,15 @@ class AttachmentModel extends Attachment {
   });
 
   factory AttachmentModel.fromJson(Map<String, dynamic> json) {
+    var url = json['url'] as String? ?? '';
+    // Prepend CDN base for relative S3 paths (e.g. "/post/videos/...")
+    if (url.startsWith('/') && !url.startsWith('//')) {
+      url = 'https://cdn.flyapp.in$url';
+    }
+    print('📎 [ATTACHMENT] type=${json['type']}, url=$url');
     return AttachmentModel(
       type: json['type'] as String? ?? 'image',
-      url: json['url'] as String? ?? '',
+      url: url,
     );
   }
 

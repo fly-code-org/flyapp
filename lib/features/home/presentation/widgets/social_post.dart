@@ -7,7 +7,7 @@ import 'package:fly/features/home/model/post_model.dart';
 import 'package:fly/features/user_profile/presentation/widgets/profile_card.dart';
 import 'package:fly/core/widgets/safe_svg_icon.dart';
 import 'package:video_player/video_player.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:visibility_detector/visibility_detector.dart';
 import 'package:get/get.dart';
 import 'package:fly/features/post/presentation/controllers/post_controller.dart';
 import 'package:fly/core/di/service_locator.dart';
@@ -45,6 +45,10 @@ class SocialPost extends StatefulWidget {
 }
 
 class _SocialPostState extends State<SocialPost> {
+  /// Only one video plays audio at a time. The currently active post ID is tracked here.
+  static String? _activeVideoPostId;
+  static _SocialPostState? _activeVideoState;
+
   VideoPlayerController? _videoController;
   PageController? _pageController;
   late bool isLiked;
@@ -65,6 +69,7 @@ class _SocialPostState extends State<SocialPost> {
 
   // Video overlay state
   bool _showVideoOverlay = false;
+  bool _isVideoLoading = false;
   Timer? _overlayTimer;
 
   @override
@@ -111,28 +116,7 @@ class _SocialPostState extends State<SocialPost> {
       _pageController = PageController();
     }
     
-    if (widget.post.isVideo && !kIsWeb && widget.post.mediaUrl != null) {
-      _videoController =
-          VideoPlayerController.networkUrl(
-              Uri.parse(widget.post.mediaUrl!),
-              videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
-            )
-            ..initialize()
-                .then((_) {
-              if (mounted) {
-                setState(() {});
-                _videoController?.setLooping(true);
-                _videoController?.setVolume(0);
-                _videoController?.play();
-              }
-                })
-                .catchError((error) {
-              print('❌ [SOCIAL POST] Error initializing video: $error');
-              if (mounted) {
-                setState(() {});
-              }
-            });
-    }
+    // Videos auto-play when visible on screen via VisibilityDetector
   }
 
   @override
@@ -348,6 +332,10 @@ class _SocialPostState extends State<SocialPost> {
   @override
   void dispose() {
     _overlayTimer?.cancel();
+    if (_activeVideoPostId == widget.post.id) {
+      _activeVideoPostId = null;
+      _activeVideoState = null;
+    }
     _videoController?.dispose();
     _pageController?.dispose();
     super.dispose();
@@ -369,6 +357,57 @@ class _SocialPostState extends State<SocialPost> {
     _overlayTimer = Timer(const Duration(milliseconds: 1200), () {
       if (mounted) setState(() => _showVideoOverlay = false);
     });
+  }
+
+  void _onVisibilityChanged(VisibilityInfo info) {
+    if (!widget.post.isVideo || widget.post.mediaUrl == null) return;
+    final visible = info.visibleFraction > 0.5;
+    if (visible) {
+      // Mute the previously active video
+      if (_activeVideoPostId != null && _activeVideoPostId != widget.post.id && _activeVideoState != null) {
+        _activeVideoState!._videoController?.setVolume(0);
+      }
+      // Make this the active video
+      _activeVideoPostId = widget.post.id;
+      _activeVideoState = this;
+
+      if (_videoController == null && !_isVideoLoading) {
+        _initAndPlayVideo();
+      } else if (_videoController != null && _videoController!.value.isInitialized) {
+        if (!_videoController!.value.isPlaying) _videoController!.play();
+        _videoController!.setVolume(1.0);
+      }
+    } else {
+      if (_videoController != null && _videoController!.value.isInitialized && _videoController!.value.isPlaying) {
+        _videoController!.pause();
+      }
+      // Clear active if this was the active one
+      if (_activeVideoPostId == widget.post.id) {
+        _activeVideoPostId = null;
+        _activeVideoState = null;
+      }
+    }
+  }
+
+  void _initAndPlayVideo() {
+    if (_isVideoLoading || widget.post.mediaUrl == null) return;
+    print('🎬 [VIDEO] Attempting to load: ${widget.post.mediaUrl}');
+    setState(() => _isVideoLoading = true);
+    _videoController = VideoPlayerController.networkUrl(
+      Uri.parse(widget.post.mediaUrl!),
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    )..initialize().then((_) {
+        print('✅ [VIDEO] Initialized successfully: ${widget.post.mediaUrl}');
+        if (mounted) {
+          setState(() => _isVideoLoading = false);
+          _videoController?.setLooping(true);
+          _videoController?.setVolume(1.0);
+          _videoController?.play();
+        }
+      }).catchError((error) {
+        print('❌ [VIDEO] Error loading ${widget.post.mediaUrl}: $error');
+        if (mounted) setState(() => _isVideoLoading = false);
+      });
   }
 
   void _openFullscreenVideo() {
@@ -1291,45 +1330,57 @@ class _SocialPostState extends State<SocialPost> {
 
           // Media
           if (widget.post.isVideo && widget.post.mediaUrl != null)
-            GestureDetector(
-              onTap: _toggleVideoPlayback,
-              onLongPress: _openFullscreenVideo,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  _videoController != null && _videoController!.value.isInitialized
-                      ? AspectRatio(
-                          aspectRatio: _videoController!.value.aspectRatio,
-                          child: VideoPlayer(_videoController!),
-                        )
-                      : Container(
-                          height: 200,
-                          color: Colors.black12,
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
+            VisibilityDetector(
+              key: Key('video-${widget.post.id}'),
+              onVisibilityChanged: _onVisibilityChanged,
+              child: GestureDetector(
+                onTap: () {
+                  if (_videoController != null && _videoController!.value.isInitialized) {
+                    _toggleVideoPlayback();
+                  } else {
+                    _initAndPlayVideo();
+                  }
+                },
+                onLongPress: _openFullscreenVideo,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    _videoController != null && _videoController!.value.isInitialized
+                        ? AspectRatio(
+                            aspectRatio: _videoController!.value.aspectRatio,
+                            child: VideoPlayer(_videoController!),
+                          )
+                        : Container(
+                            height: 200,
+                            color: Colors.black12,
+                            child: _isVideoLoading
+                                ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
+                                : const Center(
+                                    child: Icon(Icons.play_circle_outline, size: 56, color: Colors.white70),
+                                  ),
+                          ),
+                    if (_videoController != null && _videoController!.value.isInitialized)
+                      AnimatedOpacity(
+                        opacity: _showVideoOverlay ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Container(
+                          width: 56,
+                          height: 56,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.black45,
+                          ),
+                          child: Icon(
+                            _videoController?.value.isPlaying == true
+                                ? Icons.pause
+                                : Icons.play_arrow,
+                            color: Colors.white,
+                            size: 32,
                           ),
                         ),
-                  // Overlay icon: only visible briefly after a tap
-                  AnimatedOpacity(
-                    opacity: _showVideoOverlay ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 200),
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.black45,
                       ),
-                      child: Icon(
-                        _videoController?.value.isPlaying == true
-                            ? Icons.pause
-                            : Icons.play_arrow,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             )
           else if (widget.post.mediaUrls != null &&

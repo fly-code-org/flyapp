@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -12,6 +13,7 @@ import 'package:fly/features/post/presentation/utils/post_converter.dart';
 import 'package:fly/features/post/presentation/services/user_profile_service.dart';
 import 'package:fly/features/home/presentation/widgets/social_feed.dart';
 import 'package:fly/features/home/model/post_model.dart';
+import 'package:fly/features/post/domain/entities/post.dart' as api_post;
 import 'package:fly/features/user_profile/presentation/controllers/user_profile_controller.dart';
 import 'package:fly/features/subscription/presentation/controllers/subscription_controller.dart';
 import 'package:fly/features/notifications/controller/notification_controller.dart';
@@ -115,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingMore = false;
   bool _hasReachedEnd = false;
   bool _streakScrollEngaged = false;
+  bool _isInitialLoading = true;
 
   @override
   void initState() {
@@ -191,74 +194,69 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Post> get _currentPosts =>
       activeTabIndex == 0 ? socialPosts : wellnessPosts;
 
-  /// Fetches and populates both Social and Wellness tabs
+  /// Fetches and populates both Social and Wellness tabs.
+  /// Loads the active tab first so the user sees posts immediately,
+  /// then loads the other tab in the background.
   Future<void> _refreshBothTabs() async {
     if (!mounted) return;
     _postController.clearError();
     _hasReachedEnd = false;
     _isUsingFeed = true;
 
+    final activeType = activeTabIndex == 0 ? 'social' : 'support';
+    final otherType = activeTabIndex == 0 ? 'support' : 'social';
+    final otherIndex = activeTabIndex == 0 ? 1 : 0;
+
     try {
-      // Sequential to avoid PostController.posts race (shared state)
-      await _fetchAndSetTabPosts('social', 0, sortBy: _tabFilter[0] ?? 'new');
-      if (!mounted) return;
-      await _fetchAndSetTabPosts('support', 1, sortBy: _tabFilter[1] ?? 'new');
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading posts: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Fetch active tab first so user sees posts ASAP
+      await _fetchAndSetTabPosts(activeType, activeTabIndex, sortBy: _tabFilter[activeTabIndex] ?? 'new');
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() => _isInitialLoading = false);
+    }
+
+    // Fetch other tab in background — don't block the UI
+    if (mounted) {
+      _fetchAndSetTabPosts(otherType, otherIndex, sortBy: _tabFilter[otherIndex] ?? 'new');
     }
   }
 
   Future<void> _fetchAndSetTabPosts(String typeFilter, int tabIndex, {String sortBy = 'new'}) async {
-    await _postController.fetchFeed(
-      limit: 20,
-      offset: 0,
-      typeFilter: typeFilter,
-      sortBy: sortBy,
-      forceRefresh: true,
-    );
+    final sw = Stopwatch()..start();
+    print('⏱️ [HOME] _fetchAndSetTabPosts START: type=$typeFilter, tab=$tabIndex');
+    try {
+      await _postController.fetchFeed(
+        limit: 20,
+        offset: 0,
+        typeFilter: typeFilter,
+        sortBy: sortBy,
+        forceRefresh: true,
+      );
+    } catch (_) {}
+    print('⏱️ [HOME] fetchFeed done in ${sw.elapsedMilliseconds}ms for $typeFilter');
     if (!mounted) return;
 
     final rawPosts = _postController.posts.toList();
-    // When tag_type is present, filter by it; otherwise trust backend filter
+    if (rawPosts.isEmpty) {
+      if (mounted) {
+        setState(() {
+          if (tabIndex == 0) {
+            socialPosts = [];
+          } else {
+            wellnessPosts = [];
+          }
+        });
+      }
+      return;
+    }
+
     final apiPosts = rawPosts
         .where((p) => p.tagType == null || p.tagType == typeFilter)
         .toList();
-    final authorIds = apiPosts.map((p) => p.authorId).toSet().toList();
 
-    final userProfileService = UserProfileService();
-    final authorProfiles = await userProfileService.getUserProfiles(authorIds);
-
-    final authorProfileUrls = <String, String>{};
-    final authorUsernames = <String, String>{};
-
-    for (var entry in authorProfiles.entries) {
-      final userId = entry.key;
-      final profile = entry.value;
-      final usernameValue = profile['username'];
-      if (usernameValue != null) {
-        final s = usernameValue.toString().trim();
-        if (s.isNotEmpty) authorUsernames[userId] = s;
-      }
-      final picPath = profile['picture_path'] ?? profile['picturePath'];
-      if (picPath != null) {
-        final p = picPath.toString().trim();
-        if (p.isNotEmpty) authorProfileUrls[userId] = p;
-      }
-    }
-
-    final uiPosts = PostConverter.toUIPosts(
-      apiPosts,
-      authorProfileUrls: authorProfileUrls,
-      authorUsernames: authorUsernames,
-    );
-
+    // Show posts immediately with fallback names/avatars
+    final uiPosts = PostConverter.toUIPosts(apiPosts);
     if (mounted) {
       setState(() {
         if (tabIndex == 0) {
@@ -267,6 +265,117 @@ class _HomeScreenState extends State<HomeScreen> {
           wellnessPosts = uiPosts;
         }
       });
+    }
+
+    // Enrich with real author profiles in the background
+    _enrichPostsWithProfiles(apiPosts, tabIndex);
+  }
+
+  Future<void> _enrichPostsWithProfiles(List<api_post.Post> apiPosts, int tabIndex) async {
+    try {
+      final authorIds = apiPosts.map((p) => p.authorId).toSet().toList();
+      if (authorIds.isEmpty) return;
+
+      final userProfileService = UserProfileService();
+      final authorProfiles = await userProfileService.getUserProfiles(authorIds)
+          .timeout(const Duration(seconds: 10), onTimeout: () => {});
+
+      if (!mounted || authorProfiles.isEmpty) return;
+
+      final authorProfileUrls = <String, String>{};
+      final authorUsernames = <String, String>{};
+
+      for (var entry in authorProfiles.entries) {
+        final userId = entry.key;
+        final profile = entry.value;
+        final usernameValue = profile['username'];
+        if (usernameValue != null) {
+          final s = usernameValue.toString().trim();
+          if (s.isNotEmpty) authorUsernames[userId] = s;
+        }
+        final picPath = profile['picture_path'] ?? profile['picturePath'];
+        if (picPath != null) {
+          final p = picPath.toString().trim();
+          if (p.isNotEmpty) authorProfileUrls[userId] = p;
+        }
+      }
+
+      if (!mounted) return;
+      if (authorUsernames.isEmpty && authorProfileUrls.isEmpty) return;
+
+      final enrichedPosts = PostConverter.toUIPosts(
+        apiPosts,
+        authorProfileUrls: authorProfileUrls,
+        authorUsernames: authorUsernames,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (tabIndex == 0) {
+            socialPosts = enrichedPosts;
+          } else {
+            wellnessPosts = enrichedPosts;
+          }
+        });
+      }
+    } catch (e) {
+      print('⚠️ [HOME] Profile enrichment failed: $e');
+    }
+  }
+
+  Future<void> _enrichAppendedPosts(List<api_post.Post> newApiPosts, int tabIndex) async {
+    try {
+      final authorIds = newApiPosts.map((p) => p.authorId).toSet().toList();
+      if (authorIds.isEmpty) return;
+
+      final userProfileService = UserProfileService();
+      final authorProfiles = await userProfileService.getUserProfiles(authorIds)
+          .timeout(const Duration(seconds: 10), onTimeout: () => {});
+
+      if (!mounted || authorProfiles.isEmpty) return;
+
+      final authorProfileUrls = <String, String>{};
+      final authorUsernames = <String, String>{};
+
+      for (var entry in authorProfiles.entries) {
+        final userId = entry.key;
+        final profile = entry.value;
+        final usernameValue = profile['username'];
+        if (usernameValue != null) {
+          final s = usernameValue.toString().trim();
+          if (s.isNotEmpty) authorUsernames[userId] = s;
+        }
+        final picPath = profile['picture_path'] ?? profile['picturePath'];
+        if (picPath != null) {
+          final p = picPath.toString().trim();
+          if (p.isNotEmpty) authorProfileUrls[userId] = p;
+        }
+      }
+
+      if (!mounted) return;
+      if (authorUsernames.isEmpty && authorProfileUrls.isEmpty) return;
+
+      final enrichedNewPosts = PostConverter.toUIPosts(
+        newApiPosts,
+        authorProfileUrls: authorProfileUrls,
+        authorUsernames: authorUsernames,
+      );
+
+      // Replace only the matching posts at the end of the list
+      final enrichedById = {for (final p in enrichedNewPosts) p.id: p};
+      if (mounted) {
+        setState(() {
+          final list = tabIndex == 0 ? socialPosts : wellnessPosts;
+          final updated = list.map((p) => enrichedById[p.id] ?? p).toList();
+          if (tabIndex == 0) {
+            socialPosts = updated;
+          } else {
+            wellnessPosts = updated;
+          }
+        });
+      }
+    } catch (e) {
+      print('⚠️ [HOME] Profile enrichment for appended posts failed: $e');
     }
   }
 
@@ -291,8 +400,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _postController.clearError();
     _hasReachedEnd = false;
 
+    final typeFilter = activeTabIndex == 0 ? 'social' : 'support';
     try {
-      final typeFilter = activeTabIndex == 0 ? 'social' : 'support';
       await _postController.fetchFeed(
         limit: 20,
         offset: 0,
@@ -301,64 +410,42 @@ class _HomeScreenState extends State<HomeScreen> {
         forceRefresh: true,
       );
       _isUsingFeed = true;
+    } catch (_) {}
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      final rawPosts = _postController.posts.toList();
-      // When tag_type is present, filter by it; otherwise trust backend filter
-      final apiPosts = rawPosts
-          .where((p) => p.tagType == null || p.tagType == typeFilter)
-          .toList();
-      final authorIds = apiPosts.map((p) => p.authorId).toSet().toList();
-
-      final userProfileService = UserProfileService();
-      final authorProfiles = await userProfileService.getUserProfiles(
-        authorIds,
-      );
-
-      final authorProfileUrls = <String, String>{};
-      final authorUsernames = <String, String>{};
-
-      for (var entry in authorProfiles.entries) {
-        final userId = entry.key;
-        final profile = entry.value;
-        final usernameValue = profile['username'];
-        if (usernameValue != null) {
-          final s = usernameValue.toString().trim();
-          if (s.isNotEmpty) authorUsernames[userId] = s;
-        }
-        final picPath = profile['picture_path'] ?? profile['picturePath'];
-        if (picPath != null) {
-          final p = picPath.toString().trim();
-          if (p.isNotEmpty) authorProfileUrls[userId] = p;
-        }
-      }
-
-      final uiPosts = PostConverter.toUIPosts(
-        apiPosts,
-        authorProfileUrls: authorProfileUrls,
-        authorUsernames: authorUsernames,
-      );
-
+    final rawPosts = _postController.posts.toList();
+    if (rawPosts.isEmpty) {
       if (mounted) {
         setState(() {
           if (activeTabIndex == 0) {
-            socialPosts = uiPosts;
+            socialPosts = [];
           } else {
-            wellnessPosts = uiPosts;
+            wellnessPosts = [];
           }
         });
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading posts: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      return;
     }
+
+    final apiPosts = rawPosts
+        .where((p) => p.tagType == null || p.tagType == typeFilter)
+        .toList();
+
+    // Show posts immediately with fallback data
+    final uiPosts = PostConverter.toUIPosts(apiPosts);
+    if (mounted) {
+      setState(() {
+        if (activeTabIndex == 0) {
+          socialPosts = uiPosts;
+        } else {
+          wellnessPosts = uiPosts;
+        }
+      });
+    }
+
+    // Enrich with real author profiles in the background
+    _enrichPostsWithProfiles(apiPosts, activeTabIndex);
   }
 
   Future<void> _loadMorePosts() async {
@@ -394,35 +481,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _hasReachedEnd = true;
       }
 
-      final authorIds = newApiPosts.map((p) => p.authorId).toSet().toList();
-      final userProfileService = UserProfileService();
-      final authorProfiles = await userProfileService.getUserProfiles(
-        authorIds,
-      );
-
-      final authorProfileUrls = <String, String>{};
-      final authorUsernames = <String, String>{};
-
-      for (var entry in authorProfiles.entries) {
-        final userId = entry.key;
-        final profile = entry.value;
-        final usernameValue = profile['username'];
-        if (usernameValue != null) {
-          final s = usernameValue.toString().trim();
-          if (s.isNotEmpty) authorUsernames[userId] = s;
-        }
-        final picPath = profile['picture_path'] ?? profile['picturePath'];
-        if (picPath != null) {
-          final p = picPath.toString().trim();
-          if (p.isNotEmpty) authorProfileUrls[userId] = p;
-        }
-      }
-
-      final newUiPosts = PostConverter.toUIPosts(
-        newApiPosts,
-        authorProfileUrls: authorProfileUrls,
-        authorUsernames: authorUsernames,
-      );
+      // Show posts immediately with fallback data
+      final newUiPosts = PostConverter.toUIPosts(newApiPosts);
 
       final currentList = activeTabIndex == 0 ? socialPosts : wellnessPosts;
       final existingIds = currentList.map((p) => p.id).toSet();
@@ -439,6 +499,9 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         });
       }
+
+      // Enrich new posts with profiles in background (non-blocking)
+      _enrichAppendedPosts(newApiPosts, activeTabIndex);
     } catch (_) {
       // Silently ignore load-more errors
     } finally {
@@ -592,16 +655,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: Padding(
                       padding: EdgeInsets.zero,
-                      child: Obx(() {
-                        // Check loading state only when posts are empty (initial load)
-                        final isLoading = _postController.isLoading.value;
-                        final errorMessage = _postController.errorMessage.value;
-
-                        if (isLoading && _currentPosts.isEmpty) {
+                      child: Builder(builder: (context) {
+                        if (_isInitialLoading && _currentPosts.isEmpty) {
                           return const Center(
                             child: CircularProgressIndicator(),
                           );
                         }
+
+                        final errorMessage = _postController.errorMessage.value;
 
                         if (_currentPosts.isEmpty && errorMessage.isEmpty) {
                           return Center(

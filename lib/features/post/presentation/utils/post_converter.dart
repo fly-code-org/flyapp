@@ -1,7 +1,6 @@
 // presentation/utils/post_converter.dart
 import '../../../home/model/post_model.dart' as ui_model;
 import '../../domain/entities/post.dart' as api_model;
-import '../../../../core/utils/avatar_generator.dart';
 import '../../../../core/utils/profile_picture_helper.dart';
 import '../../../../features/interests/data/models/tag_icon_mapping.dart';
 
@@ -89,8 +88,8 @@ class PostConverter {
       // MHP posts without picture_path: use empty string (ProfileAvatar will handle)
       finalProfileUrl = '';
     } else {
-      // Regular user posts: use AvatarGenerator for consistency with profile screens
-      finalProfileUrl = AvatarGenerator.generateFromUserId(apiPost.authorId);
+      // No profile URL yet — show placeholder until background enrichment completes
+      finalProfileUrl = '';
     }
     final finalUsername = (username != null && username.isNotEmpty)
         ? username
