@@ -70,6 +70,7 @@ class _SocialPostState extends State<SocialPost> {
   // Video overlay state
   bool _showVideoOverlay = false;
   bool _isVideoLoading = false;
+  bool _isMuted = false;
   Timer? _overlayTimer;
 
   @override
@@ -375,7 +376,7 @@ class _SocialPostState extends State<SocialPost> {
         _initAndPlayVideo();
       } else if (_videoController != null && _videoController!.value.isInitialized) {
         if (!_videoController!.value.isPlaying) _videoController!.play();
-        _videoController!.setVolume(1.0);
+        _videoController!.setVolume(_isMuted ? 0 : 1.0);
       }
     } else {
       if (_videoController != null && _videoController!.value.isInitialized && _videoController!.value.isPlaying) {
@@ -401,7 +402,7 @@ class _SocialPostState extends State<SocialPost> {
         if (mounted) {
           setState(() => _isVideoLoading = false);
           _videoController?.setLooping(true);
-          _videoController?.setVolume(1.0);
+          _videoController?.setVolume(_isMuted ? 0 : 1.0);
           _videoController?.play();
         }
       }).catchError((error) {
@@ -1376,6 +1377,30 @@ class _SocialPostState extends State<SocialPost> {
                                 : Icons.play_arrow,
                             color: Colors.white,
                             size: 32,
+                          ),
+                        ),
+                      ),
+                    if (_videoController != null && _videoController!.value.isInitialized)
+                      Positioned(
+                        right: 8,
+                        bottom: 8,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() => _isMuted = !_isMuted);
+                            _videoController?.setVolume(_isMuted ? 0 : 1.0);
+                          },
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black54,
+                            ),
+                            child: Icon(
+                              _isMuted ? Icons.volume_off : Icons.volume_up,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ),
